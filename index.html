@@ -64,6 +64,22 @@
   <script src="https://cdn.jsdelivr.net/gh/taisel/GameBoy-Online@master/js/GameBoyCore.js"></script>
 
   <script>
+  // Stub de cout(): GameBoyCore.js usa esta función (que normalmente vive en
+  // GameBoyIO.js) para loggear. La definimos acá para no tener que cargar
+  // todo GameBoyIO.js (que trae UI propia que no queremos).
+  window.cout = function (message, colorIndex) {
+    try {
+      if (colorIndex === 2)      console.error(message);
+      else if (colorIndex === 1) console.warn(message);
+      else                       console.log(message);
+    } catch (_) {}
+  };
+  // Otros helpers que GameBoyCore puede tocar:
+  window.clear_terminal = function () {};
+  window.pause = window.pause || function () {};
+  </script>
+
+  <script>
   (function () {
     'use strict';
 
@@ -72,7 +88,7 @@
 
     // ----- CONFIGURACIÓN -----
     // Ruta al ROM. Cambiá esto si tu ROM tiene otro nombre.
-    var ROM_PATH = 'mon.gb'
+    var ROM_PATH = 'rom/game.gbc';
 
     // settings[] global usado internamente por GameBoyCore.
     // Mapeo de teclas (settings[14]):
