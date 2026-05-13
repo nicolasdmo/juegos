@@ -2,610 +2,230 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#000000">
-<title>Flappy Cube</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="referrer" content="no-referrer">
+<title>Juego</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+  * { box-sizing: border-box; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
   html, body {
-    width: 100%; height: 100%; overflow: hidden;
-    background: #000; color: #fff;
-    font-family: 'Courier New', monospace;
-    touch-action: manipulation;
-    overscroll-behavior: none;
+    margin: 0; padding: 0;
+    height: 100%; width: 100%;
+    background: #000;
+    overflow: hidden;
   }
-  #app { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
-
-  .screen { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
-  .screen.active { display: flex; }
-
-  /* MAIN MENU */
-  .title {
-    font-size: clamp(40px, 12vw, 80px);
-    font-weight: 900;
-    color: #0ff;
-    text-shadow: 0 0 10px #0ff, 0 0 20px #0ff, 0 0 40px #0ff;
-    margin-bottom: 8px;
-    letter-spacing: 4px;
-    text-align: center;
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: sans-serif;
+    color: #ccc;
   }
-  .subtitle {
-    font-size: clamp(12px, 3.5vw, 16px);
-    color: #f0f;
-    text-shadow: 0 0 8px #f0f;
-    margin-bottom: 48px;
-    letter-spacing: 2px;
-  }
-  .btn {
+  canvas#screen {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    width: min(100vw, calc(100vh * 160 / 144));
+    height: min(100vh, calc(100vw * 144 / 160));
+    background: #000;
     display: block;
-    width: min(80vw, 320px);
-    padding: 18px 24px;
-    margin: 12px 0;
-    font-family: inherit;
-    font-size: clamp(16px, 4.5vw, 22px);
-    font-weight: bold;
-    letter-spacing: 2px;
-    color: #0ff;
-    background: transparent;
-    border: 2px solid #0ff;
-    border-radius: 8px;
-    cursor: pointer;
-    text-align: center;
-    box-shadow: 0 0 12px rgba(0,255,255,.5), inset 0 0 12px rgba(0,255,255,.2);
-    transition: transform .1s, box-shadow .15s;
+    outline: none;
   }
-  .btn:active { transform: scale(.97); box-shadow: 0 0 20px rgba(0,255,255,.9), inset 0 0 20px rgba(0,255,255,.4); }
-  .btn.magenta { color: #f0f; border-color: #f0f; box-shadow: 0 0 12px rgba(255,0,255,.5), inset 0 0 12px rgba(255,0,255,.2); }
-  .btn.magenta:active { box-shadow: 0 0 20px rgba(255,0,255,.9), inset 0 0 20px rgba(255,0,255,.4); }
-  .btn.green { color: #0f8; border-color: #0f8; box-shadow: 0 0 12px rgba(0,255,136,.5), inset 0 0 12px rgba(0,255,136,.2); }
-  .btn.green:active { box-shadow: 0 0 20px rgba(0,255,136,.9), inset 0 0 20px rgba(0,255,136,.4); }
-
-  /* GAME */
-  #gameCanvas { display: block; background: #000; touch-action: none; }
-  #gameOverlay {
-    position: absolute; inset: 0;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: flex-start;
-    padding-top: env(safe-area-inset-top, 16px);
-    pointer-events: none;
-  }
-  #scoreDisplay {
-    margin-top: 24px;
-    font-size: clamp(40px, 10vw, 64px);
-    font-weight: 900;
-    color: #fff;
-    text-shadow: 0 0 8px #0ff, 0 0 16px #0ff;
-  }
-  #tapHint {
-    position: absolute;
+  #status {
+    position: fixed;
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
-    color: #0ff;
-    font-size: clamp(18px, 5vw, 26px);
-    text-shadow: 0 0 10px #0ff;
+    font-family: monospace;
+    font-size: 16px;
     text-align: center;
-    letter-spacing: 2px;
-    animation: pulse 1.2s infinite;
-  }
-  @keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:1} }
-
-  /* GAME OVER */
-  .panel {
-    background: rgba(0,0,0,.85);
-    border: 2px solid #0ff;
-    border-radius: 12px;
-    padding: 28px 24px;
-    box-shadow: 0 0 20px rgba(0,255,255,.4);
-    width: min(86vw, 380px);
-    text-align: center;
-  }
-  .panel h2 {
-    color: #f0f;
-    text-shadow: 0 0 10px #f0f;
-    font-size: clamp(24px, 6vw, 32px);
-    margin-bottom: 16px;
-    letter-spacing: 3px;
-  }
-  .panel .score-big {
-    font-size: clamp(48px, 14vw, 72px);
-    color: #0ff;
-    text-shadow: 0 0 12px #0ff;
-    font-weight: 900;
-    margin: 12px 0;
-  }
-  .panel .label {
-    color: #888; font-size: 14px; letter-spacing: 2px;
-  }
-
-  /* NAME ENTRY */
-  .name-input {
-    display: flex; justify-content: center; gap: 12px; margin: 24px 0;
-  }
-  .letter-slot {
-    width: 56px; height: 72px;
-    border: 2px solid #0ff;
-    border-radius: 8px;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    background: rgba(0,255,255,.05);
-    position: relative;
-  }
-  .letter-slot.active { box-shadow: 0 0 16px #0ff; }
-  .letter-slot .letter {
-    font-size: 38px; font-weight: 900; color: #fff;
-    text-shadow: 0 0 8px #0ff;
-  }
-  .arrow-btn {
-    background: transparent; border: 2px solid #f0f; color: #f0f;
-    width: 36px; height: 36px; border-radius: 50%;
-    font-size: 16px; font-weight: bold; cursor: pointer;
-    margin: 4px 0;
-    box-shadow: 0 0 8px rgba(255,0,255,.5);
-  }
-  .arrow-btn:active { background: rgba(255,0,255,.2); }
-
-  /* SCORES TABLE */
-  .scores-title {
-    font-size: clamp(28px, 8vw, 48px);
-    color: #f0f;
-    text-shadow: 0 0 10px #f0f, 0 0 20px #f0f;
-    letter-spacing: 4px;
-    margin-bottom: 24px;
-  }
-  .scores-list {
-    width: min(86vw, 380px);
-    max-height: 60vh;
-    overflow-y: auto;
-    border: 2px solid #f0f;
-    border-radius: 8px;
-    background: rgba(0,0,0,.6);
-    box-shadow: 0 0 16px rgba(255,0,255,.3);
-    padding: 8px;
-  }
-  .score-row {
-    display: grid;
-    grid-template-columns: 40px 1fr 80px;
-    gap: 12px;
-    padding: 10px 12px;
-    align-items: center;
-    border-bottom: 1px solid rgba(255,0,255,.2);
-    font-size: clamp(14px, 4vw, 18px);
-  }
-  .score-row:last-child { border-bottom: none; }
-  .score-row .rank { color: #0ff; font-weight: bold; text-shadow: 0 0 6px #0ff; }
-  .score-row .name { color: #fff; letter-spacing: 3px; font-weight: bold; }
-  .score-row .pts { color: #0f8; text-align: right; text-shadow: 0 0 6px #0f8; font-weight: bold; }
-  .score-row.highlight { background: rgba(0,255,255,.1); }
-  .empty-msg { padding: 32px 16px; text-align: center; color: #666; font-size: 14px; letter-spacing: 2px; }
-
-  .top-bar {
-    position: absolute; top: env(safe-area-inset-top, 12px); left: 0; right: 0;
-    display: flex; justify-content: space-between; padding: 12px 16px;
     pointer-events: none;
   }
-  .icon-btn {
-    pointer-events: auto;
-    background: transparent;
-    border: 2px solid #0ff;
-    color: #0ff;
-    width: 44px; height: 44px;
-    border-radius: 50%;
-    font-size: 20px; font-weight: bold;
-    cursor: pointer;
-    box-shadow: 0 0 8px rgba(0,255,255,.4);
+  #status.error { color: #ff6666; }
+  #hint {
+    position: fixed;
+    bottom: 8px; right: 12px;
+    font-family: monospace;
+    font-size: 11px;
+    color: #444;
+    pointer-events: none;
   }
 </style>
 </head>
-<body>
-<div id="app">
+<body oncontextmenu="return false" ondragstart="return false" onselectstart="return false">
 
-  <!-- MAIN MENU -->
-  <div id="menuScreen" class="screen active">
-    <div class="title">FLAPPY<br>CUBE</div>
-    <div class="subtitle">◆ ARCADE NEON ◆</div>
-    <button class="btn" onclick="showScreen('game'); startGame()">▶ FLAPPY CUBE</button>
-    <button class="btn magenta" onclick="showScreen('scores'); renderScores()">★ PUNTAJES MÁXIMOS</button>
-  </div>
+  <canvas id="screen" width="160" height="144" tabindex="0"></canvas>
+  <div id="status">Cargando…</div>
+  <div id="hint">F = pantalla completa</div>
 
-  <!-- GAME -->
-  <div id="gameScreen" class="screen">
-    <canvas id="gameCanvas"></canvas>
-    <div id="gameOverlay">
-      <div id="scoreDisplay">0</div>
-      <div id="tapHint">TOCA PARA SALTAR</div>
-    </div>
-    <div class="top-bar">
-      <button class="icon-btn" onclick="exitToMenu()">←</button>
-      <span></span>
-    </div>
-  </div>
+  <!-- GameBoy Online (Grant Galitz) - cargado desde jsDelivr -->
+  <script src="https://cdn.jsdelivr.net/gh/taisel/GameBoy-Online@master/js/other/base64.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/taisel/GameBoy-Online@master/js/other/resize.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/taisel/GameBoy-Online@master/js/other/resampler.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/taisel/GameBoy-Online@master/js/other/XAudioServer.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/taisel/GameBoy-Online@master/js/GameBoyCore.js"></script>
 
-  <!-- GAME OVER -->
-  <div id="gameOverScreen" class="screen">
-    <div class="panel">
-      <h2>GAME OVER</h2>
-      <div class="label">PUNTAJE</div>
-      <div class="score-big" id="finalScore">0</div>
-      <div class="label" id="bestLabel">MEJOR: 0</div>
-      <div style="margin-top: 24px;">
-        <button class="btn green" onclick="showScreen('game'); startGame()" style="width:100%; margin: 8px 0">↻ JUGAR DE NUEVO</button>
-        <button class="btn magenta" onclick="showScreen('menu')" style="width:100%; margin: 8px 0">⌂ MENÚ</button>
-      </div>
-    </div>
-  </div>
+  <script>
+  (function () {
+    'use strict';
 
-  <!-- NAME ENTRY (top 10) -->
-  <div id="nameScreen" class="screen">
-    <div class="panel">
-      <h2>¡TOP 10!</h2>
-      <div class="label">PUNTAJE</div>
-      <div class="score-big" id="nameScore">0</div>
-      <div class="label">INGRESA TUS INICIALES</div>
-      <div class="name-input" id="nameInput"></div>
-      <button class="btn green" onclick="confirmName()" style="width:100%">✓ GUARDAR</button>
-    </div>
-  </div>
+    var statusEl = document.getElementById('status');
+    var canvas   = document.getElementById('screen');
 
-  <!-- HIGH SCORES -->
-  <div id="scoresScreen" class="screen">
-    <div class="scores-title">PUNTAJES</div>
-    <div class="scores-list" id="scoresList"></div>
-    <button class="btn" style="margin-top:24px" onclick="showScreen('menu')">← VOLVER</button>
-  </div>
+    // ----- CONFIGURACIÓN -----
+    // Ruta al ROM. Cambiá esto si tu ROM tiene otro nombre.
+    var ROM_PATH = 'rom/game.gbc';
 
-</div>
+    // settings[] global usado internamente por GameBoyCore.
+    // Mapeo de teclas (settings[14]):
+    //   [Right, Left, Up, Down, A, B, Select, Start]
+    //   Por defecto: Flechas, X, Z, Shift, Enter
+    window.settings = [
+      true,   // 0  sonido on
+      true,   // 1  boot con boot ROM
+      false,  // 2  forzar modo GB
+      false,  // 3  prioridad a modo GB
+      false,  // 4  usar BIOS GBC
+      false,  // 5  desactivar colorización en modo GB
+      false,  // 6  prohibir typed arrays
+      8,      // 7  intervalo del loop (ms)
+      10,     // 8  buffer audio mínimo
+      20,     // 9  buffer audio máximo
+      false,  // 10 override MBC1 RAM
+      false,  // 11 usar boot ROM de GB en vez del de GBC
+      false,  // 12 escalar canvas en JS
+      true,   // 13 image smoothing
+      [39, 37, 38, 40, 88, 90, 16, 13], // 14 keymap
+      false,  // 15
+      0x3f,   // 16 canales de sonido (bitmask)
+      false,  // 17
+      true,   // 18
+      true,   // 19
+      false,  // 20
+      false,  // 21
+      false,  // 22
+      false,  // 23
+      false,  // 24
+      false   // 25
+    ];
 
-<script>
-// ===== STORAGE =====
-const STORAGE_KEY = 'flappyCube_scores_v1';
-function loadScores() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
-  catch(e) { return []; }
-}
-function saveScores(s) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); } catch(e) {}
-}
-function bestScore() {
-  const s = loadScores();
-  return s.length ? s[0].score : 0;
-}
-
-// ===== SCREENS =====
-const screens = ['menu','game','gameOver','name','scores'];
-function showScreen(name) {
-  screens.forEach(s => {
-    document.getElementById(s + 'Screen').classList.toggle('active', s === name);
-  });
-  if (name !== 'game') stopGameLoop();
-}
-
-function exitToMenu() {
-  stopGameLoop();
-  showScreen('menu');
-}
-
-// ===== GAME =====
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-const scoreDisplay = document.getElementById('scoreDisplay');
-const tapHint = document.getElementById('tapHint');
-
-let W = 0, H = 0;
-let cube, pipes, score, lastPipeX, gameState, frame, animId;
-let lastTime = 0;
-
-const CONFIG = {
-  gravity: 1100,        // px/s^2  (caída más suave)
-  jumpVel: -380,        // px/s    (saltos más bajos)
-  pipeSpeed: 150,       // px/s    (avance horizontal más lento)
-  pipeGap: 150,         // hueco entre tubos
-  pipeWidth: 54,        // tubos más delgados
-  pipeSpacing: 230,     // separación entre tubos
-  cubeSize: 26,         // cubo más pequeño (vista más alejada)
-};
-
-function resizeCanvas() {
-  const dpr = window.devicePixelRatio || 1;
-  W = window.innerWidth;
-  H = window.innerHeight;
-  canvas.style.width = W + 'px';
-  canvas.style.height = H + 'px';
-  canvas.width = Math.floor(W * dpr);
-  canvas.height = Math.floor(H * dpr);
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-}
-window.addEventListener('resize', () => { resizeCanvas(); });
-
-function startGame() {
-  resizeCanvas();
-  cube = {
-    x: W * 0.28,
-    y: H / 2,
-    vy: 0,
-    size: CONFIG.cubeSize,
-    rot: 0,
-  };
-  pipes = [];
-  score = 0;
-  gameState = 'ready';   // ready | playing | dead
-  frame = 0;
-  scoreDisplay.textContent = '0';
-  tapHint.style.display = 'block';
-  spawnInitialPipes();
-  lastTime = performance.now();
-  loop(lastTime);
-}
-
-function spawnInitialPipes() {
-  // First pipe well off-screen so player has time
-  let x = W + 100;
-  for (let i = 0; i < 4; i++) {
-    pipes.push(makePipe(x));
-    x += CONFIG.pipeSpacing;
-  }
-}
-
-function makePipe(x) {
-  const margin = 70;
-  const gapY = margin + Math.random() * (H - CONFIG.pipeGap - margin * 2);
-  return { x, gapY, passed: false };
-}
-
-function jump() {
-  if (gameState === 'ready') {
-    gameState = 'playing';
-    tapHint.style.display = 'none';
-  }
-  if (gameState === 'playing') {
-    cube.vy = CONFIG.jumpVel;
-    cube.rot = -0.4;
-  } else if (gameState === 'dead') {
-    // ignore — handled by overlay
-  }
-}
-
-// Input
-function onTap(e) {
-  if (e.cancelable) e.preventDefault();
-  jump();
-}
-canvas.addEventListener('touchstart', onTap, { passive: false });
-canvas.addEventListener('mousedown', onTap);
-document.addEventListener('keydown', (e) => {
-  if (e.code === 'Space' || e.code === 'ArrowUp') {
-    if (document.getElementById('gameScreen').classList.contains('active')) jump();
-  }
-});
-
-function update(dt) {
-  if (gameState === 'ready') {
-    // gentle bobbing while waiting
-    cube.y = H / 2 + Math.sin(performance.now() / 250) * 8;
-    return;
-  }
-  if (gameState !== 'playing') return;
-
-  cube.vy += CONFIG.gravity * dt;
-  cube.y += cube.vy * dt;
-  cube.rot = Math.max(-0.5, Math.min(1.3, cube.vy / 600));
-
-  for (const p of pipes) p.x -= CONFIG.pipeSpeed * dt;
-
-  // remove off-screen, spawn new
-  while (pipes.length && pipes[0].x + CONFIG.pipeWidth < -20) pipes.shift();
-  const lastX = pipes.length ? pipes[pipes.length - 1].x : W;
-  if (lastX < W + CONFIG.pipeSpacing) {
-    pipes.push(makePipe(lastX + CONFIG.pipeSpacing));
-  }
-
-  // scoring + collision
-  const cx = cube.x, cy = cube.y, hs = cube.size / 2;
-  for (const p of pipes) {
-    // score when cube passes pipe center
-    if (!p.passed && p.x + CONFIG.pipeWidth < cx - hs) {
-      p.passed = true;
-      score++;
-      scoreDisplay.textContent = score;
+    function setStatus(msg, isError) {
+      statusEl.textContent = msg;
+      statusEl.className = isError ? 'error' : '';
+      statusEl.style.display = '';
     }
-    // collision (AABB vs two rects)
-    if (cx + hs > p.x && cx - hs < p.x + CONFIG.pipeWidth) {
-      if (cy - hs < p.gapY || cy + hs > p.gapY + CONFIG.pipeGap) {
-        die();
+
+    function hideStatus() {
+      statusEl.style.display = 'none';
+    }
+
+    async function loadROM(path) {
+      var res = await fetch(path, { cache: 'no-store' });
+      if (!res.ok) throw new Error('No se pudo cargar ' + path + ' (HTTP ' + res.status + ')');
+      var buf = await res.arrayBuffer();
+      var bytes = new Uint8Array(buf);
+      // GameBoyCore espera el ROM como string binario (1 char = 1 byte)
+      var s = '';
+      var chunk = 0x8000;
+      for (var i = 0; i < bytes.length; i += chunk) {
+        s += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+      }
+      return s;
+    }
+
+    function bindKeyboard(gameboy) {
+      var keys = settings[14];
+      var keymap = {};
+      for (var i = 0; i < keys.length; i++) keymap[keys[i]] = i;
+
+      function onKey(e, pressed) {
+        // Game pad
+        if (keymap.hasOwnProperty(e.keyCode)) {
+          try { gameboy.JoyPadEvent(keymap[e.keyCode], pressed); } catch (_) {}
+          e.preventDefault();
+          return;
+        }
+        // Pantalla completa con F
+        if (pressed && (e.key === 'f' || e.key === 'F')) {
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(function(){});
+          } else {
+            document.exitFullscreen().catch(function(){});
+          }
+          e.preventDefault();
+        }
+        // Bloquear atajos del navegador (Ctrl/Cmd + cualquier cosa)
+        if (e.ctrlKey || e.metaKey) {
+          // Permitimos F5 normal (sin ctrl). Si querés bloquear F5 también, descomentá la línea siguiente.
+          // if (e.key === 'r' || e.key === 'R') e.preventDefault();
+          e.preventDefault();
+        }
+      }
+
+      document.addEventListener('keydown', function (e) { onKey(e, true);  });
+      document.addEventListener('keyup',   function (e) { onKey(e, false); });
+
+      // Bloquear drag & drop (que no puedan soltar otro ROM)
+      window.addEventListener('dragover', function (e) { e.preventDefault(); });
+      window.addEventListener('drop',     function (e) { e.preventDefault(); });
+    }
+
+    function runGame(romString) {
+      var gameboy;
+      try {
+        gameboy = new GameBoyCore(canvas, romString);
+        gameboy.start();
+      } catch (e) {
+        setStatus('Error al iniciar emulador: ' + (e && e.message || e), true);
         return;
       }
+
+      hideStatus();
+
+      var ms = settings[7] || 8;
+      var loop = setInterval(function () {
+        try { gameboy.run(); }
+        catch (e) {
+          clearInterval(loop);
+          setStatus('Error en ejecución: ' + (e && e.message || e), true);
+        }
+      }, ms);
+
+      bindKeyboard(gameboy);
+
+      // Algunos navegadores requieren un gesto del usuario para habilitar audio.
+      // Tocamos resume() al primer input.
+      function unlockAudio() {
+        try {
+          if (window.AudioContext || window.webkitAudioContext) {
+            var Ctx = window.AudioContext || window.webkitAudioContext;
+            if (!unlockAudio._ctx) {
+              unlockAudio._ctx = new Ctx();
+            }
+            if (unlockAudio._ctx.state === 'suspended') {
+              unlockAudio._ctx.resume();
+            }
+          }
+        } catch (_) {}
+      }
+      window.addEventListener('keydown', unlockAudio, { once: true });
+      window.addEventListener('click',   unlockAudio, { once: true });
     }
-  }
-  // floor / ceiling
-  if (cy + hs > H || cy - hs < 0) {
-    die();
-  }
-}
 
-function die() {
-  gameState = 'dead';
-  // small flash effect
-  flashAlpha = 1;
-  setTimeout(() => endGame(), 600);
-}
+    function boot() {
+      if (typeof GameBoyCore !== 'function') {
+        setStatus('No se pudo cargar el emulador (revisá la conexión).', true);
+        return;
+      }
+      setStatus('Cargando ROM…');
+      loadROM(ROM_PATH)
+        .then(runGame)
+        .catch(function (err) {
+          setStatus(err.message || 'Error desconocido cargando el ROM.', true);
+        });
+    }
 
-let flashAlpha = 0;
-
-function endGame() {
-  stopGameLoop();
-  const scores = loadScores();
-  const qualifies = scores.length < 10 || score > scores[scores.length - 1].score;
-  if (score > 0 && qualifies) {
-    openNameEntry(score);
-  } else {
-    document.getElementById('finalScore').textContent = score;
-    document.getElementById('bestLabel').textContent = 'MEJOR: ' + bestScore();
-    showScreen('gameOver');
-  }
-}
-
-function drawGrid() {
-  // subtle neon grid background
-  ctx.strokeStyle = 'rgba(0, 80, 120, 0.35)';
-  ctx.lineWidth = 1;
-  const step = 40;
-  ctx.beginPath();
-  for (let x = 0; x < W; x += step) { ctx.moveTo(x, 0); ctx.lineTo(x, H); }
-  for (let y = 0; y < H; y += step) { ctx.moveTo(0, y); ctx.lineTo(W, y); }
-  ctx.stroke();
-}
-
-function drawPipe(p) {
-  // top
-  ctx.fillStyle = '#1a0033';
-  ctx.fillRect(p.x, 0, CONFIG.pipeWidth, p.gapY);
-  ctx.fillRect(p.x, p.gapY + CONFIG.pipeGap, CONFIG.pipeWidth, H - (p.gapY + CONFIG.pipeGap));
-
-  ctx.strokeStyle = '#f0f';
-  ctx.lineWidth = 3;
-  ctx.shadowColor = '#f0f';
-  ctx.shadowBlur = 16;
-  ctx.strokeRect(p.x, 0, CONFIG.pipeWidth, p.gapY);
-  ctx.strokeRect(p.x, p.gapY + CONFIG.pipeGap, CONFIG.pipeWidth, H - (p.gapY + CONFIG.pipeGap));
-  // caps
-  ctx.fillStyle = '#330066';
-  ctx.fillRect(p.x - 6, p.gapY - 16, CONFIG.pipeWidth + 12, 16);
-  ctx.fillRect(p.x - 6, p.gapY + CONFIG.pipeGap, CONFIG.pipeWidth + 12, 16);
-  ctx.strokeRect(p.x - 6, p.gapY - 16, CONFIG.pipeWidth + 12, 16);
-  ctx.strokeRect(p.x - 6, p.gapY + CONFIG.pipeGap, CONFIG.pipeWidth + 12, 16);
-  ctx.shadowBlur = 0;
-}
-
-function drawCube() {
-  ctx.save();
-  ctx.translate(cube.x, cube.y);
-  ctx.rotate(cube.rot);
-  const s = cube.size;
-  // glow body
-  ctx.fillStyle = '#003344';
-  ctx.shadowColor = '#0ff';
-  ctx.shadowBlur = 18;
-  ctx.fillRect(-s/2, -s/2, s, s);
-  ctx.strokeStyle = '#0ff';
-  ctx.lineWidth = 3;
-  ctx.strokeRect(-s/2, -s/2, s, s);
-  // inner detail
-  ctx.shadowBlur = 0;
-  ctx.fillStyle = '#0ff';
-  ctx.fillRect(-s/4, -s/4, s/8, s/8); // eye
-  ctx.restore();
-}
-
-function render() {
-  ctx.clearRect(0, 0, W, H);
-  // background gradient
-  const g = ctx.createLinearGradient(0, 0, 0, H);
-  g.addColorStop(0, '#000010');
-  g.addColorStop(1, '#08001a');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, W, H);
-  drawGrid();
-  for (const p of pipes) drawPipe(p);
-  drawCube();
-
-  if (flashAlpha > 0) {
-    ctx.fillStyle = `rgba(255, 0, 100, ${flashAlpha})`;
-    ctx.fillRect(0, 0, W, H);
-    flashAlpha -= 0.08;
-  }
-}
-
-function loop(t) {
-  const dt = Math.min(0.033, (t - lastTime) / 1000);
-  lastTime = t;
-  update(dt);
-  render();
-  animId = requestAnimationFrame(loop);
-}
-
-function stopGameLoop() {
-  if (animId) cancelAnimationFrame(animId);
-  animId = null;
-}
-
-// ===== NAME ENTRY =====
-let nameLetters = ['A','A','A'];
-let activeSlot = 0;
-let pendingScore = 0;
-
-function openNameEntry(scoreVal) {
-  pendingScore = scoreVal;
-  nameLetters = ['A','A','A'];
-  activeSlot = 0;
-  document.getElementById('nameScore').textContent = scoreVal;
-  renderNameInput();
-  showScreen('name');
-}
-
-function renderNameInput() {
-  const container = document.getElementById('nameInput');
-  container.innerHTML = '';
-  nameLetters.forEach((L, i) => {
-    const slot = document.createElement('div');
-    slot.className = 'letter-slot' + (i === activeSlot ? ' active' : '');
-    slot.innerHTML = `
-      <button class="arrow-btn" data-i="${i}" data-dir="up">▲</button>
-      <div class="letter">${L}</div>
-      <button class="arrow-btn" data-i="${i}" data-dir="down">▼</button>
-    `;
-    slot.addEventListener('click', () => { activeSlot = i; renderNameInput(); });
-    container.appendChild(slot);
-  });
-  container.querySelectorAll('.arrow-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const i = parseInt(btn.dataset.i);
-      const dir = btn.dataset.dir === 'up' ? 1 : -1;
-      let code = nameLetters[i].charCodeAt(0) - 65;
-      code = (code + dir + 26) % 26;
-      nameLetters[i] = String.fromCharCode(65 + code);
-      activeSlot = i;
-      renderNameInput();
-    });
-  });
-}
-
-function confirmName() {
-  const name = nameLetters.join('');
-  const scores = loadScores();
-  scores.push({ name, score: pendingScore, date: Date.now() });
-  scores.sort((a, b) => b.score - a.score);
-  const trimmed = scores.slice(0, 10);
-  saveScores(trimmed);
-  document.getElementById('finalScore').textContent = pendingScore;
-  document.getElementById('bestLabel').textContent = 'MEJOR: ' + bestScore();
-  showScreen('gameOver');
-}
-
-// ===== SCORES VIEW =====
-function renderScores() {
-  const list = document.getElementById('scoresList');
-  const scores = loadScores();
-  if (!scores.length) {
-    list.innerHTML = '<div class="empty-msg">SIN PUNTAJES AÚN<br><br>¡JUEGA Y APARECE AQUÍ!</div>';
-    return;
-  }
-  list.innerHTML = scores.map((s, i) => `
-    <div class="score-row ${i === 0 ? 'highlight' : ''}">
-      <div class="rank">${String(i + 1).padStart(2, '0')}</div>
-      <div class="name">${s.name}</div>
-      <div class="pts">${s.score}</div>
-    </div>
-  `).join('');
-}
-
-// Prevent double-tap zoom etc.
-document.addEventListener('gesturestart', e => e.preventDefault());
-document.addEventListener('dblclick', e => e.preventDefault());
-
-// Initial sizing
-resizeCanvas();
-</script>
+    if (document.readyState === 'complete') boot();
+    else window.addEventListener('load', boot);
+  })();
+  </script>
 </body>
 </html>
