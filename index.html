@@ -64,9 +64,11 @@
   <script src="https://cdn.jsdelivr.net/gh/taisel/GameBoy-Online@master/js/GameBoyCore.js"></script>
 
   <script>
-  // Stub de cout(): GameBoyCore.js usa esta función (que normalmente vive en
-  // GameBoyIO.js) para loggear. La definimos acá para no tener que cargar
-  // todo GameBoyIO.js (que trae UI propia que no queremos).
+  // GameBoyCore.js llama a varias funciones que normalmente viven en
+  // GameBoyIO.js (UI, persistencia, etc.). Como no cargamos ese archivo
+  // (trae UI que rompe el modo kiosko), definimos stubs acá.
+
+  // Logging
   window.cout = function (message, colorIndex) {
     try {
       if (colorIndex === 2)      console.error(message);
@@ -74,9 +76,50 @@
       else                       console.log(message);
     } catch (_) {}
   };
-  // Otros helpers que GameBoyCore puede tocar:
   window.clear_terminal = function () {};
-  window.pause = window.pause || function () {};
+
+  // Control de ejecución (no-op: el loop lo manejamos nosotros)
+  window.pause              = function () {};
+  window.run                = function () {};
+  window.terminateEmulation = function () {};
+
+  // Canvas: el core a veces pide reinicializarlo. Como ya manejamos el canvas,
+  // disparamos un evento "redimensionar" trivial.
+  window.initNewCanvas = function () {
+    try {
+      if (window.gameboy && window.gameboy.canvas) {
+        window.gameboy.canvas.width  = window.gameboy.canvas.width  || 160;
+        window.gameboy.canvas.height = window.gameboy.canvas.height || 144;
+      }
+    } catch (_) {}
+  };
+
+  // Persistencia (saves). Usamos localStorage como hace GameBoyIO original.
+  window.findValue = function (key) {
+    try {
+      var v = window.localStorage.getItem(key);
+      return v === null ? null : JSON.parse(v);
+    } catch (_) { return null; }
+  };
+  window.setValue = function (key, value) {
+    try { window.localStorage.setItem(key, JSON.stringify(value)); } catch (_) {}
+  };
+  window.deleteValue = function (key) {
+    try { window.localStorage.removeItem(key); } catch (_) {}
+  };
+
+  // Save / load state — no-ops (sin botones de save state en kiosko)
+  window.save           = function () {};
+  window.saveSRAM       = function () {};
+  window.saveRTC        = function () {};
+  window.openState      = function () {};
+  window.import_save    = function () {};
+  window.refreshAnex    = function () {};
+  window.windowingInitialize = function () {};
+  window.registerGUIEvents   = function () {};
+
+  // Helpers varios
+  window.matchKey = function () { return false; };
   </script>
 
   <script>
@@ -188,6 +231,7 @@
       var gameboy;
       try {
         gameboy = new GameBoyCore(canvas, romString);
+        window.gameboy = gameboy; // expuesto para los stubs
         gameboy.start();
       } catch (e) {
         setStatus('Error al iniciar emulador: ' + (e && e.message || e), true);
