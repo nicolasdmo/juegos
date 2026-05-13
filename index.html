@@ -297,13 +297,13 @@ let cube, pipes, score, lastPipeX, gameState, frame, animId;
 let lastTime = 0;
 
 const CONFIG = {
-  gravity: 1800,        // px/s^2
-  jumpVel: -560,        // px/s
-  pipeSpeed: 220,       // px/s
-  pipeGap: 180,         // gap between top and bottom pipe
-  pipeWidth: 70,
-  pipeSpacing: 280,     // horizontal spacing between pipes
-  cubeSize: 38,
+  gravity: 1100,        // px/s^2  (caída más suave)
+  jumpVel: -380,        // px/s    (saltos más bajos)
+  pipeSpeed: 150,       // px/s    (avance horizontal más lento)
+  pipeGap: 150,         // hueco entre tubos
+  pipeWidth: 54,        // tubos más delgados
+  pipeSpacing: 230,     // separación entre tubos
+  cubeSize: 26,         // cubo más pequeño (vista más alejada)
 };
 
 function resizeCanvas() {
@@ -348,7 +348,7 @@ function spawnInitialPipes() {
 }
 
 function makePipe(x) {
-  const margin = 90;
+  const margin = 70;
   const gapY = margin + Math.random() * (H - CONFIG.pipeGap - margin * 2);
   return { x, gapY, passed: false };
 }
@@ -382,7 +382,7 @@ document.addEventListener('keydown', (e) => {
 function update(dt) {
   if (gameState === 'ready') {
     // gentle bobbing while waiting
-    cube.y = H / 2 + Math.sin(performance.now() / 250) * 12;
+    cube.y = H / 2 + Math.sin(performance.now() / 250) * 8;
     return;
   }
   if (gameState !== 'playing') return;
