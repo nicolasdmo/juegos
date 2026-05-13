@@ -2,410 +2,610 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Blobs — Prototipo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#000000">
+<title>Flappy Cube</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { width: 100%; height: 100%; overflow: hidden; background: #0d1117; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    color: #e0e0e0;
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+  html, body {
+    width: 100%; height: 100%; overflow: hidden;
+    background: #000; color: #fff;
+    font-family: 'Courier New', monospace;
+    touch-action: manipulation;
+    overscroll-behavior: none;
   }
-  canvas { display: block; cursor: crosshair; }
-  .topbar {
-    position: fixed; top: 0; left: 0; right: 0; height: 44px;
-    background: rgba(13, 17, 23, 0.85);
-    backdrop-filter: blur(8px);
-    border-bottom: 1px solid #1f2937;
-    display: flex; align-items: center; padding: 0 16px;
-    font-size: 13px; letter-spacing: 1px;
-    z-index: 10;
+  #app { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+
+  .screen { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
+  .screen.active { display: flex; }
+
+  /* MAIN MENU */
+  .title {
+    font-size: clamp(40px, 12vw, 80px);
+    font-weight: 900;
+    color: #0ff;
+    text-shadow: 0 0 10px #0ff, 0 0 20px #0ff, 0 0 40px #0ff;
+    margin-bottom: 8px;
+    letter-spacing: 4px;
+    text-align: center;
   }
-  .topbar .title { font-weight: 600; }
-  .topbar .hint { margin-left: auto; color: #6b7280; font-size: 12px; }
-  .topbar code {
-    background: #000; padding: 2px 6px; border-radius: 3px;
-    font-size: 11px; color: #ccc;
+  .subtitle {
+    font-size: clamp(12px, 3.5vw, 16px);
+    color: #f0f;
+    text-shadow: 0 0 8px #f0f;
+    margin-bottom: 48px;
+    letter-spacing: 2px;
+  }
+  .btn {
+    display: block;
+    width: min(80vw, 320px);
+    padding: 18px 24px;
+    margin: 12px 0;
+    font-family: inherit;
+    font-size: clamp(16px, 4.5vw, 22px);
+    font-weight: bold;
+    letter-spacing: 2px;
+    color: #0ff;
+    background: transparent;
+    border: 2px solid #0ff;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: center;
+    box-shadow: 0 0 12px rgba(0,255,255,.5), inset 0 0 12px rgba(0,255,255,.2);
+    transition: transform .1s, box-shadow .15s;
+  }
+  .btn:active { transform: scale(.97); box-shadow: 0 0 20px rgba(0,255,255,.9), inset 0 0 20px rgba(0,255,255,.4); }
+  .btn.magenta { color: #f0f; border-color: #f0f; box-shadow: 0 0 12px rgba(255,0,255,.5), inset 0 0 12px rgba(255,0,255,.2); }
+  .btn.magenta:active { box-shadow: 0 0 20px rgba(255,0,255,.9), inset 0 0 20px rgba(255,0,255,.4); }
+  .btn.green { color: #0f8; border-color: #0f8; box-shadow: 0 0 12px rgba(0,255,136,.5), inset 0 0 12px rgba(0,255,136,.2); }
+  .btn.green:active { box-shadow: 0 0 20px rgba(0,255,136,.9), inset 0 0 20px rgba(0,255,136,.4); }
+
+  /* GAME */
+  #gameCanvas { display: block; background: #000; touch-action: none; }
+  #gameOverlay {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: flex-start;
+    padding-top: env(safe-area-inset-top, 16px);
+    pointer-events: none;
+  }
+  #scoreDisplay {
+    margin-top: 24px;
+    font-size: clamp(40px, 10vw, 64px);
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 0 0 8px #0ff, 0 0 16px #0ff;
+  }
+  #tapHint {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    color: #0ff;
+    font-size: clamp(18px, 5vw, 26px);
+    text-shadow: 0 0 10px #0ff;
+    text-align: center;
+    letter-spacing: 2px;
+    animation: pulse 1.2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:1} }
+
+  /* GAME OVER */
+  .panel {
+    background: rgba(0,0,0,.85);
+    border: 2px solid #0ff;
+    border-radius: 12px;
+    padding: 28px 24px;
+    box-shadow: 0 0 20px rgba(0,255,255,.4);
+    width: min(86vw, 380px);
+    text-align: center;
+  }
+  .panel h2 {
+    color: #f0f;
+    text-shadow: 0 0 10px #f0f;
+    font-size: clamp(24px, 6vw, 32px);
+    margin-bottom: 16px;
+    letter-spacing: 3px;
+  }
+  .panel .score-big {
+    font-size: clamp(48px, 14vw, 72px);
+    color: #0ff;
+    text-shadow: 0 0 12px #0ff;
+    font-weight: 900;
+    margin: 12px 0;
+  }
+  .panel .label {
+    color: #888; font-size: 14px; letter-spacing: 2px;
+  }
+
+  /* NAME ENTRY */
+  .name-input {
+    display: flex; justify-content: center; gap: 12px; margin: 24px 0;
+  }
+  .letter-slot {
+    width: 56px; height: 72px;
+    border: 2px solid #0ff;
+    border-radius: 8px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: rgba(0,255,255,.05);
+    position: relative;
+  }
+  .letter-slot.active { box-shadow: 0 0 16px #0ff; }
+  .letter-slot .letter {
+    font-size: 38px; font-weight: 900; color: #fff;
+    text-shadow: 0 0 8px #0ff;
+  }
+  .arrow-btn {
+    background: transparent; border: 2px solid #f0f; color: #f0f;
+    width: 36px; height: 36px; border-radius: 50%;
+    font-size: 16px; font-weight: bold; cursor: pointer;
+    margin: 4px 0;
+    box-shadow: 0 0 8px rgba(255,0,255,.5);
+  }
+  .arrow-btn:active { background: rgba(255,0,255,.2); }
+
+  /* SCORES TABLE */
+  .scores-title {
+    font-size: clamp(28px, 8vw, 48px);
+    color: #f0f;
+    text-shadow: 0 0 10px #f0f, 0 0 20px #f0f;
+    letter-spacing: 4px;
+    margin-bottom: 24px;
+  }
+  .scores-list {
+    width: min(86vw, 380px);
+    max-height: 60vh;
+    overflow-y: auto;
+    border: 2px solid #f0f;
+    border-radius: 8px;
+    background: rgba(0,0,0,.6);
+    box-shadow: 0 0 16px rgba(255,0,255,.3);
+    padding: 8px;
+  }
+  .score-row {
+    display: grid;
+    grid-template-columns: 40px 1fr 80px;
+    gap: 12px;
+    padding: 10px 12px;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,0,255,.2);
+    font-size: clamp(14px, 4vw, 18px);
+  }
+  .score-row:last-child { border-bottom: none; }
+  .score-row .rank { color: #0ff; font-weight: bold; text-shadow: 0 0 6px #0ff; }
+  .score-row .name { color: #fff; letter-spacing: 3px; font-weight: bold; }
+  .score-row .pts { color: #0f8; text-align: right; text-shadow: 0 0 6px #0f8; font-weight: bold; }
+  .score-row.highlight { background: rgba(0,255,255,.1); }
+  .empty-msg { padding: 32px 16px; text-align: center; color: #666; font-size: 14px; letter-spacing: 2px; }
+
+  .top-bar {
+    position: absolute; top: env(safe-area-inset-top, 12px); left: 0; right: 0;
+    display: flex; justify-content: space-between; padding: 12px 16px;
+    pointer-events: none;
+  }
+  .icon-btn {
+    pointer-events: auto;
+    background: transparent;
+    border: 2px solid #0ff;
+    color: #0ff;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    font-size: 20px; font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 0 8px rgba(0,255,255,.4);
   }
 </style>
 </head>
 <body>
-  <div class="topbar">
-    <span class="title">BLOBS</span>
-    <span style="color:#6b7280; margin-left: 12px;">prototipo · single-player con bots</span>
-    <span class="hint">mover: <code>mouse</code> · reiniciar: <code>R</code></span>
+<div id="app">
+
+  <!-- MAIN MENU -->
+  <div id="menuScreen" class="screen active">
+    <div class="title">FLAPPY<br>CUBE</div>
+    <div class="subtitle">◆ ARCADE NEON ◆</div>
+    <button class="btn" onclick="showScreen('game'); startGame()">▶ FLAPPY CUBE</button>
+    <button class="btn magenta" onclick="showScreen('scores'); renderScores()">★ PUNTAJES MÁXIMOS</button>
   </div>
-  <canvas id="game"></canvas>
+
+  <!-- GAME -->
+  <div id="gameScreen" class="screen">
+    <canvas id="gameCanvas"></canvas>
+    <div id="gameOverlay">
+      <div id="scoreDisplay">0</div>
+      <div id="tapHint">TOCA PARA SALTAR</div>
+    </div>
+    <div class="top-bar">
+      <button class="icon-btn" onclick="exitToMenu()">←</button>
+      <span></span>
+    </div>
+  </div>
+
+  <!-- GAME OVER -->
+  <div id="gameOverScreen" class="screen">
+    <div class="panel">
+      <h2>GAME OVER</h2>
+      <div class="label">PUNTAJE</div>
+      <div class="score-big" id="finalScore">0</div>
+      <div class="label" id="bestLabel">MEJOR: 0</div>
+      <div style="margin-top: 24px;">
+        <button class="btn green" onclick="showScreen('game'); startGame()" style="width:100%; margin: 8px 0">↻ JUGAR DE NUEVO</button>
+        <button class="btn magenta" onclick="showScreen('menu')" style="width:100%; margin: 8px 0">⌂ MENÚ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAME ENTRY (top 10) -->
+  <div id="nameScreen" class="screen">
+    <div class="panel">
+      <h2>¡TOP 10!</h2>
+      <div class="label">PUNTAJE</div>
+      <div class="score-big" id="nameScore">0</div>
+      <div class="label">INGRESA TUS INICIALES</div>
+      <div class="name-input" id="nameInput"></div>
+      <button class="btn green" onclick="confirmName()" style="width:100%">✓ GUARDAR</button>
+    </div>
+  </div>
+
+  <!-- HIGH SCORES -->
+  <div id="scoresScreen" class="screen">
+    <div class="scores-title">PUNTAJES</div>
+    <div class="scores-list" id="scoresList"></div>
+    <button class="btn" style="margin-top:24px" onclick="showScreen('menu')">← VOLVER</button>
+  </div>
+
+</div>
 
 <script>
-// ---------- config ----------
-const WORLD_W = 3200, WORLD_H = 3200;
-const FOOD_COUNT = 500;
-const BOT_COUNT = 14;
-const START_MASS = 100;
-const FOOD_MASS = 4;
-const EAT_RATIO = 1.18;   // tenés que ser 18% más grande para comer
-const BOT_NAMES = ['Nico','Ana','Luca','Sofi','Mati','Cami','Tomi','Iván','Vale','Rocío','Pancho','Dali','Zoe','Jorge','Mora','Beto'];
-const COLORS = ['#ff6b6b','#ffd93d','#6bcf7f','#4dabf7','#c47bff','#ff9b7b','#7bffd4','#ffeb7b','#ff7bd4','#7b9bff','#ffa94d','#a3e635'];
+// ===== STORAGE =====
+const STORAGE_KEY = 'flappyCube_scores_v1';
+function loadScores() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+  catch(e) { return []; }
+}
+function saveScores(s) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); } catch(e) {}
+}
+function bestScore() {
+  const s = loadScores();
+  return s.length ? s[0].score : 0;
+}
 
-// ---------- setup ----------
-const canvas = document.getElementById('game');
+// ===== SCREENS =====
+const screens = ['menu','game','gameOver','name','scores'];
+function showScreen(name) {
+  screens.forEach(s => {
+    document.getElementById(s + 'Screen').classList.toggle('active', s === name);
+  });
+  if (name !== 'game') stopGameLoop();
+}
+
+function exitToMenu() {
+  stopGameLoop();
+  showScreen('menu');
+}
+
+// ===== GAME =====
+const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-let W, H;
-function resize() {
-  W = canvas.width = window.innerWidth;
-  H = canvas.height = window.innerHeight;
+const scoreDisplay = document.getElementById('scoreDisplay');
+const tapHint = document.getElementById('tapHint');
+
+let W = 0, H = 0;
+let cube, pipes, score, lastPipeX, gameState, frame, animId;
+let lastTime = 0;
+
+const CONFIG = {
+  gravity: 1800,        // px/s^2
+  jumpVel: -560,        // px/s
+  pipeSpeed: 220,       // px/s
+  pipeGap: 180,         // gap between top and bottom pipe
+  pipeWidth: 70,
+  pipeSpacing: 280,     // horizontal spacing between pipes
+  cubeSize: 38,
+};
+
+function resizeCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  canvas.width = Math.floor(W * dpr);
+  canvas.height = Math.floor(H * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
-resize();
-window.addEventListener('resize', resize);
+window.addEventListener('resize', () => { resizeCanvas(); });
 
-const mouse = { x: 0, y: 0 };
-window.addEventListener('mousemove', e => {
-  mouse.x = e.clientX;
-  mouse.y = e.clientY;
-});
-window.addEventListener('keydown', e => {
-  if (e.key === 'r' || e.key === 'R') start();
-});
-
-// ---------- world ----------
-const food = [];
-const cells = [];
-let player;
-
-function radius(mass) { return Math.sqrt(mass) * 1.7 + 5; }
-function speedFor(mass) { return 320 / Math.pow(mass, 0.22); }
-
-function spawnFood() {
-  food.push({
-    x: Math.random() * WORLD_W,
-    y: Math.random() * WORLD_H,
-    color: COLORS[Math.floor(Math.random() * COLORS.length)],
-  });
-}
-
-function makeCell(opts = {}) {
-  return {
-    name: opts.name ?? BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)],
-    x: opts.x ?? Math.random() * WORLD_W,
-    y: opts.y ?? Math.random() * WORLD_H,
-    mass: opts.mass ?? START_MASS,
-    color: opts.color ?? COLORS[Math.floor(Math.random() * COLORS.length)],
-    isBot: opts.isBot ?? true,
-    alive: true,
-    aiTarget: null,
-    aiTimer: 0,
+function startGame() {
+  resizeCanvas();
+  cube = {
+    x: W * 0.28,
+    y: H / 2,
+    vy: 0,
+    size: CONFIG.cubeSize,
+    rot: 0,
   };
+  pipes = [];
+  score = 0;
+  gameState = 'ready';   // ready | playing | dead
+  frame = 0;
+  scoreDisplay.textContent = '0';
+  tapHint.style.display = 'block';
+  spawnInitialPipes();
+  lastTime = performance.now();
+  loop(lastTime);
 }
 
-function start() {
-  food.length = 0;
-  cells.length = 0;
-  for (let i = 0; i < FOOD_COUNT; i++) spawnFood();
-  player = makeCell({
-    name: 'TÚ', isBot: false, mass: START_MASS,
-    x: WORLD_W / 2, y: WORLD_H / 2, color: '#4dabf7',
-  });
-  cells.push(player);
-  for (let i = 0; i < BOT_COUNT; i++) {
-    cells.push(makeCell({ mass: START_MASS + Math.random() * 350 }));
+function spawnInitialPipes() {
+  // First pipe well off-screen so player has time
+  let x = W + 100;
+  for (let i = 0; i < 4; i++) {
+    pipes.push(makePipe(x));
+    x += CONFIG.pipeSpacing;
   }
 }
 
-function respawn(c) {
-  c.mass = START_MASS + (c.isBot ? Math.random() * 200 : 0);
-  c.x = Math.random() * WORLD_W;
-  c.y = Math.random() * WORLD_H;
-  c.alive = true;
-  if (c.isBot) {
-    c.color = COLORS[Math.floor(Math.random() * COLORS.length)];
-    c.name = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
+function makePipe(x) {
+  const margin = 90;
+  const gapY = margin + Math.random() * (H - CONFIG.pipeGap - margin * 2);
+  return { x, gapY, passed: false };
+}
+
+function jump() {
+  if (gameState === 'ready') {
+    gameState = 'playing';
+    tapHint.style.display = 'none';
+  }
+  if (gameState === 'playing') {
+    cube.vy = CONFIG.jumpVel;
+    cube.rot = -0.4;
+  } else if (gameState === 'dead') {
+    // ignore — handled by overlay
   }
 }
 
-// ---------- input -> world ----------
-function cameraScale() {
-  const r = radius(player.mass);
-  return Math.max(0.35, Math.min(1.4, 30 / Math.sqrt(r)));
+// Input
+function onTap(e) {
+  if (e.cancelable) e.preventDefault();
+  jump();
 }
-
-function mouseWorld() {
-  const s = cameraScale();
-  return {
-    x: player.x + (mouse.x - W / 2) / s,
-    y: player.y + (mouse.y - H / 2) / s,
-  };
-}
-
-// ---------- AI ----------
-function planAI(c) {
-  let bestFood = null, bestFoodD2 = Infinity;
-  for (const f of food) {
-    const d2 = (c.x - f.x) ** 2 + (c.y - f.y) ** 2;
-    if (d2 < bestFoodD2) { bestFoodD2 = d2; bestFood = f; }
+canvas.addEventListener('touchstart', onTap, { passive: false });
+canvas.addEventListener('mousedown', onTap);
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space' || e.code === 'ArrowUp') {
+    if (document.getElementById('gameScreen').classList.contains('active')) jump();
   }
-  let prey = null, preyD2 = Infinity;
-  let threat = null, threatD2 = Infinity;
-  for (const o of cells) {
-    if (o === c || !o.alive) continue;
-    const d2 = (c.x - o.x) ** 2 + (c.y - o.y) ** 2;
-    if (o.mass * EAT_RATIO < c.mass) {
-      if (d2 < preyD2) { preyD2 = d2; prey = o; }
-    } else if (o.mass > c.mass * EAT_RATIO) {
-      if (d2 < threatD2) { threatD2 = d2; threat = o; }
-    }
-  }
-  // huir si hay amenaza cerca
-  if (threat && threatD2 < 260 * 260) {
-    const dx = c.x - threat.x, dy = c.y - threat.y;
-    const d = Math.hypot(dx, dy) || 1;
-    c.aiTarget = { x: c.x + (dx / d) * 600, y: c.y + (dy / d) * 600 };
-    return;
-  }
-  // cazar si hay presa cerca
-  if (prey && preyD2 < 320 * 320) {
-    c.aiTarget = prey;
-    return;
-  }
-  c.aiTarget = bestFood;
-}
+});
 
-function moveTowards(c, tx, ty, dt) {
-  const dx = tx - c.x, dy = ty - c.y;
-  const d = Math.hypot(dx, dy);
-  if (d < 1) return;
-  const step = Math.min(d, speedFor(c.mass) * dt);
-  c.x += (dx / d) * step;
-  c.y += (dy / d) * step;
-}
-
-// ---------- update ----------
 function update(dt) {
-  if (player.alive) {
-    const mw = mouseWorld();
-    moveTowards(player, mw.x, mw.y, dt);
+  if (gameState === 'ready') {
+    // gentle bobbing while waiting
+    cube.y = H / 2 + Math.sin(performance.now() / 250) * 12;
+    return;
   }
-  for (const c of cells) {
-    if (!c.alive || !c.isBot) continue;
-    c.aiTimer -= dt;
-    if (c.aiTimer <= 0 || !c.aiTarget) {
-      planAI(c);
-      c.aiTimer = 0.5 + Math.random() * 0.7;
-    }
-    if (c.aiTarget) moveTowards(c, c.aiTarget.x, c.aiTarget.y, dt);
+  if (gameState !== 'playing') return;
+
+  cube.vy += CONFIG.gravity * dt;
+  cube.y += cube.vy * dt;
+  cube.rot = Math.max(-0.5, Math.min(1.3, cube.vy / 600));
+
+  for (const p of pipes) p.x -= CONFIG.pipeSpeed * dt;
+
+  // remove off-screen, spawn new
+  while (pipes.length && pipes[0].x + CONFIG.pipeWidth < -20) pipes.shift();
+  const lastX = pipes.length ? pipes[pipes.length - 1].x : W;
+  if (lastX < W + CONFIG.pipeSpacing) {
+    pipes.push(makePipe(lastX + CONFIG.pipeSpacing));
   }
 
-  // comer comida
-  for (const c of cells) {
-    if (!c.alive) continue;
-    const cr = radius(c.mass);
-    const cr2 = cr * cr;
-    for (let i = food.length - 1; i >= 0; i--) {
-      const f = food[i];
-      const d2 = (c.x - f.x) ** 2 + (c.y - f.y) ** 2;
-      if (d2 < cr2) {
-        c.mass += FOOD_MASS;
-        food.splice(i, 1);
+  // scoring + collision
+  const cx = cube.x, cy = cube.y, hs = cube.size / 2;
+  for (const p of pipes) {
+    // score when cube passes pipe center
+    if (!p.passed && p.x + CONFIG.pipeWidth < cx - hs) {
+      p.passed = true;
+      score++;
+      scoreDisplay.textContent = score;
+    }
+    // collision (AABB vs two rects)
+    if (cx + hs > p.x && cx - hs < p.x + CONFIG.pipeWidth) {
+      if (cy - hs < p.gapY || cy + hs > p.gapY + CONFIG.pipeGap) {
+        die();
+        return;
       }
     }
   }
-  while (food.length < FOOD_COUNT) spawnFood();
-
-  // comer células
-  for (let i = 0; i < cells.length; i++) {
-    const a = cells[i];
-    if (!a.alive) continue;
-    for (let j = 0; j < cells.length; j++) {
-      if (i === j) continue;
-      const b = cells[j];
-      if (!b.alive) continue;
-      if (a.mass < b.mass * EAT_RATIO) continue;
-      const d = Math.hypot(a.x - b.x, a.y - b.y);
-      const ar = radius(a.mass), br = radius(b.mass);
-      if (d < ar - br * 0.4) {
-        a.mass += b.mass * 0.8;
-        b.alive = false;
-        if (b === player) {
-          setTimeout(() => respawn(player), 1800);
-        } else {
-          setTimeout(() => respawn(b), 2000 + Math.random() * 2500);
-        }
-      }
-    }
-  }
-
-  // clamp al mundo
-  for (const c of cells) {
-    if (!c.alive) continue;
-    const r = radius(c.mass);
-    c.x = Math.max(r, Math.min(WORLD_W - r, c.x));
-    c.y = Math.max(r, Math.min(WORLD_H - r, c.y));
+  // floor / ceiling
+  if (cy + hs > H || cy - hs < 0) {
+    die();
   }
 }
 
-// ---------- render ----------
-function darken(hex, amt) {
-  const h = hex.replace('#', '');
-  const r = Math.floor(parseInt(h.slice(0, 2), 16) * (1 - amt));
-  const g = Math.floor(parseInt(h.slice(2, 4), 16) * (1 - amt));
-  const b = Math.floor(parseInt(h.slice(4, 6), 16) * (1 - amt));
-  return `rgb(${r},${g},${b})`;
+function die() {
+  gameState = 'dead';
+  // small flash effect
+  flashAlpha = 1;
+  setTimeout(() => endGame(), 600);
+}
+
+let flashAlpha = 0;
+
+function endGame() {
+  stopGameLoop();
+  const scores = loadScores();
+  const qualifies = scores.length < 10 || score > scores[scores.length - 1].score;
+  if (score > 0 && qualifies) {
+    openNameEntry(score);
+  } else {
+    document.getElementById('finalScore').textContent = score;
+    document.getElementById('bestLabel').textContent = 'MEJOR: ' + bestScore();
+    showScreen('gameOver');
+  }
+}
+
+function drawGrid() {
+  // subtle neon grid background
+  ctx.strokeStyle = 'rgba(0, 80, 120, 0.35)';
+  ctx.lineWidth = 1;
+  const step = 40;
+  ctx.beginPath();
+  for (let x = 0; x < W; x += step) { ctx.moveTo(x, 0); ctx.lineTo(x, H); }
+  for (let y = 0; y < H; y += step) { ctx.moveTo(0, y); ctx.lineTo(W, y); }
+  ctx.stroke();
+}
+
+function drawPipe(p) {
+  // top
+  ctx.fillStyle = '#1a0033';
+  ctx.fillRect(p.x, 0, CONFIG.pipeWidth, p.gapY);
+  ctx.fillRect(p.x, p.gapY + CONFIG.pipeGap, CONFIG.pipeWidth, H - (p.gapY + CONFIG.pipeGap));
+
+  ctx.strokeStyle = '#f0f';
+  ctx.lineWidth = 3;
+  ctx.shadowColor = '#f0f';
+  ctx.shadowBlur = 16;
+  ctx.strokeRect(p.x, 0, CONFIG.pipeWidth, p.gapY);
+  ctx.strokeRect(p.x, p.gapY + CONFIG.pipeGap, CONFIG.pipeWidth, H - (p.gapY + CONFIG.pipeGap));
+  // caps
+  ctx.fillStyle = '#330066';
+  ctx.fillRect(p.x - 6, p.gapY - 16, CONFIG.pipeWidth + 12, 16);
+  ctx.fillRect(p.x - 6, p.gapY + CONFIG.pipeGap, CONFIG.pipeWidth + 12, 16);
+  ctx.strokeRect(p.x - 6, p.gapY - 16, CONFIG.pipeWidth + 12, 16);
+  ctx.strokeRect(p.x - 6, p.gapY + CONFIG.pipeGap, CONFIG.pipeWidth + 12, 16);
+  ctx.shadowBlur = 0;
+}
+
+function drawCube() {
+  ctx.save();
+  ctx.translate(cube.x, cube.y);
+  ctx.rotate(cube.rot);
+  const s = cube.size;
+  // glow body
+  ctx.fillStyle = '#003344';
+  ctx.shadowColor = '#0ff';
+  ctx.shadowBlur = 18;
+  ctx.fillRect(-s/2, -s/2, s, s);
+  ctx.strokeStyle = '#0ff';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(-s/2, -s/2, s, s);
+  // inner detail
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#0ff';
+  ctx.fillRect(-s/4, -s/4, s/8, s/8); // eye
+  ctx.restore();
 }
 
 function render() {
-  ctx.fillStyle = '#0d1117';
+  ctx.clearRect(0, 0, W, H);
+  // background gradient
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#000010');
+  g.addColorStop(1, '#08001a');
+  ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, H);
+  drawGrid();
+  for (const p of pipes) drawPipe(p);
+  drawCube();
 
-  const scale = cameraScale();
-  ctx.save();
-  ctx.translate(W / 2, H / 2);
-  ctx.scale(scale, scale);
-  ctx.translate(-player.x, -player.y);
-
-  // grilla
-  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
-  ctx.lineWidth = 1 / scale;
-  const gs = 80;
-  const xs = Math.floor((player.x - W / (2 * scale)) / gs) * gs;
-  const xe = player.x + W / (2 * scale) + gs;
-  const ys = Math.floor((player.y - H / (2 * scale)) / gs) * gs;
-  const ye = player.y + H / (2 * scale) + gs;
-  ctx.beginPath();
-  for (let x = xs; x < xe; x += gs) { ctx.moveTo(x, ys); ctx.lineTo(x, ye); }
-  for (let y = ys; y < ye; y += gs) { ctx.moveTo(xs, y); ctx.lineTo(xe, y); }
-  ctx.stroke();
-
-  // borde del mundo
-  ctx.strokeStyle = 'rgba(255,80,80,0.35)';
-  ctx.lineWidth = 4 / scale;
-  ctx.strokeRect(0, 0, WORLD_W, WORLD_H);
-
-  // comida
-  for (const f of food) {
-    ctx.fillStyle = f.color;
-    ctx.beginPath();
-    ctx.arc(f.x, f.y, 6, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  // células (renderizar de menor a mayor para layering)
-  const alive = cells.filter(c => c.alive).sort((a, b) => a.mass - b.mass);
-  for (const c of alive) {
-    const r = radius(c.mass);
-    ctx.fillStyle = c.color;
-    ctx.beginPath();
-    ctx.arc(c.x, c.y, r, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = darken(c.color, 0.35);
-    ctx.lineWidth = Math.max(2, r * 0.07);
-    ctx.stroke();
-    // marcar al jugador
-    if (c === player) {
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    }
-    // nombre + masa
-    ctx.fillStyle = '#fff';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    const nameSize = Math.max(12, r * 0.38);
-    ctx.font = `600 ${nameSize}px sans-serif`;
-    ctx.fillText(c.name, c.x, c.y - r * 0.12);
-    ctx.font = `${Math.max(10, r * 0.26)}px sans-serif`;
-    ctx.fillStyle = 'rgba(255,255,255,0.85)';
-    ctx.fillText(Math.floor(c.mass), c.x, c.y + r * 0.28);
-  }
-
-  ctx.restore();
-
-  drawHUD();
-
-  if (!player.alive) {
-    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  if (flashAlpha > 0) {
+    ctx.fillStyle = `rgba(255, 0, 100, ${flashAlpha})`;
     ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = '#fff';
-    ctx.textAlign = 'center';
-    ctx.font = '300 56px sans-serif';
-    ctx.fillText('TE COMIERON', W / 2, H / 2 - 8);
-    ctx.font = '14px sans-serif';
-    ctx.fillStyle = '#9ca3af';
-    ctx.fillText('reapareciendo…', W / 2, H / 2 + 28);
+    flashAlpha -= 0.08;
   }
 }
 
-function drawHUD() {
-  // leaderboard
-  const top = [...cells].filter(c => c.alive).sort((a, b) => b.mass - a.mass).slice(0, 6);
-  const lbX = W - 200, lbY = 60;
-  ctx.fillStyle = 'rgba(13, 17, 23, 0.7)';
-  ctx.fillRect(lbX, lbY, 184, 16 + top.length * 20 + 12);
-  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-  ctx.strokeRect(lbX, lbY, 184, 16 + top.length * 20 + 12);
-  ctx.textAlign = 'left';
-  ctx.fillStyle = '#9ca3af';
-  ctx.font = 'bold 11px sans-serif';
-  ctx.fillText('LEADERBOARD', lbX + 12, lbY + 20);
-  for (let i = 0; i < top.length; i++) {
-    const c = top[i];
-    const y = lbY + 42 + i * 20;
-    ctx.fillStyle = c === player ? '#ffd93d' : '#e0e0e0';
-    ctx.font = c === player ? 'bold 13px sans-serif' : '13px sans-serif';
-    ctx.fillText(`${i + 1}. ${c.name}`, lbX + 12, y);
-    ctx.textAlign = 'right';
-    ctx.fillText(Math.floor(c.mass), lbX + 172, y);
-    ctx.textAlign = 'left';
-  }
-
-  // masa propia
-  const mX = 16, mY = 60;
-  ctx.fillStyle = 'rgba(13, 17, 23, 0.7)';
-  ctx.fillRect(mX, mY, 150, 58);
-  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-  ctx.strokeRect(mX, mY, 150, 58);
-  ctx.fillStyle = '#9ca3af';
-  ctx.font = 'bold 11px sans-serif';
-  ctx.fillText('TU MASA', mX + 12, mY + 18);
-  ctx.fillStyle = '#fff';
-  ctx.font = '300 28px sans-serif';
-  ctx.fillText(player.alive ? Math.floor(player.mass) : '—', mX + 12, mY + 46);
-
-  // minimap
-  const mm = 140;
-  const mmX = W - mm - 16, mmY = H - mm - 16;
-  ctx.fillStyle = 'rgba(0,0,0,0.5)';
-  ctx.fillRect(mmX, mmY, mm, mm);
-  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-  ctx.strokeRect(mmX, mmY, mm, mm);
-  for (const c of cells) {
-    if (!c.alive) continue;
-    const mxp = mmX + (c.x / WORLD_W) * mm;
-    const myp = mmY + (c.y / WORLD_H) * mm;
-    ctx.fillStyle = c === player ? '#ffd93d' : c.color;
-    ctx.beginPath();
-    ctx.arc(mxp, myp, c === player ? 3.5 : 2, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  // viewport rect en minimap
-  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
-  ctx.lineWidth = 1;
-  const s = cameraScale();
-  const vw = (W / s / WORLD_W) * mm;
-  const vh = (H / s / WORLD_H) * mm;
-  ctx.strokeRect(mmX + (player.x / WORLD_W) * mm - vw / 2, mmY + (player.y / WORLD_H) * mm - vh / 2, vw, vh);
-}
-
-// ---------- loop ----------
-let last = performance.now();
-function loop(now) {
-  const dt = Math.min(0.05, (now - last) / 1000);
-  last = now;
+function loop(t) {
+  const dt = Math.min(0.033, (t - lastTime) / 1000);
+  lastTime = t;
   update(dt);
   render();
-  requestAnimationFrame(loop);
+  animId = requestAnimationFrame(loop);
 }
 
-start();
-requestAnimationFrame(loop);
+function stopGameLoop() {
+  if (animId) cancelAnimationFrame(animId);
+  animId = null;
+}
+
+// ===== NAME ENTRY =====
+let nameLetters = ['A','A','A'];
+let activeSlot = 0;
+let pendingScore = 0;
+
+function openNameEntry(scoreVal) {
+  pendingScore = scoreVal;
+  nameLetters = ['A','A','A'];
+  activeSlot = 0;
+  document.getElementById('nameScore').textContent = scoreVal;
+  renderNameInput();
+  showScreen('name');
+}
+
+function renderNameInput() {
+  const container = document.getElementById('nameInput');
+  container.innerHTML = '';
+  nameLetters.forEach((L, i) => {
+    const slot = document.createElement('div');
+    slot.className = 'letter-slot' + (i === activeSlot ? ' active' : '');
+    slot.innerHTML = `
+      <button class="arrow-btn" data-i="${i}" data-dir="up">▲</button>
+      <div class="letter">${L}</div>
+      <button class="arrow-btn" data-i="${i}" data-dir="down">▼</button>
+    `;
+    slot.addEventListener('click', () => { activeSlot = i; renderNameInput(); });
+    container.appendChild(slot);
+  });
+  container.querySelectorAll('.arrow-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const i = parseInt(btn.dataset.i);
+      const dir = btn.dataset.dir === 'up' ? 1 : -1;
+      let code = nameLetters[i].charCodeAt(0) - 65;
+      code = (code + dir + 26) % 26;
+      nameLetters[i] = String.fromCharCode(65 + code);
+      activeSlot = i;
+      renderNameInput();
+    });
+  });
+}
+
+function confirmName() {
+  const name = nameLetters.join('');
+  const scores = loadScores();
+  scores.push({ name, score: pendingScore, date: Date.now() });
+  scores.sort((a, b) => b.score - a.score);
+  const trimmed = scores.slice(0, 10);
+  saveScores(trimmed);
+  document.getElementById('finalScore').textContent = pendingScore;
+  document.getElementById('bestLabel').textContent = 'MEJOR: ' + bestScore();
+  showScreen('gameOver');
+}
+
+// ===== SCORES VIEW =====
+function renderScores() {
+  const list = document.getElementById('scoresList');
+  const scores = loadScores();
+  if (!scores.length) {
+    list.innerHTML = '<div class="empty-msg">SIN PUNTAJES AÚN<br><br>¡JUEGA Y APARECE AQUÍ!</div>';
+    return;
+  }
+  list.innerHTML = scores.map((s, i) => `
+    <div class="score-row ${i === 0 ? 'highlight' : ''}">
+      <div class="rank">${String(i + 1).padStart(2, '0')}</div>
+      <div class="name">${s.name}</div>
+      <div class="pts">${s.score}</div>
+    </div>
+  `).join('');
+}
+
+// Prevent double-tap zoom etc.
+document.addEventListener('gesturestart', e => e.preventDefault());
+document.addEventListener('dblclick', e => e.preventDefault());
+
+// Initial sizing
+resizeCanvas();
 </script>
 </body>
 </html>
