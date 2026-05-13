@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Blobs — Prototipo</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #0d1117; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #e0e0e0;
+  }
+  canvas { display: block; cursor: crosshair; }
+  .topbar {
+    position: fixed; top: 0; left: 0; right: 0; height: 44px;
+    background: rgba(13, 17, 23, 0.85);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid #1f2937;
+    display: flex; align-items: center; padding: 0 16px;
+    font-size: 13px; letter-spacing: 1px;
+    z-index: 10;
+  }
+  .topbar .title { font-weight: 600; }
+  .topbar .hint { margin-left: auto; color: #6b7280; font-size: 12px; }
+  .topbar code {
+    background: #000; padding: 2px 6px; border-radius: 3px;
+    font-size: 11px; color: #ccc;
+  }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <span class="title">BLOBS</span>
+    <span style="color:#6b7280; margin-left: 12px;">prototipo · single-player con bots</span>
+    <span class="hint">mover: <code>mouse</code> · reiniciar: <code>R</code></span>
+  </div>
+  <canvas id="game"></canvas>
+
+<script>
+// ---------- config ----------
+const WORLD_W = 3200, WORLD_H = 3200;
+const FOOD_COUNT = 500;
+const BOT_COUNT = 14;
+const START_MASS = 100;
+const FOOD_MASS = 4;
+const EAT_RATIO = 1.18;   // tenés que ser 18% más grande para comer
+const BOT_NAMES = ['Nico','Ana','Luca','Sofi','Mati','Cami','Tomi','Iván','Vale','Rocío','Pancho','Dali','Zoe','Jorge','Mora','Beto'];
+const COLORS = ['#ff6b6b','#ffd93d','#6bcf7f','#4dabf7','#c47bff','#ff9b7b','#7bffd4','#ffeb7b','#ff7bd4','#7b9bff','#ffa94d','#a3e635'];
+
+// ---------- setup ----------
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+let W, H;
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+const mouse = { x: 0, y: 0 };
+window.addEventListener('mousemove', e => {
+  mouse.x = e.clientX;
+  mouse.y = e.clientY;
+});
+window.addEventListener('keydown', e => {
+  if (e.key === 'r' || e.key === 'R') start();
+});
+
+// ---------- world ----------
+const food = [];
+const cells = [];
+let player;
+
+function radius(mass) { return Math.sqrt(mass) * 1.7 + 5; }
+function speedFor(mass) { return 320 / Math.pow(mass, 0.22); }
+
+function spawnFood() {
+  food.push({
+    x: Math.random() * WORLD_W,
+    y: Math.random() * WORLD_H,
+    color: COLORS[Math.floor(Math.random() * COLORS.length)],
+  });
+}
+
+function makeCell(opts = {}) {
+  return {
+    name: opts.name ?? BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)],
+    x: opts.x ?? Math.random() * WORLD_W,
+    y: opts.y ?? Math.random() * WORLD_H,
+    mass: opts.mass ?? START_MASS,
+    color: opts.color ?? COLORS[Math.floor(Math.random() * COLORS.length)],
+    isBot: opts.isBot ?? true,
+    alive: true,
+    aiTarget: null,
+    aiTimer: 0,
+  };
+}
+
+function start() {
+  food.length = 0;
+  cells.length = 0;
+  for (let i = 0; i < FOOD_COUNT; i++) spawnFood();
+  player = makeCell({
+    name: 'TÚ', isBot: false, mass: START_MASS,
+    x: WORLD_W / 2, y: WORLD_H / 2, color: '#4dabf7',
+  });
+  cells.push(player);
+  for (let i = 0; i < BOT_COUNT; i++) {
+    cells.push(makeCell({ mass: START_MASS + Math.random() * 350 }));
+  }
+}
+
+function respawn(c) {
+  c.mass = START_MASS + (c.isBot ? Math.random() * 200 : 0);
+  c.x = Math.random() * WORLD_W;
+  c.y = Math.random() * WORLD_H;
+  c.alive = true;
+  if (c.isBot) {
+    c.color = COLORS[Math.floor(Math.random() * COLORS.length)];
+    c.name = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
+  }
+}
+
+// ---------- input -> world ----------
+function cameraScale() {
+  const r = radius(player.mass);
+  return Math.max(0.35, Math.min(1.4, 30 / Math.sqrt(r)));
+}
+
+function mouseWorld() {
+  const s = cameraScale();
+  return {
+    x: player.x + (mouse.x - W / 2) / s,
+    y: player.y + (mouse.y - H / 2) / s,
+  };
+}
+
+// ---------- AI ----------
+function planAI(c) {
+  let bestFood = null, bestFoodD2 = Infinity;
+  for (const f of food) {
+    const d2 = (c.x - f.x) ** 2 + (c.y - f.y) ** 2;
+    if (d2 < bestFoodD2) { bestFoodD2 = d2; bestFood = f; }
+  }
+  let prey = null, preyD2 = Infinity;
+  let threat = null, threatD2 = Infinity;
+  for (const o of cells) {
+    if (o === c || !o.alive) continue;
+    const d2 = (c.x - o.x) ** 2 + (c.y - o.y) ** 2;
+    if (o.mass * EAT_RATIO < c.mass) {
+      if (d2 < preyD2) { preyD2 = d2; prey = o; }
+    } else if (o.mass > c.mass * EAT_RATIO) {
+      if (d2 < threatD2) { threatD2 = d2; threat = o; }
+    }
+  }
+  // huir si hay amenaza cerca
+  if (threat && threatD2 < 260 * 260) {
+    const dx = c.x - threat.x, dy = c.y - threat.y;
+    const d = Math.hypot(dx, dy) || 1;
+    c.aiTarget = { x: c.x + (dx / d) * 600, y: c.y + (dy / d) * 600 };
+    return;
+  }
+  // cazar si hay presa cerca
+  if (prey && preyD2 < 320 * 320) {
+    c.aiTarget = prey;
+    return;
+  }
+  c.aiTarget = bestFood;
+}
+
+function moveTowards(c, tx, ty, dt) {
+  const dx = tx - c.x, dy = ty - c.y;
+  const d = Math.hypot(dx, dy);
+  if (d < 1) return;
+  const step = Math.min(d, speedFor(c.mass) * dt);
+  c.x += (dx / d) * step;
+  c.y += (dy / d) * step;
+}
+
+// ---------- update ----------
+function update(dt) {
+  if (player.alive) {
+    const mw = mouseWorld();
+    moveTowards(player, mw.x, mw.y, dt);
+  }
+  for (const c of cells) {
+    if (!c.alive || !c.isBot) continue;
+    c.aiTimer -= dt;
+    if (c.aiTimer <= 0 || !c.aiTarget) {
+      planAI(c);
+      c.aiTimer = 0.5 + Math.random() * 0.7;
+    }
+    if (c.aiTarget) moveTowards(c, c.aiTarget.x, c.aiTarget.y, dt);
+  }
+
+  // comer comida
+  for (const c of cells) {
+    if (!c.alive) continue;
+    const cr = radius(c.mass);
+    const cr2 = cr * cr;
+    for (let i = food.length - 1; i >= 0; i--) {
+      const f = food[i];
+      const d2 = (c.x - f.x) ** 2 + (c.y - f.y) ** 2;
+      if (d2 < cr2) {
+        c.mass += FOOD_MASS;
+        food.splice(i, 1);
+      }
+    }
+  }
+  while (food.length < FOOD_COUNT) spawnFood();
+
+  // comer células
+  for (let i = 0; i < cells.length; i++) {
+    const a = cells[i];
+    if (!a.alive) continue;
+    for (let j = 0; j < cells.length; j++) {
+      if (i === j) continue;
+      const b = cells[j];
+      if (!b.alive) continue;
+      if (a.mass < b.mass * EAT_RATIO) continue;
+      const d = Math.hypot(a.x - b.x, a.y - b.y);
+      const ar = radius(a.mass), br = radius(b.mass);
+      if (d < ar - br * 0.4) {
+        a.mass += b.mass * 0.8;
+        b.alive = false;
+        if (b === player) {
+          setTimeout(() => respawn(player), 1800);
+        } else {
+          setTimeout(() => respawn(b), 2000 + Math.random() * 2500);
+        }
+      }
+    }
+  }
+
+  // clamp al mundo
+  for (const c of cells) {
+    if (!c.alive) continue;
+    const r = radius(c.mass);
+    c.x = Math.max(r, Math.min(WORLD_W - r, c.x));
+    c.y = Math.max(r, Math.min(WORLD_H - r, c.y));
+  }
+}
+
+// ---------- render ----------
+function darken(hex, amt) {
+  const h = hex.replace('#', '');
+  const r = Math.floor(parseInt(h.slice(0, 2), 16) * (1 - amt));
+  const g = Math.floor(parseInt(h.slice(2, 4), 16) * (1 - amt));
+  const b = Math.floor(parseInt(h.slice(4, 6), 16) * (1 - amt));
+  return `rgb(${r},${g},${b})`;
+}
+
+function render() {
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, W, H);
+
+  const scale = cameraScale();
+  ctx.save();
+  ctx.translate(W / 2, H / 2);
+  ctx.scale(scale, scale);
+  ctx.translate(-player.x, -player.y);
+
+  // grilla
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1 / scale;
+  const gs = 80;
+  const xs = Math.floor((player.x - W / (2 * scale)) / gs) * gs;
+  const xe = player.x + W / (2 * scale) + gs;
+  const ys = Math.floor((player.y - H / (2 * scale)) / gs) * gs;
+  const ye = player.y + H / (2 * scale) + gs;
+  ctx.beginPath();
+  for (let x = xs; x < xe; x += gs) { ctx.moveTo(x, ys); ctx.lineTo(x, ye); }
+  for (let y = ys; y < ye; y += gs) { ctx.moveTo(xs, y); ctx.lineTo(xe, y); }
+  ctx.stroke();
+
+  // borde del mundo
+  ctx.strokeStyle = 'rgba(255,80,80,0.35)';
+  ctx.lineWidth = 4 / scale;
+  ctx.strokeRect(0, 0, WORLD_W, WORLD_H);
+
+  // comida
+  for (const f of food) {
+    ctx.fillStyle = f.color;
+    ctx.beginPath();
+    ctx.arc(f.x, f.y, 6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // células (renderizar de menor a mayor para layering)
+  const alive = cells.filter(c => c.alive).sort((a, b) => a.mass - b.mass);
+  for (const c of alive) {
+    const r = radius(c.mass);
+    ctx.fillStyle = c.color;
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = darken(c.color, 0.35);
+    ctx.lineWidth = Math.max(2, r * 0.07);
+    ctx.stroke();
+    // marcar al jugador
+    if (c === player) {
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+    // nombre + masa
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const nameSize = Math.max(12, r * 0.38);
+    ctx.font = `600 ${nameSize}px sans-serif`;
+    ctx.fillText(c.name, c.x, c.y - r * 0.12);
+    ctx.font = `${Math.max(10, r * 0.26)}px sans-serif`;
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.fillText(Math.floor(c.mass), c.x, c.y + r * 0.28);
+  }
+
+  ctx.restore();
+
+  drawHUD();
+
+  if (!player.alive) {
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.font = '300 56px sans-serif';
+    ctx.fillText('TE COMIERON', W / 2, H / 2 - 8);
+    ctx.font = '14px sans-serif';
+    ctx.fillStyle = '#9ca3af';
+    ctx.fillText('reapareciendo…', W / 2, H / 2 + 28);
+  }
+}
+
+function drawHUD() {
+  // leaderboard
+  const top = [...cells].filter(c => c.alive).sort((a, b) => b.mass - a.mass).slice(0, 6);
+  const lbX = W - 200, lbY = 60;
+  ctx.fillStyle = 'rgba(13, 17, 23, 0.7)';
+  ctx.fillRect(lbX, lbY, 184, 16 + top.length * 20 + 12);
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.strokeRect(lbX, lbY, 184, 16 + top.length * 20 + 12);
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#9ca3af';
+  ctx.font = 'bold 11px sans-serif';
+  ctx.fillText('LEADERBOARD', lbX + 12, lbY + 20);
+  for (let i = 0; i < top.length; i++) {
+    const c = top[i];
+    const y = lbY + 42 + i * 20;
+    ctx.fillStyle = c === player ? '#ffd93d' : '#e0e0e0';
+    ctx.font = c === player ? 'bold 13px sans-serif' : '13px sans-serif';
+    ctx.fillText(`${i + 1}. ${c.name}`, lbX + 12, y);
+    ctx.textAlign = 'right';
+    ctx.fillText(Math.floor(c.mass), lbX + 172, y);
+    ctx.textAlign = 'left';
+  }
+
+  // masa propia
+  const mX = 16, mY = 60;
+  ctx.fillStyle = 'rgba(13, 17, 23, 0.7)';
+  ctx.fillRect(mX, mY, 150, 58);
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.strokeRect(mX, mY, 150, 58);
+  ctx.fillStyle = '#9ca3af';
+  ctx.font = 'bold 11px sans-serif';
+  ctx.fillText('TU MASA', mX + 12, mY + 18);
+  ctx.fillStyle = '#fff';
+  ctx.font = '300 28px sans-serif';
+  ctx.fillText(player.alive ? Math.floor(player.mass) : '—', mX + 12, mY + 46);
+
+  // minimap
+  const mm = 140;
+  const mmX = W - mm - 16, mmY = H - mm - 16;
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.fillRect(mmX, mmY, mm, mm);
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.strokeRect(mmX, mmY, mm, mm);
+  for (const c of cells) {
+    if (!c.alive) continue;
+    const mxp = mmX + (c.x / WORLD_W) * mm;
+    const myp = mmY + (c.y / WORLD_H) * mm;
+    ctx.fillStyle = c === player ? '#ffd93d' : c.color;
+    ctx.beginPath();
+    ctx.arc(mxp, myp, c === player ? 3.5 : 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // viewport rect en minimap
+  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+  ctx.lineWidth = 1;
+  const s = cameraScale();
+  const vw = (W / s / WORLD_W) * mm;
+  const vh = (H / s / WORLD_H) * mm;
+  ctx.strokeRect(mmX + (player.x / WORLD_W) * mm - vw / 2, mmY + (player.y / WORLD_H) * mm - vh / 2, vw, vh);
+}
+
+// ---------- loop ----------
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min(0.05, (now - last) / 1000);
+  last = now;
+  update(dt);
+  render();
+  requestAnimationFrame(loop);
+}
+
+start();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
