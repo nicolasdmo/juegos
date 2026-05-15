@@ -2,95 +2,548 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Juego</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Arcade</title>
 <style>
-  * { box-sizing: border-box; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body {
-    margin: 0; padding: 0;
-    width: 100%; height: 100%;
-    background: #000; color: #ccc;
+    margin: 0; padding: 0; height: 100%; width: 100%;
+    background: #0a0a0a; color: #eee;
+    font-family: system-ui, -apple-system, sans-serif;
     overflow: hidden;
-    font-family: system-ui, sans-serif;
+    -webkit-user-select: none; user-select: none;
   }
-  #game {
-    width: 100vw;
-    height: 100vh;
-    background: #000;
-  }
+  body { touch-action: none; }
 
-  /* ----- Modo kiosko: esconder controles y menú de EmulatorJS ----- */
-  /* Barra de menú inferior */
-  .ejs_menu_bar,
-  .ejs_menu_bar_hidden,
-  .ejs_menu_button,
-  .ejs_settings_parent,
-  .ejs_cheat_parent,
-  .ejs_netplay_parent,
-  .ejs_save_states_menu,
-  .ejs_volume_parent,
-  .ejs_context_menu,
-  .ejs_popout_container {
+  /* ===== Screens ===== */
+  .screen { display: none; width: 100vw; height: 100vh; }
+  .screen.active { display: flex; flex-direction: column; }
+
+  /* ===== Auth ===== */
+  #screen-auth { align-items: center; justify-content: center; padding: 16px; }
+  .auth-card {
+    background: #161616; border: 1px solid #2a2a2a; border-radius: 14px;
+    padding: 28px; width: 100%; max-width: 380px;
+  }
+  .auth-card h1 { margin: 0 0 4px; font-size: 24px; font-weight: 600; }
+  .auth-card .subtitle { color: #888; font-size: 13px; margin-bottom: 22px; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 20px; background: #0a0a0a; padding: 4px; border-radius: 8px; }
+  .tab {
+    flex: 1; padding: 8px 12px; background: transparent; border: none;
+    color: #888; cursor: pointer; border-radius: 6px; font-size: 13px; font-weight: 500;
+    transition: all 0.15s;
+  }
+  .tab.active { background: #2a2a2a; color: #fff; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; color: #888; margin-bottom: 6px; }
+  .field input {
+    width: 100%; padding: 12px 14px; background: #0a0a0a;
+    border: 1px solid #2a2a2a; border-radius: 8px;
+    color: #fff; font-size: 15px;
+    -webkit-user-select: text; user-select: text;
+  }
+  .field input:focus { outline: none; border-color: #555; }
+  .btn-primary {
+    width: 100%; padding: 13px; background: #4070d0; border: none; border-radius: 8px;
+    color: #fff; font-size: 15px; font-weight: 500; cursor: pointer;
+    margin-top: 4px;
+  }
+  .btn-primary:hover { background: #5080e0; }
+  .btn-primary:active { transform: scale(0.99); }
+  .msg { margin-top: 12px; font-size: 13px; min-height: 18px; text-align: center; }
+  .msg.error { color: #ff6b6b; }
+  .msg.ok    { color: #4caf50; }
+
+  /* ===== Picker ===== */
+  #screen-picker { padding: 16px; }
+  .picker-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px; flex-shrink: 0;
+  }
+  .picker-header h2 { margin: 0; font-size: 18px; font-weight: 600; }
+  .picker-header .user-info { display: flex; align-items: center; gap: 10px; }
+  .picker-header .hello { color: #888; font-size: 13px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+    overflow-y: auto;
+    flex: 1;
+    padding-bottom: 16px;
+  }
+  .rom-card {
+    background: #161616; border: 1px solid #2a2a2a; border-radius: 10px;
+    padding: 16px 10px; cursor: pointer; text-align: center;
+    transition: all 0.15s;
+  }
+  .rom-card:hover { background: #1f1f1f; border-color: #444; }
+  .rom-card:active { transform: scale(0.98); }
+  .rom-card .icon { font-size: 36px; margin-bottom: 8px; }
+  .rom-card .title { font-size: 13px; word-break: break-word; }
+  .rom-card .badge {
+    display: inline-block; padding: 2px 6px; background: #2a2a2a; border-radius: 4px;
+    font-size: 10px; color: #aaa; margin-top: 6px; text-transform: uppercase;
+  }
+  .empty {
+    grid-column: 1 / -1;
+    color: #888; text-align: center; padding: 40px 16px; font-size: 14px;
+  }
+  .empty.error { color: #ff6b6b; }
+  .btn-small {
+    background: #2a2a2a; border: 1px solid #3a3a3a; color: #eee;
+    padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;
+  }
+  .btn-small:hover { background: #3a3a3a; }
+
+  /* ===== Game ===== */
+  #screen-game { padding: 0; }
+  #game-container { width: 100%; height: 100%; background: #000; position: relative; }
+  #game { width: 100%; height: 100%; }
+  .game-overlay {
+    position: fixed; top: 8px; left: 8px; z-index: 99999;
+    display: flex; gap: 6px;
+  }
+  .overlay-btn {
+    background: rgba(0,0,0,0.7); border: 1px solid #555; color: #fff;
+    padding: 8px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;
+    backdrop-filter: blur(6px);
+  }
+  .overlay-btn:hover { background: rgba(40,40,40,0.85); }
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.9); border: 1px solid #4caf50; color: #4caf50;
+    padding: 10px 18px; border-radius: 8px; font-size: 13px;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 99999;
+  }
+  .toast.show { opacity: 1; }
+  .toast.error { border-color: #ff6b6b; color: #ff6b6b; }
+
+  /* Hide EmulatorJS UI but keep virtual gamepad */
+  .ejs_menu_bar, .ejs_menu_bar_hidden, .ejs_menu_button,
+  .ejs_settings_parent, .ejs_cheat_parent, .ejs_netplay_parent,
+  .ejs_save_states_menu, .ejs_context_menu, .ejs_popout_container,
+  .ejs_loading_text {
     display: none !important;
   }
-  /* Pantalla de inicio (botón "Play") y splash */
-  .ejs_start_button { /* lo dejamos porque algunos navegadores requieren un click para habilitar audio */ }
 </style>
 </head>
 <body oncontextmenu="return false" ondragstart="return false">
 
-  <div id="game"></div>
+  <!-- ===== AUTH SCREEN ===== -->
+  <div id="screen-auth" class="screen active">
+    <div class="auth-card">
+      <h1 id="auth-title">Iniciar sesión</h1>
+      <div class="subtitle" id="auth-subtitle">Entrá para acceder a tus partidas</div>
+      <div class="tabs">
+        <button class="tab active" data-tab="signin">Entrar</button>
+        <button class="tab" data-tab="signup">Crear cuenta</button>
+      </div>
+      <div class="field" id="field-name" style="display:none;">
+        <label>Nombre</label>
+        <input type="text" id="signup-name" placeholder="Tu nombre" autocomplete="name">
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="email" placeholder="email@ejemplo.com" autocomplete="email" inputmode="email">
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn-primary" id="auth-submit">Entrar</button>
+      <div class="msg" id="auth-msg"></div>
+    </div>
+  </div>
+
+  <!-- ===== ROM PICKER SCREEN ===== -->
+  <div id="screen-picker" class="screen">
+    <div class="picker-header">
+      <h2>Elegí un juego</h2>
+      <div class="user-info">
+        <span class="hello" id="hello-user"></span>
+        <button class="btn-small" id="logout-btn">Salir</button>
+      </div>
+    </div>
+    <div class="grid" id="rom-grid">
+      <div class="empty">Cargando lista…</div>
+    </div>
+  </div>
+
+  <!-- ===== GAME SCREEN ===== -->
+  <div id="screen-game" class="screen">
+    <div id="game-container">
+      <div class="game-overlay">
+        <button class="overlay-btn" id="back-btn">← Salir</button>
+        <button class="overlay-btn" id="save-btn">💾 Guardar</button>
+      </div>
+      <div id="game"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
 
   <script>
-    // ---- CONFIG ----
-    // Cambiá esta línea si tu ROM tiene otro nombre.
-    var EJS_gameUrl    = 'mon.gb';
+  //=============================================================================
+  // CONFIG
+  //=============================================================================
+  const ROMS_FOLDER = 'roms';          // carpeta donde están los .gb/.gbc
+  const AUTO_SAVE_INTERVAL_MS = 30000; // cada 30 seg
+  const STORE = {
+    USERS:   'arcade_users_v1',
+    SESSION: 'arcade_session_v1',
+    SAVES:   'arcade_saves_v1',         // { "email|rom": { state: b64, sram: b64, t: timestamp } }
+    CURRENT_ROM: 'arcade_current_rom_v1' // sessionStorage: rom seleccionado para esta sesión
+  };
 
-    // Core: 'gb' funciona para GB y GBC. Si querés forzar GBC, usá 'gbc'.
-    var EJS_core       = 'gb';
+  //=============================================================================
+  // STORAGE UTILS
+  //=============================================================================
+  function loadStore(key, fallback, useSession) {
+    try {
+      const v = (useSession ? sessionStorage : localStorage).getItem(key);
+      return v ? JSON.parse(v) : fallback;
+    } catch { return fallback; }
+  }
+  function saveStore(key, value, useSession) {
+    (useSession ? sessionStorage : localStorage).setItem(key, JSON.stringify(value));
+  }
+  function delStore(key, useSession) {
+    (useSession ? sessionStorage : localStorage).removeItem(key);
+  }
 
-    var EJS_player     = '#game';
-    var EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
-    var EJS_startOnLoaded = true;        // arranca solo, sin click extra
-    var EJS_color      = '#1a1a1a';
-    var EJS_volume     = 0.6;
-    var EJS_disableDatabases = true;     // no guarda info del usuario
-    var EJS_Buttons = {                  // esconder todos los botones de la UI
-      playPause: false,
-      restart: false,
-      mute: false,
-      settings: false,
-      fullscreen: true,                  // dejamos solo fullscreen
-      saveState: false,
-      loadState: false,
-      screenRecord: false,
-      gamepad: false,
-      cheat: false,
-      volume: false,
-      saveSavFiles: false,
-      loadSavFiles: false,
-      quickSave: false,
-      quickLoad: false,
-      screenshot: false,
-      cacheManager: false,
-      exitEmulation: false
+  //=============================================================================
+  // CRYPTO UTILS
+  //=============================================================================
+  async function sha256(str) {
+    const buf = new TextEncoder().encode(str);
+    const hash = await crypto.subtle.digest('SHA-256', buf);
+    return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+
+  function uint8ToBase64(u8) {
+    if (!u8 || u8.length === 0) return '';
+    let s = '';
+    const chunk = 0x8000;
+    for (let i = 0; i < u8.length; i += chunk) {
+      s += String.fromCharCode.apply(null, u8.subarray(i, Math.min(i + chunk, u8.length)));
+    }
+    return btoa(s);
+  }
+  function base64ToUint8(b64) {
+    if (!b64) return new Uint8Array(0);
+    const s = atob(b64);
+    const u8 = new Uint8Array(s.length);
+    for (let i = 0; i < s.length; i++) u8[i] = s.charCodeAt(i);
+    return u8;
+  }
+
+  //=============================================================================
+  // UI HELPERS
+  //=============================================================================
+  function showScreen(name) {
+    document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+    const target = document.getElementById('screen-' + name);
+    if (target) target.classList.add('active');
+  }
+  function setAuthMsg(text, type) {
+    const m = document.getElementById('auth-msg');
+    m.textContent = text;
+    m.className = 'msg ' + (type || '');
+  }
+  let toastTimer = null;
+  function toast(msg, type) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (type === 'error' ? ' error' : '');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.className = 'toast'; }, 1800);
+  }
+
+  //=============================================================================
+  // AUTH
+  //=============================================================================
+  let currentTab = 'signin';
+  let currentUser = null;
+
+  document.querySelectorAll('.tab').forEach(t => {
+    t.addEventListener('click', () => {
+      currentTab = t.dataset.tab;
+      document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === t));
+      const isSignup = currentTab === 'signup';
+      document.getElementById('auth-title').textContent = isSignup ? 'Crear cuenta' : 'Iniciar sesión';
+      document.getElementById('auth-subtitle').textContent = isSignup
+        ? 'Registrate para guardar tus partidas'
+        : 'Entrá para acceder a tus partidas';
+      document.getElementById('field-name').style.display = isSignup ? '' : 'none';
+      document.getElementById('auth-submit').textContent = isSignup ? 'Registrarme' : 'Entrar';
+      document.getElementById('password').autocomplete = isSignup ? 'new-password' : 'current-password';
+      setAuthMsg('', '');
+    });
+  });
+
+  document.getElementById('auth-submit').addEventListener('click', handleAuth);
+  ['email', 'password', 'signup-name'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => {
+      if (e.key === 'Enter') handleAuth();
+    });
+  });
+
+  async function handleAuth() {
+    const email = document.getElementById('email').value.trim().toLowerCase();
+    const pass  = document.getElementById('password').value;
+    if (!email || !pass) { setAuthMsg('Completá email y contraseña', 'error'); return; }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { setAuthMsg('Email inválido', 'error'); return; }
+    if (pass.length < 4) { setAuthMsg('La contraseña debe tener al menos 4 caracteres', 'error'); return; }
+
+    const hash = await sha256(pass + ':' + email);  // salt mínimo con el email
+    const users = loadStore(STORE.USERS, []);
+
+    if (currentTab === 'signup') {
+      const name = document.getElementById('signup-name').value.trim();
+      if (!name) { setAuthMsg('Ingresá tu nombre', 'error'); return; }
+      if (users.find(u => u.email === email)) {
+        setAuthMsg('Ya hay un usuario con ese email', 'error');
+        return;
+      }
+      const user = { name, email, hash, createdAt: Date.now() };
+      users.push(user);
+      saveStore(STORE.USERS, users);
+      saveStore(STORE.SESSION, { email, name });
+      enterApp(user);
+    } else {
+      const u = users.find(u => u.email === email);
+      if (!u || u.hash !== hash) {
+        setAuthMsg('Email o contraseña incorrectos', 'error');
+        return;
+      }
+      saveStore(STORE.SESSION, { email: u.email, name: u.name });
+      enterApp(u);
+    }
+  }
+
+  document.getElementById('logout-btn').addEventListener('click', () => {
+    if (!confirm('¿Salir de tu sesión?')) return;
+    delStore(STORE.SESSION);
+    delStore(STORE.CURRENT_ROM, true);
+    location.reload();
+  });
+
+  //=============================================================================
+  // ROM LIST
+  //=============================================================================
+  async function loadROMList() {
+    const grid = document.getElementById('rom-grid');
+    grid.innerHTML = '<div class="empty">Cargando lista…</div>';
+
+    let roms = await detectROMsViaGitHubAPI();
+
+    if (!roms) {
+      // Fallback: manifest manual
+      try {
+        const r = await fetch(ROMS_FOLDER + '/manifest.json', { cache: 'no-store' });
+        if (r.ok) {
+          const arr = await r.json();
+          roms = arr.map(name => ({ name, path: ROMS_FOLDER + '/' + name }));
+        }
+      } catch (_) {}
+    }
+
+    if (!roms || roms.length === 0) {
+      grid.innerHTML = '<div class="empty error">No se encontraron ROMs en la carpeta /' + ROMS_FOLDER + '/. ' +
+                       'Subí archivos .gb o .gbc al repo.</div>';
+      return;
+    }
+
+    roms.sort((a, b) => a.name.localeCompare(b.name));
+    grid.innerHTML = '';
+    roms.forEach(rom => {
+      const card = document.createElement('div');
+      card.className = 'rom-card';
+      const isGBC = /\.gbc$/i.test(rom.name);
+      const title = rom.name.replace(/\.(gb|gbc)$/i, '').replace(/[-_]/g, ' ');
+      card.innerHTML = '<div class="icon">' + (isGBC ? '🎨' : '🎮') + '</div>' +
+                       '<div class="title">' + escapeHTML(title) + '</div>' +
+                       '<div class="badge">' + (isGBC ? 'GBC' : 'GB') + '</div>';
+      card.addEventListener('click', () => selectROM(rom));
+      grid.appendChild(card);
+    });
+  }
+  function escapeHTML(s) {
+    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  async function detectROMsViaGitHubAPI() {
+    const host = window.location.hostname;
+    if (!host.endsWith('.github.io')) return null;
+
+    const owner = host.split('.')[0];
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    // user-page repo: pathname suele estar vacío → repo = owner.github.io
+    // project-page repo: pathname[0] = nombre del repo
+    const repo = pathParts[0] || (owner + '.github.io');
+
+    try {
+      const url = `https://api.github.com/repos/${owner}/${repo}/contents/${ROMS_FOLDER}`;
+      const r = await fetch(url);
+      if (!r.ok) return null;
+      const files = await r.json();
+      if (!Array.isArray(files)) return null;
+      return files
+        .filter(f => f.type === 'file' && /\.(gb|gbc)$/i.test(f.name))
+        .map(f => ({ name: f.name, path: ROMS_FOLDER + '/' + f.name }));
+    } catch (e) {
+      console.warn('GitHub API listing failed:', e);
+      return null;
+    }
+  }
+
+  function selectROM(rom) {
+    saveStore(STORE.CURRENT_ROM, rom, true);
+    location.reload();
+  }
+
+  //=============================================================================
+  // EMULATOR
+  //=============================================================================
+  let currentROM = null;
+  let autoSaveTimer = null;
+  let emulatorReady = false;
+
+  function bootEmulator(rom) {
+    currentROM = rom;
+    showScreen('game');
+
+    const saveKey = currentUser.email + '|' + rom.name;
+    const saves = loadStore(STORE.SAVES, {});
+    const userSave = saves[saveKey];
+
+    window.EJS_player     = '#game';
+    window.EJS_gameUrl    = rom.path;
+    window.EJS_core       = /\.gbc$/i.test(rom.name) ? 'gbc' : 'gb';
+    window.EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
+    window.EJS_startOnLoaded = true;
+    window.EJS_volume     = 0.6;
+    window.EJS_disableDatabases = true;
+    window.EJS_Buttons = {
+      playPause: false, restart: false, mute: false, settings: false,
+      fullscreen: true, saveState: false, loadState: false,
+      screenRecord: false, gamepad: false, cheat: false, volume: false,
+      saveSavFiles: false, loadSavFiles: false, quickSave: false,
+      quickLoad: false, screenshot: false, cacheManager: false, exitEmulation: false
     };
 
-    // Bloqueos extra para modo kiosko
-    document.addEventListener('keydown', function (e) {
-      // Bloquear atajos del navegador (Ctrl+S, Ctrl+P, etc.)
-      if (e.ctrlKey || e.metaKey) {
-        var k = (e.key || '').toLowerCase();
-        if (['s','p','u','o','j','f','w','t','n','r'].indexOf(k) !== -1) {
-          e.preventDefault();
-        }
-      }
-    });
-    window.addEventListener('dragover', function (e) { e.preventDefault(); });
-    window.addEventListener('drop',     function (e) { e.preventDefault(); });
-  </script>
+    // Cargar el estado guardado al iniciar (si existe)
+    if (userSave && userSave.state) {
+      window.EJS_loadStateURL = 'data:application/octet-stream;base64,' + userSave.state;
+    }
 
-  <!-- Cargador oficial de EmulatorJS -->
-  <script src="https://cdn.emulatorjs.org/stable/data/loader.js"></script>
+    window.EJS_ready = function () {
+      emulatorReady = true;
+      if (autoSaveTimer) clearInterval(autoSaveTimer);
+      autoSaveTimer = setInterval(() => saveProgress(true), AUTO_SAVE_INTERVAL_MS);
+    };
+
+    const sc = document.createElement('script');
+    sc.src = 'https://cdn.emulatorjs.org/stable/data/loader.js';
+    document.body.appendChild(sc);
+  }
+
+  function getEmulatorState() {
+    const e = window.EJS_emulator;
+    if (!e) return null;
+    try {
+      if (e.gameManager && typeof e.gameManager.getState === 'function') return e.gameManager.getState();
+      if (typeof e.getState === 'function') return e.getState();
+    } catch (err) { console.warn('getState error:', err); }
+    return null;
+  }
+  function getEmulatorSRAM() {
+    const e = window.EJS_emulator;
+    if (!e) return null;
+    try {
+      if (e.gameManager && typeof e.gameManager.getSaveFile === 'function') return e.gameManager.getSaveFile();
+    } catch (err) { console.warn('getSaveFile error:', err); }
+    return null;
+  }
+
+  function saveProgress(silent) {
+    if (!emulatorReady || !currentUser || !currentROM) return;
+    try {
+      const state = getEmulatorState();
+      const sram  = getEmulatorSRAM();
+      if (!state) return;
+      const saves = loadStore(STORE.SAVES, {});
+      const key = currentUser.email + '|' + currentROM.name;
+      saves[key] = {
+        state: uint8ToBase64(state),
+        sram:  sram ? uint8ToBase64(sram) : '',
+        t:     Date.now()
+      };
+      saveStore(STORE.SAVES, saves);
+      if (!silent) toast('Partida guardada ✓');
+    } catch (e) {
+      console.warn('save failed:', e);
+      if (!silent) toast('Error al guardar', 'error');
+    }
+  }
+
+  document.getElementById('save-btn').addEventListener('click', () => saveProgress(false));
+
+  document.getElementById('back-btn').addEventListener('click', () => {
+    saveProgress(true);
+    delStore(STORE.CURRENT_ROM, true);
+    location.reload();
+  });
+
+  // Save automatically when closing tab
+  window.addEventListener('beforeunload', () => {
+    if (currentROM && emulatorReady) saveProgress(true);
+  });
+  window.addEventListener('pagehide', () => {
+    if (currentROM && emulatorReady) saveProgress(true);
+  });
+
+  //=============================================================================
+  // KIOSK SHORTCUTS BLOCKER
+  //=============================================================================
+  document.addEventListener('keydown', function (e) {
+    if (e.ctrlKey || e.metaKey) {
+      const k = (e.key || '').toLowerCase();
+      if (['s','p','u','o','j','w','t','n','r','d','h'].indexOf(k) !== -1) e.preventDefault();
+    }
+  });
+  window.addEventListener('dragover', e => e.preventDefault());
+  window.addEventListener('drop',     e => e.preventDefault());
+  document.addEventListener('gesturestart', e => e.preventDefault());
+
+  //=============================================================================
+  // ENTRY POINT
+  //=============================================================================
+  function enterApp(user) {
+    currentUser = user;
+    document.getElementById('hello-user').textContent = 'Hola, ' + user.name;
+
+    // ¿Hay un ROM seleccionado en esta sesión?
+    const rom = loadStore(STORE.CURRENT_ROM, null, true);
+    if (rom && rom.name && rom.path) {
+      bootEmulator(rom);
+    } else {
+      showScreen('picker');
+      loadROMList();
+    }
+  }
+
+  (function init() {
+    const session = loadStore(STORE.SESSION, null);
+    if (session && session.email) {
+      const users = loadStore(STORE.USERS, []);
+      const u = users.find(x => x.email === session.email);
+      if (u) { enterApp(u); return; }
+    }
+    showScreen('auth');
+  })();
+  </script>
 </body>
 </html>
