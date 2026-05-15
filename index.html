@@ -569,7 +569,9 @@
 
     window.EJS_player     = '#game';
     window.EJS_gameUrl    = rom.path;
-    window.EJS_core       = /\.gbc$/i.test(rom.name) ? 'gbc' : 'gb';
+    // El core 'gb' de EmulatorJS (Gambatte) maneja tanto Game Boy como
+    // Game Boy Color. NO usar 'gbc' como core — ese core no existe.
+    window.EJS_core       = 'gb';
     window.EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
     window.EJS_startOnLoaded = true;
     window.EJS_volume     = 0.6;
