@@ -461,21 +461,53 @@
     const list = [];
     if (manualUrl) list.push(manualUrl);
 
-    const base = rom.name.replace(/\.(gb|gbc)$/i, '').replace(/[-_]/g, ' ').trim();
+    // IMPORTANTE: NO reemplazamos guiones. Los nombres de libretro-thumbnails
+    // siguen la convención No-Intro y los guiones son parte del nombre real
+    // (ej. "F-1 Race", "Pokemon - Yellow Version").
+    const base = rom.name.replace(/\.(gb|gbc)$/i, '').trim();
     const isGBC = /\.gbc$/i.test(rom.name);
     const folders = isGBC
       ? ['Nintendo_-_Game_Boy_Color', 'Nintendo_-_Game_Boy']
       : ['Nintendo_-_Game_Boy', 'Nintendo_-_Game_Boy_Color'];
 
-    const variants = [
-      base + ' (World)',
-      base + ' (USA, Europe)',
-      base + ' (USA)',
-      base + ' (Europe)',
-      base + ' (Japan)',
-      base
-    ];
+    // Generar variantes de nombre, en orden de preferencia
+    const variants = [];
+    const add = (s) => {
+      const t = (s || '').trim().replace(/\s+/g, ' ');
+      if (t && variants.indexOf(t) === -1) variants.push(t);
+    };
 
+    // 1) Nombre literal (matchea exacto con muchos libretro-thumbnails)
+    add(base);
+
+    // 2) Sacar progresivamente los tags entre paréntesis del final
+    //    "X (World) (Rev 1)" -> "X (World)" -> "X"
+    let stripped = base;
+    while (/\s*\([^)]*\)\s*$/.test(stripped)) {
+      stripped = stripped.replace(/\s*\([^)]*\)\s*$/, '').trim();
+      add(stripped);
+    }
+    const coreName = stripped; // nombre "limpio" sin paréntesis
+
+    // 3) Para el nombre limpio, agregar tags comunes de región
+    if (coreName) {
+      ['(World)', '(USA, Europe)', '(USA)', '(Europe)', '(Japan)',
+       '(USA, Europe, Korea)', '(World) (Rev 1)', '(USA, Europe) (Rev 1)']
+        .forEach(tag => add(coreName + ' ' + tag));
+    }
+
+    // 4) Variantes con "Pokémon" (con acento) — libretro lo guarda así
+    if (/Pokemon/i.test(base)) {
+      variants.slice().forEach(v => add(v.replace(/Pokemon/g, 'Pokémon')));
+    }
+
+    // 5) Reemplazos comunes: II <-> 2, etc. (por si acaso)
+    variants.slice().forEach(v => {
+      if (/\bII\b/.test(v)) add(v.replace(/\bII\b/g, '2'));
+      if (/\b2\b/.test(v))  add(v.replace(/\b2\b/g, 'II'));
+    });
+
+    // Construir las URLs combinando carpetas × variantes
     for (const folder of folders) {
       for (const v of variants) {
         list.push(
