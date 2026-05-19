@@ -331,14 +331,12 @@
   }
 
   function submitToGoogleSheet(name, email) {
-    // Script tag: sigue redirects de Apps Script sin restricciones CORS.
     const params = new URLSearchParams({ name, email });
     const url = APPS_SCRIPT_URL + '?' + params.toString();
-    console.log('[Arcade] Enviando a Google Sheets:', url);
     const s = document.createElement('script');
     s.src = url;
-    s.onload = () => { console.log('[Arcade] OK - dato enviado'); s.remove(); };
-    s.onerror = (e) => { console.warn('[Arcade] Error al enviar:', e); s.remove(); };
+    s.onload = () => { toast('📋 Email registrado ✓'); s.remove(); };
+    s.onerror = () => { toast('⚠️ No se pudo registrar el email', 'error'); s.remove(); };
     document.head.appendChild(s);
   }
 
