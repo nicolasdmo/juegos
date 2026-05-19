@@ -218,12 +218,6 @@
 
   <div class="toast" id="toast"></div>
 
-  <!-- Formulario oculto para captura de emails sin problemas de CORS/redirect -->
-  <iframe name="track-iframe" style="display:none" aria-hidden="true"></iframe>
-  <form id="track-form" method="GET" target="track-iframe" style="display:none" aria-hidden="true">
-    <input type="hidden" name="name"  id="track-name">
-    <input type="hidden" name="email" id="track-email">
-  </form>
 
   <script>
   //=============================================================================
@@ -337,12 +331,15 @@
   }
 
   function submitToGoogleSheet(name, email) {
-    // Formulario oculto → iframe: sigue redirects de Apps Script sin restricciones CORS.
-    const form = document.getElementById('track-form');
-    form.action = APPS_SCRIPT_URL;
-    document.getElementById('track-name').value  = name;
-    document.getElementById('track-email').value = email;
-    form.submit();
+    // Script tag: sigue redirects de Apps Script sin restricciones CORS.
+    const params = new URLSearchParams({ name, email });
+    const url = APPS_SCRIPT_URL + '?' + params.toString();
+    console.log('[Arcade] Enviando a Google Sheets:', url);
+    const s = document.createElement('script');
+    s.src = url;
+    s.onload = () => { console.log('[Arcade] OK - dato enviado'); s.remove(); };
+    s.onerror = (e) => { console.warn('[Arcade] Error al enviar:', e); s.remove(); };
+    document.head.appendChild(s);
   }
 
   document.getElementById('logout-btn').addEventListener('click', () => {
