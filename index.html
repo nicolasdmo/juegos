@@ -21,21 +21,14 @@
   .screen { display: none; width: 100vw; height: 100vh; }
   .screen.active { display: flex; flex-direction: column; }
 
-  /* ===== Auth ===== */
-  #screen-auth { align-items: center; justify-content: center; padding: 16px; }
-  .auth-card {
+  /* ===== Register ===== */
+  #screen-register { align-items: center; justify-content: center; padding: 16px; }
+  .register-card {
     background: #161616; border: 1px solid #2a2a2a; border-radius: 14px;
     padding: 28px; width: 100%; max-width: 380px;
   }
-  .auth-card h1 { margin: 0 0 4px; font-size: 24px; font-weight: 600; }
-  .auth-card .subtitle { color: #888; font-size: 13px; margin-bottom: 22px; }
-  .tabs { display: flex; gap: 6px; margin-bottom: 20px; background: #0a0a0a; padding: 4px; border-radius: 8px; }
-  .tab {
-    flex: 1; padding: 8px 12px; background: transparent; border: none;
-    color: #888; cursor: pointer; border-radius: 6px; font-size: 13px; font-weight: 500;
-    transition: all 0.15s;
-  }
-  .tab.active { background: #2a2a2a; color: #fff; }
+  .register-card h1 { margin: 0 0 4px; font-size: 24px; font-weight: 600; }
+  .register-card .subtitle { color: #888; font-size: 13px; margin-bottom: 24px; }
   .field { margin-bottom: 14px; }
   .field label { display: block; font-size: 12px; color: #888; margin-bottom: 6px; }
   .field input {
@@ -52,6 +45,7 @@
   }
   .btn-primary:hover { background: #5080e0; }
   .btn-primary:active { transform: scale(0.99); }
+  .btn-primary:disabled { background: #2a2a2a; color: #666; cursor: not-allowed; }
   .msg { margin-top: 12px; font-size: 13px; min-height: 18px; text-align: center; }
   .msg.error { color: #ff6b6b; }
   .msg.ok    { color: #4caf50; }
@@ -122,7 +116,6 @@
   #screen-game { padding: 0; }
   #game-container { width: 100%; height: 100%; background: #000; position: relative; }
   #game { width: 100%; height: 100%; }
-  /* ===== Menú flotante del juego ===== */
   .game-menu {
     position: fixed; top: 8px; left: 8px; z-index: 99999;
   }
@@ -166,7 +159,6 @@
   .toast.show { opacity: 1; }
   .toast.error { border-color: #ff6b6b; color: #ff6b6b; }
 
-  /* Hide EmulatorJS UI but keep virtual gamepad */
   .ejs_menu_bar, .ejs_menu_bar_hidden, .ejs_menu_button,
   .ejs_settings_parent, .ejs_cheat_parent, .ejs_netplay_parent,
   .ejs_save_states_menu, .ejs_context_menu, .ejs_popout_container,
@@ -177,29 +169,21 @@
 </head>
 <body oncontextmenu="return false" ondragstart="return false">
 
-  <!-- ===== AUTH SCREEN ===== -->
-  <div id="screen-auth" class="screen active">
-    <div class="auth-card">
-      <h1 id="auth-title">Iniciar sesión</h1>
-      <div class="subtitle" id="auth-subtitle">Entrá para acceder a tus partidas</div>
-      <div class="tabs">
-        <button class="tab active" data-tab="signin">Entrar</button>
-        <button class="tab" data-tab="signup">Crear cuenta</button>
-      </div>
-      <div class="field" id="field-name" style="display:none;">
+  <!-- ===== REGISTER SCREEN ===== -->
+  <div id="screen-register" class="screen active">
+    <div class="register-card">
+      <h1>Arcade</h1>
+      <div class="subtitle">Ingresá tu nombre y email para jugar</div>
+      <div class="field">
         <label>Nombre</label>
-        <input type="text" id="signup-name" placeholder="Tu nombre" autocomplete="name">
+        <input type="text" id="reg-name" placeholder="Tu nombre" autocomplete="name">
       </div>
       <div class="field">
         <label>Email</label>
-        <input type="email" id="email" placeholder="email@ejemplo.com" autocomplete="email" inputmode="email">
+        <input type="email" id="reg-email" placeholder="email@ejemplo.com" autocomplete="email" inputmode="email">
       </div>
-      <div class="field">
-        <label>Contraseña</label>
-        <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
-      </div>
-      <button class="btn-primary" id="auth-submit">Entrar</button>
-      <div class="msg" id="auth-msg"></div>
+      <button class="btn-primary" id="reg-submit">Jugar</button>
+      <div class="msg" id="reg-msg"></div>
     </div>
   </div>
 
@@ -236,15 +220,16 @@
 
   <script>
   //=============================================================================
-  // CONFIG
+  // CONFIG — Google Apps Script para captura de emails
   //=============================================================================
-  const ROMS_FOLDER = 'roms';          // carpeta donde están los .gb/.gbc
-  const AUTO_SAVE_INTERVAL_MS = 30000; // cada 30 seg
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwopk25_OHfk2uaTgXI_LxneQPuFoBg16OZxgQkRjM6zIPls9U78OAqN38bO3-uVOPo/exec';
+
+  const ROMS_FOLDER = 'roms';
+  const AUTO_SAVE_INTERVAL_MS = 30000;
   const STORE = {
-    USERS:   'arcade_users_v1',
-    SESSION: 'arcade_session_v1',
-    SAVES:   'arcade_saves_v1',         // { "email|rom": { state: b64, sram: b64, t: timestamp } }
-    CURRENT_ROM: 'arcade_current_rom_v1' // sessionStorage: rom seleccionado para esta sesión
+    SESSION:     'arcade_session_v2',
+    SAVES:       'arcade_saves_v1',
+    CURRENT_ROM: 'arcade_current_rom_v1'
   };
 
   //=============================================================================
@@ -264,14 +249,8 @@
   }
 
   //=============================================================================
-  // CRYPTO UTILS
+  // BINARY UTILS
   //=============================================================================
-  async function sha256(str) {
-    const buf = new TextEncoder().encode(str);
-    const hash = await crypto.subtle.digest('SHA-256', buf);
-    return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
-  }
-
   function uint8ToBase64(u8) {
     if (!u8 || u8.length === 0) return '';
     let s = '';
@@ -297,8 +276,8 @@
     const target = document.getElementById('screen-' + name);
     if (target) target.classList.add('active');
   }
-  function setAuthMsg(text, type) {
-    const m = document.getElementById('auth-msg');
+  function setRegMsg(text, type) {
+    const m = document.getElementById('reg-msg');
     m.textContent = text;
     m.className = 'msg ' + (type || '');
   }
@@ -312,69 +291,57 @@
   }
 
   //=============================================================================
-  // AUTH
+  // REGISTRO
   //=============================================================================
-  let currentTab = 'signin';
   let currentUser = null;
 
-  document.querySelectorAll('.tab').forEach(t => {
-    t.addEventListener('click', () => {
-      currentTab = t.dataset.tab;
-      document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === t));
-      const isSignup = currentTab === 'signup';
-      document.getElementById('auth-title').textContent = isSignup ? 'Crear cuenta' : 'Iniciar sesión';
-      document.getElementById('auth-subtitle').textContent = isSignup
-        ? 'Registrate para guardar tus partidas'
-        : 'Entrá para acceder a tus partidas';
-      document.getElementById('field-name').style.display = isSignup ? '' : 'none';
-      document.getElementById('auth-submit').textContent = isSignup ? 'Registrarme' : 'Entrar';
-      document.getElementById('password').autocomplete = isSignup ? 'new-password' : 'current-password';
-      setAuthMsg('', '');
-    });
-  });
-
-  document.getElementById('auth-submit').addEventListener('click', handleAuth);
-  ['email', 'password', 'signup-name'].forEach(id => {
+  document.getElementById('reg-submit').addEventListener('click', handleRegister);
+  ['reg-name', 'reg-email'].forEach(id => {
     document.getElementById(id).addEventListener('keydown', e => {
-      if (e.key === 'Enter') handleAuth();
+      if (e.key === 'Enter') handleRegister();
     });
   });
 
-  async function handleAuth() {
-    const email = document.getElementById('email').value.trim().toLowerCase();
-    const pass  = document.getElementById('password').value;
-    if (!email || !pass) { setAuthMsg('Completá email y contraseña', 'error'); return; }
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { setAuthMsg('Email inválido', 'error'); return; }
-    if (pass.length < 4) { setAuthMsg('La contraseña debe tener al menos 4 caracteres', 'error'); return; }
+  async function handleRegister() {
+    const name  = document.getElementById('reg-name').value.trim();
+    const email = document.getElementById('reg-email').value.trim().toLowerCase();
 
-    const hash = await sha256(pass + ':' + email);  // salt mínimo con el email
-    const users = loadStore(STORE.USERS, []);
-
-    if (currentTab === 'signup') {
-      const name = document.getElementById('signup-name').value.trim();
-      if (!name) { setAuthMsg('Ingresá tu nombre', 'error'); return; }
-      if (users.find(u => u.email === email)) {
-        setAuthMsg('Ya hay un usuario con ese email', 'error');
-        return;
-      }
-      const user = { name, email, hash, createdAt: Date.now() };
-      users.push(user);
-      saveStore(STORE.USERS, users);
-      saveStore(STORE.SESSION, { email, name });
-      enterApp(user);
-    } else {
-      const u = users.find(u => u.email === email);
-      if (!u || u.hash !== hash) {
-        setAuthMsg('Email o contraseña incorrectos', 'error');
-        return;
-      }
-      saveStore(STORE.SESSION, { email: u.email, name: u.name });
-      enterApp(u);
+    if (!name)  { setRegMsg('Ingresá tu nombre', 'error'); return; }
+    if (!email) { setRegMsg('Ingresá tu email', 'error'); return; }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      setRegMsg('Email inválido', 'error'); return;
     }
+
+    const btn = document.getElementById('reg-submit');
+    btn.disabled = true;
+    btn.textContent = 'Guardando…';
+    setRegMsg('', '');
+
+    // Enviar a Google Sheets (en segundo plano, sin bloquear el juego)
+    submitToGoogleSheet(name, email).catch(() => {});
+
+    // Guardar sesión local y entrar
+    const user = { name, email };
+    saveStore(STORE.SESSION, user);
+    enterApp(user);
+
+    btn.disabled = false;
+    btn.textContent = 'Jugar';
+  }
+
+  async function submitToGoogleSheet(name, email) {
+    // Usamos no-cors porque Apps Script no devuelve CORS headers en todos los casos.
+    // El fetch igual se ejecuta y la fila se agrega a la planilla.
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email })
+    });
   }
 
   document.getElementById('logout-btn').addEventListener('click', () => {
-    if (!confirm('¿Salir de tu sesión?')) return;
+    if (!confirm('¿Salir?')) return;
     delStore(STORE.SESSION);
     delStore(STORE.CURRENT_ROM, true);
     location.reload();
@@ -390,7 +357,6 @@
     let roms = await detectROMsViaGitHubAPI();
 
     if (!roms) {
-      // Fallback: manifest manual
       try {
         const r = await fetch(ROMS_FOLDER + '/manifest.json', { cache: 'no-store' });
         if (r.ok) {
@@ -407,7 +373,6 @@
     }
 
     roms.sort((a, b) => a.name.localeCompare(b.name));
-    // Cargar mapeo manual de portadas (opcional)
     let manualCovers = {};
     try {
       const r = await fetch(ROMS_FOLDER + '/covers.json', { cache: 'no-store' });
@@ -436,21 +401,16 @@
     });
   }
 
-  // Intenta cargar la portada probando varias URLs candidatas.
-  // Si todas fallan, queda el emoji de fallback.
   function tryLoadCover(img, rom, manualUrl) {
     const candidates = buildCoverCandidates(rom, manualUrl);
     let idx = 0;
-    img.onload = () => {
-      // Imagen válida: marcar como cargada para esconder el fallback
-      img.classList.add('loaded');
-    };
+    img.onload = () => { img.classList.add('loaded'); };
     img.onerror = () => {
       idx++;
       if (idx < candidates.length) {
         img.src = candidates[idx];
       } else {
-        img.style.display = 'none'; // se ve el fallback emoji
+        img.style.display = 'none';
         img.onerror = null;
       }
     };
@@ -461,53 +421,41 @@
     const list = [];
     if (manualUrl) list.push(manualUrl);
 
-    // IMPORTANTE: NO reemplazamos guiones. Los nombres de libretro-thumbnails
-    // siguen la convención No-Intro y los guiones son parte del nombre real
-    // (ej. "F-1 Race", "Pokemon - Yellow Version").
     const base = rom.name.replace(/\.(gb|gbc)$/i, '').trim();
     const isGBC = /\.gbc$/i.test(rom.name);
     const folders = isGBC
       ? ['Nintendo_-_Game_Boy_Color', 'Nintendo_-_Game_Boy']
       : ['Nintendo_-_Game_Boy', 'Nintendo_-_Game_Boy_Color'];
 
-    // Generar variantes de nombre, en orden de preferencia
     const variants = [];
     const add = (s) => {
       const t = (s || '').trim().replace(/\s+/g, ' ');
       if (t && variants.indexOf(t) === -1) variants.push(t);
     };
 
-    // 1) Nombre literal (matchea exacto con muchos libretro-thumbnails)
     add(base);
-
-    // 2) Sacar progresivamente los tags entre paréntesis del final
-    //    "X (World) (Rev 1)" -> "X (World)" -> "X"
     let stripped = base;
     while (/\s*\([^)]*\)\s*$/.test(stripped)) {
       stripped = stripped.replace(/\s*\([^)]*\)\s*$/, '').trim();
       add(stripped);
     }
-    const coreName = stripped; // nombre "limpio" sin paréntesis
+    const coreName = stripped;
 
-    // 3) Para el nombre limpio, agregar tags comunes de región
     if (coreName) {
       ['(World)', '(USA, Europe)', '(USA)', '(Europe)', '(Japan)',
        '(USA, Europe, Korea)', '(World) (Rev 1)', '(USA, Europe) (Rev 1)']
         .forEach(tag => add(coreName + ' ' + tag));
     }
 
-    // 4) Variantes con "Pokémon" (con acento) — libretro lo guarda así
     if (/Pokemon/i.test(base)) {
       variants.slice().forEach(v => add(v.replace(/Pokemon/g, 'Pokémon')));
     }
 
-    // 5) Reemplazos comunes: II <-> 2, etc. (por si acaso)
     variants.slice().forEach(v => {
       if (/\bII\b/.test(v)) add(v.replace(/\bII\b/g, '2'));
       if (/\b2\b/.test(v))  add(v.replace(/\b2\b/g, 'II'));
     });
 
-    // Construir las URLs combinando carpetas × variantes
     for (const folder of folders) {
       for (const v of variants) {
         list.push(
@@ -518,6 +466,7 @@
     }
     return list;
   }
+
   function escapeHTML(s) {
     return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
@@ -528,8 +477,6 @@
 
     const owner = host.split('.')[0];
     const pathParts = window.location.pathname.split('/').filter(Boolean);
-    // user-page repo: pathname suele estar vacío → repo = owner.github.io
-    // project-page repo: pathname[0] = nombre del repo
     const repo = pathParts[0] || (owner + '.github.io');
 
     try {
@@ -569,8 +516,6 @@
 
     window.EJS_player     = '#game';
     window.EJS_gameUrl    = rom.path;
-    // El core 'gb' de EmulatorJS (Gambatte) maneja tanto Game Boy como
-    // Game Boy Color. NO usar 'gbc' como core — ese core no existe.
     window.EJS_core       = 'gb';
     window.EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
     window.EJS_startOnLoaded = true;
@@ -584,7 +529,6 @@
       quickLoad: false, screenshot: false, cacheManager: false, exitEmulation: false
     };
 
-    // Cargar el estado guardado al iniciar (si existe)
     if (userSave && userSave.state) {
       window.EJS_loadStateURL = 'data:application/octet-stream;base64,' + userSave.state;
     }
@@ -639,7 +583,6 @@
     }
   }
 
-  // Menú desplegable del juego (☰)
   const menuToggle = document.getElementById('menu-toggle');
   const menuItems  = document.getElementById('menu-items');
   function closeMenu() {
@@ -651,7 +594,6 @@
     menuItems.classList.toggle('open');
     menuToggle.classList.toggle('open');
   });
-  // Cerrar el menú si tocás en cualquier otro lado
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.game-menu')) closeMenu();
   });
@@ -663,12 +605,10 @@
     saveProgress(false);
     closeMenu();
   });
-
   document.getElementById('load-btn').addEventListener('click', () => {
     loadProgress();
     closeMenu();
   });
-
   document.getElementById('back-btn').addEventListener('click', () => {
     saveProgress(true);
     delStore(STORE.CURRENT_ROM, true);
@@ -710,7 +650,6 @@
     }
   }
 
-  // Save automatically when closing tab
   window.addEventListener('beforeunload', () => {
     if (currentROM && emulatorReady) saveProgress(true);
   });
@@ -738,7 +677,6 @@
     currentUser = user;
     document.getElementById('hello-user').textContent = 'Hola, ' + user.name;
 
-    // ¿Hay un ROM seleccionado en esta sesión?
     const rom = loadStore(STORE.CURRENT_ROM, null, true);
     if (rom && rom.name && rom.path) {
       bootEmulator(rom);
@@ -750,12 +688,11 @@
 
   (function init() {
     const session = loadStore(STORE.SESSION, null);
-    if (session && session.email) {
-      const users = loadStore(STORE.USERS, []);
-      const u = users.find(x => x.email === session.email);
-      if (u) { enterApp(u); return; }
+    if (session && session.email && session.name) {
+      enterApp(session);
+      return;
     }
-    showScreen('auth');
+    showScreen('register');
   })();
   </script>
 </body>
