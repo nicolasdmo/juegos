@@ -222,7 +222,7 @@
   //=============================================================================
   // CONFIG — Google Apps Script para captura de emails
   //=============================================================================
-  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwopk25_OHfk2uaTgXI_LxneQPuFoBg16OZxgQkRjM6zIPls9U78OAqN38bO3-uVOPo/exec';
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz_lXVeIGK-YZqkc4HXqy3xfBpOEESNn4GteThwXVnO9b3L9B9FhJqgzaxcFfPXQTCi/exec';
 
   const ROMS_FOLDER = 'roms';
   const AUTO_SAVE_INTERVAL_MS = 30000;
@@ -330,13 +330,11 @@
   }
 
   async function submitToGoogleSheet(name, email) {
-    // Usamos no-cors porque Apps Script no devuelve CORS headers en todos los casos.
-    // El fetch igual se ejecuta y la fila se agrega a la planilla.
-    await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email })
+    // GET con parámetros en la URL — más confiable con Apps Script
+    const params = new URLSearchParams({ name, email });
+    await fetch(APPS_SCRIPT_URL + '?' + params.toString(), {
+      method: 'GET',
+      mode: 'no-cors'
     });
   }
 
