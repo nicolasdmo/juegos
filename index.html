@@ -325,7 +325,7 @@
     setRegMsg('', '');
 
     // Enviar a Google Sheets (en segundo plano, sin bloquear el juego)
-    submitToGoogleSheet(name, email).catch(() => {});
+    try { submitToGoogleSheet(name, email); } catch(_) {}
 
     // Guardar sesión local y entrar
     const user = { name, email, synced: true };
@@ -696,7 +696,7 @@
     if (session && session.email && session.name) {
       // Si todavía no se registró en Sheets (sesión vieja), lo mandamos ahora
       if (!session.synced) {
-        submitToGoogleSheet(session.name, session.email).catch(() => {});
+        try { submitToGoogleSheet(session.name, session.email); } catch(_) {}
         session.synced = true;
         saveStore(STORE.SESSION, session);
       }
