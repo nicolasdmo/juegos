@@ -218,6 +218,13 @@
 
   <div class="toast" id="toast"></div>
 
+  <!-- Formulario oculto para captura de emails sin problemas de CORS/redirect -->
+  <iframe name="track-iframe" style="display:none" aria-hidden="true"></iframe>
+  <form id="track-form" method="GET" target="track-iframe" style="display:none" aria-hidden="true">
+    <input type="hidden" name="name"  id="track-name">
+    <input type="hidden" name="email" id="track-email">
+  </form>
+
   <script>
   //=============================================================================
   // CONFIG — Google Apps Script para captura de emails
@@ -321,7 +328,7 @@
     submitToGoogleSheet(name, email).catch(() => {});
 
     // Guardar sesión local y entrar
-    const user = { name, email };
+    const user = { name, email, synced: true };
     saveStore(STORE.SESSION, user);
     enterApp(user);
 
@@ -330,15 +337,12 @@
   }
 
   function submitToGoogleSheet(name, email) {
-    // Usamos Image() para evitar el problema de redirección de Apps Script.
-    // Los navegadores siguen redirects en cargas de imagen sin restricciones CORS.
-    return new Promise((resolve) => {
-      const img = new Image();
-      const params = new URLSearchParams({ name, email });
-      img.onload = img.onerror = resolve;
-      img.src = APPS_SCRIPT_URL + '?' + params.toString();
-      setTimeout(resolve, 5000); // timeout de seguridad
-    });
+    // Formulario oculto → iframe: sigue redirects de Apps Script sin restricciones CORS.
+    const form = document.getElementById('track-form');
+    form.action = APPS_SCRIPT_URL;
+    document.getElementById('track-name').value  = name;
+    document.getElementById('track-email').value = email;
+    form.submit();
   }
 
   document.getElementById('logout-btn').addEventListener('click', () => {
@@ -690,6 +694,12 @@
   (function init() {
     const session = loadStore(STORE.SESSION, null);
     if (session && session.email && session.name) {
+      // Si todavía no se registró en Sheets (sesión vieja), lo mandamos ahora
+      if (!session.synced) {
+        submitToGoogleSheet(session.name, session.email).catch(() => {});
+        session.synced = true;
+        saveStore(STORE.SESSION, session);
+      }
       enterApp(session);
       return;
     }
