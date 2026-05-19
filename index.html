@@ -329,12 +329,15 @@
     btn.textContent = 'Jugar';
   }
 
-  async function submitToGoogleSheet(name, email) {
-    // GET con parámetros en la URL — más confiable con Apps Script
-    const params = new URLSearchParams({ name, email });
-    await fetch(APPS_SCRIPT_URL + '?' + params.toString(), {
-      method: 'GET',
-      mode: 'no-cors'
+  function submitToGoogleSheet(name, email) {
+    // Usamos Image() para evitar el problema de redirección de Apps Script.
+    // Los navegadores siguen redirects en cargas de imagen sin restricciones CORS.
+    return new Promise((resolve) => {
+      const img = new Image();
+      const params = new URLSearchParams({ name, email });
+      img.onload = img.onerror = resolve;
+      img.src = APPS_SCRIPT_URL + '?' + params.toString();
+      setTimeout(resolve, 5000); // timeout de seguridad
     });
   }
 
