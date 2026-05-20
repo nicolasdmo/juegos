@@ -7,10 +7,26 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Arcade</title>
 <style>
+  :root {
+    --bg:        #08000f;
+    --surface:   #120825;
+    --surface2:  #1e1038;
+    --border:    #3a1868;
+    --accent:    #7b3fc8;
+    --accent-hi: #a55ef0;
+    --btn-a:     #c0244a;   /* Game Boy A button */
+    --btn-a-sh:  #7a0028;
+    --btn-b:     #2a1050;   /* secondary/select */
+    --btn-b-sh:  #0e0030;
+    --text:      #f0e5ff;
+    --muted:     #9070b8;
+    --red:       #ff5f6d;
+    --green:     #4ade80;
+  }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body {
     margin: 0; padding: 0; height: 100%; width: 100%;
-    background: #0a0a0a; color: #eee;
+    background: var(--bg); color: var(--text);
     font-family: system-ui, -apple-system, sans-serif;
     overflow: hidden;
     -webkit-user-select: none; user-select: none;
@@ -24,31 +40,40 @@
   /* ===== Register ===== */
   #screen-register { align-items: center; justify-content: center; padding: 16px; }
   .register-card {
-    background: #161616; border: 1px solid #2a2a2a; border-radius: 14px;
-    padding: 28px; width: 100%; max-width: 380px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 18px;
+    padding: 30px; width: 100%; max-width: 380px;
+    box-shadow: 0 0 40px rgba(123,63,200,0.18);
   }
-  .register-card h1 { margin: 0 0 4px; font-size: 24px; font-weight: 600; }
-  .register-card .subtitle { color: #888; font-size: 13px; margin-bottom: 24px; }
+  .register-card h1 { margin: 0 0 4px; font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+  .register-card .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
   .field { margin-bottom: 14px; }
-  .field label { display: block; font-size: 12px; color: #888; margin-bottom: 6px; }
+  .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
   .field input {
-    width: 100%; padding: 12px 14px; background: #0a0a0a;
-    border: 1px solid #2a2a2a; border-radius: 8px;
-    color: #fff; font-size: 15px;
+    width: 100%; padding: 12px 14px; background: var(--bg);
+    border: 1px solid var(--border); border-radius: 10px;
+    color: var(--text); font-size: 15px;
     -webkit-user-select: text; user-select: text;
   }
-  .field input:focus { outline: none; border-color: #555; }
+  .field input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(123,63,200,0.2); }
+
+  /* Game Boy A-button style for primary */
   .btn-primary {
-    width: 100%; padding: 13px; background: #4070d0; border: none; border-radius: 8px;
-    color: #fff; font-size: 15px; font-weight: 500; cursor: pointer;
-    margin-top: 4px;
+    width: 100%; padding: 14px;
+    background: var(--btn-a);
+    box-shadow: 0 5px 0 var(--btn-a-sh);
+    border: none; border-radius: 50px;
+    color: #fff; font-size: 15px; font-weight: 700;
+    letter-spacing: 1px; text-transform: uppercase;
+    cursor: pointer; margin-top: 8px;
+    transition: transform 0.08s, box-shadow 0.08s;
   }
-  .btn-primary:hover { background: #5080e0; }
-  .btn-primary:active { transform: scale(0.99); }
-  .btn-primary:disabled { background: #2a2a2a; color: #666; cursor: not-allowed; }
+  .btn-primary:hover { background: #d42e56; }
+  .btn-primary:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--btn-a-sh); }
+  .btn-primary:disabled { background: var(--border); box-shadow: none; color: var(--muted); cursor: not-allowed; }
+
   .msg { margin-top: 12px; font-size: 13px; min-height: 18px; text-align: center; }
-  .msg.error { color: #ff6b6b; }
-  .msg.ok    { color: #4caf50; }
+  .msg.error { color: var(--red); }
+  .msg.ok    { color: var(--green); }
 
   /* ===== Picker ===== */
   #screen-picker { padding: 16px; }
@@ -56,191 +81,201 @@
     display: flex; justify-content: space-between; align-items: center;
     margin-bottom: 10px; flex-shrink: 0;
   }
-  .picker-header h2 { margin: 0; font-size: 18px; font-weight: 600; }
+  .picker-header h2 { margin: 0; font-size: 18px; font-weight: 700; }
   .picker-header .user-info { display: flex; align-items: center; gap: 10px; }
-  .picker-header .hello { color: #888; font-size: 13px; }
+  .picker-header .hello { color: var(--muted); font-size: 13px; }
 
-  .search-bar {
-    position: relative; margin-bottom: 12px; flex-shrink: 0;
-  }
+  .search-bar { position: relative; margin-bottom: 12px; flex-shrink: 0; }
   .search-bar input {
-    width: 100%; padding: 10px 14px 10px 36px;
-    background: #161616; border: 1px solid #2a2a2a; border-radius: 8px;
-    color: #fff; font-size: 14px;
+    width: 100%; padding: 10px 14px 10px 38px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 50px;
+    color: var(--text); font-size: 14px;
     -webkit-user-select: text; user-select: text;
   }
-  .search-bar input:focus { outline: none; border-color: #555; }
-  .search-bar input::placeholder { color: #555; }
+  .search-bar input:focus { outline: none; border-color: var(--accent); }
+  .search-bar input::placeholder { color: var(--muted); }
   .search-icon {
-    position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
-    color: #555; font-size: 15px; pointer-events: none;
+    position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+    color: var(--muted); font-size: 15px; pointer-events: none;
   }
 
   .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-    gap: 10px;
-    overflow-y: auto;
-    flex: 1;
-    padding-bottom: 16px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px; overflow-y: auto; flex: 1; padding-bottom: 16px;
   }
   .rom-card {
-    background: #161616; border: 1px solid #2a2a2a; border-radius: 10px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
     padding: 8px; cursor: pointer; text-align: center;
-    transition: all 0.15s;
-    display: flex; flex-direction: column;
+    transition: all 0.15s; display: flex; flex-direction: column;
   }
-  .rom-card:hover { background: #1f1f1f; border-color: #444; }
-  .rom-card:active { transform: scale(0.98); }
+  .rom-card:hover { background: var(--surface2); border-color: var(--accent); box-shadow: 0 0 14px rgba(123,63,200,0.2); }
+  .rom-card:active { transform: scale(0.97); }
   .rom-card .cover {
-    width: 100%; aspect-ratio: 3 / 4;
-    background: #0a0a0a; border-radius: 6px;
+    width: 100%; aspect-ratio: 3 / 4; background: var(--bg); border-radius: 8px;
     overflow: hidden; margin-bottom: 8px;
-    display: flex; align-items: center; justify-content: center;
-    position: relative;
+    display: flex; align-items: center; justify-content: center; position: relative;
   }
-  .rom-card .cover img {
-    width: 100%; height: 100%; object-fit: cover;
-    background: #0a0a0a;
-  }
+  .rom-card .cover img { width: 100%; height: 100%; object-fit: cover; background: var(--bg); }
   .rom-card .cover .fallback {
-    position: absolute; inset: 0;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 42px; color: #666;
+    position: absolute; inset: 0; display: flex; align-items: center;
+    justify-content: center; font-size: 42px; color: var(--muted);
   }
   .rom-card .cover img.loaded + .fallback { display: none; }
-  .rom-card .title {
-    font-size: 12px; word-break: break-word; flex: 1;
-    line-height: 1.3;
-  }
+  .rom-card .title { font-size: 12px; word-break: break-word; flex: 1; line-height: 1.3; color: var(--text); }
   .rom-card .badge {
-    display: inline-block; padding: 2px 6px; background: #2a2a2a; border-radius: 4px;
-    font-size: 10px; color: #aaa; margin-top: 6px; text-transform: uppercase;
-    align-self: center;
+    display: inline-block; padding: 2px 7px; background: var(--border); border-radius: 50px;
+    font-size: 10px; color: var(--accent-hi); margin-top: 6px; text-transform: uppercase;
+    align-self: center; letter-spacing: 0.5px;
   }
-  .empty {
-    grid-column: 1 / -1;
-    color: #888; text-align: center; padding: 40px 16px; font-size: 14px;
-  }
-  .empty.error { color: #ff6b6b; }
-  .btn-small {
-    background: #2a2a2a; border: 1px solid #3a3a3a; color: #eee;
-    padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;
-  }
-  .btn-small:hover { background: #3a3a3a; }
+  .empty { grid-column: 1 / -1; color: var(--muted); text-align: center; padding: 40px 16px; font-size: 14px; }
+  .empty.error { color: var(--red); }
 
-  /* ===== Game ===== */
+  /* Game Boy Start/Select style for small buttons */
+  .btn-small {
+    background: var(--btn-b);
+    box-shadow: 0 3px 0 var(--btn-b-sh);
+    border: 1px solid var(--border); color: var(--text);
+    padding: 6px 16px; border-radius: 50px; font-size: 11px;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: transform 0.08s, box-shadow 0.08s;
+  }
+  .btn-small:hover { background: #3a1870; }
+  .btn-small:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--btn-b-sh); }
+
+  /* ===== Game Screen ===== */
   #screen-game { padding: 0; }
   #game-container { width: 100%; height: 100%; background: #000; position: relative; }
-  #game { width: 100%; height: 100%; }
+
+  /* Banner strip */
+  .game-banner {
+    position: absolute; top: 0; left: 0; right: 0; height: 58px;
+    background: rgba(8,0,15,0.82); backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(123,63,200,0.35);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000; overflow: hidden;
+  }
+  .game-banner a { display: flex; align-items: center; height: 100%; max-height: 50px; }
+  .game-banner img { max-height: 46px; width: auto; object-fit: contain; }
+  .game-banner .banner-placeholder {
+    color: var(--muted); font-size: 12px; letter-spacing: 1px; text-transform: uppercase;
+    border: 1px dashed var(--border); padding: 6px 20px; border-radius: 6px;
+  }
+
+  /* Game canvas area below banner */
+  #game {
+    position: absolute; top: 58px; left: 0; right: 0; bottom: 0;
+  }
 
   /* Loading overlay */
   .game-loading {
-    position: absolute; inset: 0; background: #000;
+    position: absolute; inset: 0; background: var(--bg);
     display: flex; align-items: center; justify-content: center;
-    z-index: 9999; transition: opacity 0.4s;
+    z-index: 999; transition: opacity 0.4s;
   }
   .game-loading.hidden { opacity: 0; pointer-events: none; }
   .loading-content { text-align: center; }
   .loading-spinner {
     width: 48px; height: 48px;
-    border: 3px solid #2a2a2a;
-    border-top-color: #4070d0;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent-hi);
     border-radius: 50%;
     margin: 0 auto 16px;
     animation: spin 0.8s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-game-name { color: #888; font-size: 13px; margin-top: 8px; }
+  .loading-game-name { color: var(--muted); font-size: 13px; margin-top: 8px; }
 
+  /* Menu button — just below banner, ultra-transparent */
   .game-menu {
-    position: fixed; top: 8px; left: 8px; z-index: 99999;
+    position: absolute; top: 66px; left: 8px; z-index: 99999;
   }
   .menu-toggle {
-    width: 40px; height: 40px;
-    background: rgba(0,0,0,0.55);
-    border: 1px solid #555; color: #fff;
-    border-radius: 8px; font-size: 16px;
+    width: 36px; height: 36px;
+    background: rgba(8,0,15,0.30);
+    border: 1px solid rgba(123,63,200,0.35); color: rgba(240,229,255,0.55);
+    border-radius: 50px; font-size: 14px;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    backdrop-filter: blur(6px);
-    transition: background 0.15s;
+    backdrop-filter: blur(4px);
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
   }
-  .menu-toggle:hover { background: rgba(40,40,40,0.85); }
-  .menu-toggle.open { background: rgba(60,60,60,0.95); }
+  .menu-toggle:hover, .menu-toggle.open {
+    background: rgba(58,24,104,0.85);
+    color: var(--text); border-color: var(--accent);
+  }
   .menu-items {
-    display: none;
-    flex-direction: column;
-    margin-top: 6px;
-    gap: 4px;
-    min-width: 160px;
+    display: none; flex-direction: column;
+    margin-top: 6px; gap: 4px; min-width: 165px;
   }
   .menu-items.open { display: flex; }
   .menu-item {
-    background: rgba(0,0,0,0.85);
-    border: 1px solid #555; color: #fff;
-    padding: 10px 14px; border-radius: 6px;
-    font-size: 13px; cursor: pointer;
-    text-align: left;
-    backdrop-filter: blur(6px);
-    white-space: nowrap;
+    background: rgba(18,8,37,0.92);
+    border: 1px solid var(--border); color: var(--text);
+    padding: 10px 14px; border-radius: 50px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    text-align: left; backdrop-filter: blur(6px); white-space: nowrap;
+    transition: background 0.12s;
   }
-  .menu-item:hover { background: rgba(50,50,50,0.95); }
+  .menu-item:hover { background: rgba(58,24,104,0.95); border-color: var(--accent); }
   .menu-item:active { transform: scale(0.97); }
 
   /* ===== Save Slots Modal ===== */
   .modal-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+    position: fixed; inset: 0; background: rgba(4,0,10,0.80);
     display: flex; align-items: center; justify-content: center;
-    z-index: 999999; padding: 16px;
-    animation: fadeIn 0.15s ease;
+    z-index: 999999; padding: 16px; animation: fadeIn 0.15s ease;
   }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   .modal {
-    background: #161616; border: 1px solid #2a2a2a; border-radius: 14px;
-    padding: 20px; width: 100%; max-width: 340px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 18px;
+    padding: 22px; width: 100%; max-width: 340px;
+    box-shadow: 0 0 40px rgba(123,63,200,0.25);
   }
-  .modal h3 { margin: 0 0 16px; font-size: 16px; font-weight: 600; }
+  .modal h3 { margin: 0 0 16px; font-size: 16px; font-weight: 700; }
   .slot-list { display: flex; flex-direction: column; gap: 8px; }
   .slot {
-    background: #0a0a0a; border: 1px solid #2a2a2a; border-radius: 8px;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
     padding: 12px; display: flex; align-items: center; gap: 10px;
   }
-  .slot-num { font-size: 13px; color: #888; min-width: 20px; font-weight: 500; }
+  .slot-num { font-size: 13px; color: var(--muted); min-width: 20px; font-weight: 700; }
   .slot-info { flex: 1; }
-  .slot-info .slot-date { font-size: 12px; color: #eee; }
-  .slot-info .slot-empty { font-size: 12px; color: #555; }
+  .slot-info .slot-date { font-size: 12px; color: var(--text); }
+  .slot-info .slot-empty { font-size: 12px; color: var(--muted); }
   .slot-actions { display: flex; gap: 6px; }
   .slot-btn {
-    background: #2a2a2a; border: 1px solid #3a3a3a; color: #eee;
-    padding: 5px 10px; border-radius: 5px; font-size: 11px; cursor: pointer;
+    border: 1px solid var(--border); color: var(--text);
+    padding: 5px 10px; border-radius: 50px; font-size: 11px;
+    font-weight: 600; cursor: pointer; background: var(--surface2);
+    transition: transform 0.08s;
   }
-  .slot-btn:hover { background: #3a3a3a; }
-  .slot-btn.save { color: #4caf50; border-color: #2a5c2a; }
-  .slot-btn.load { color: #4070d0; border-color: #2a3c6a; }
-  .slot-btn.del  { color: #ff6b6b; border-color: #6a2a2a; }
+  .slot-btn:active { transform: scale(0.95); }
+  .slot-btn.save { color: var(--green); border-color: #1a5c2a; background: #0a1f0e; }
+  .slot-btn.load { color: var(--accent-hi); border-color: var(--border); }
+  .slot-btn.del  { color: var(--red); border-color: #6a1a1a; background: #1a0808; }
   .modal-footer { margin-top: 16px; text-align: right; }
   .btn-cancel {
-    background: #2a2a2a; border: 1px solid #3a3a3a; color: #aaa;
-    padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer;
+    background: var(--btn-b); box-shadow: 0 3px 0 var(--btn-b-sh);
+    border: 1px solid var(--border); color: var(--muted);
+    padding: 8px 20px; border-radius: 50px; font-size: 13px;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+    cursor: pointer; transition: transform 0.08s, box-shadow 0.08s;
   }
-  .btn-cancel:hover { background: #3a3a3a; }
+  .btn-cancel:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--btn-b-sh); }
 
   .toast {
     position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-    background: rgba(0,0,0,0.9); border: 1px solid #4caf50; color: #4caf50;
-    padding: 10px 18px; border-radius: 8px; font-size: 13px;
-    opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 99999;
+    background: rgba(8,0,15,0.95); border: 1px solid var(--green); color: var(--green);
+    padding: 10px 18px; border-radius: 50px; font-size: 13px; font-weight: 600;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999999;
   }
   .toast.show { opacity: 1; }
-  .toast.error { border-color: #ff6b6b; color: #ff6b6b; }
+  .toast.error { border-color: var(--red); color: var(--red); }
 
   .ejs_menu_bar, .ejs_menu_bar_hidden, .ejs_menu_button,
   .ejs_settings_parent, .ejs_cheat_parent, .ejs_netplay_parent,
   .ejs_save_states_menu, .ejs_context_menu, .ejs_popout_container,
-  .ejs_loading_text {
-    display: none !important;
-  }
+  .ejs_loading_text { display: none !important; }
 </style>
 </head>
 <body oncontextmenu="return false" ondragstart="return false">
@@ -284,13 +319,18 @@
   <!-- ===== GAME SCREEN ===== -->
   <div id="screen-game" class="screen">
     <div id="game-container">
+
+      <!-- Banner publicitario — cambiá BANNER_IMG_URL y BANNER_LINK_URL en el JS -->
+      <div class="game-banner" id="game-banner"></div>
+
       <div class="game-loading" id="game-loading">
         <div class="loading-content">
           <div class="loading-spinner"></div>
-          <div style="color:#eee;font-size:15px;">Iniciando emulador…</div>
+          <div style="color:var(--text);font-size:15px;">Iniciando emulador…</div>
           <div class="loading-game-name" id="loading-game-name"></div>
         </div>
       </div>
+
       <div class="game-menu">
         <button class="menu-toggle" id="menu-toggle" aria-label="Menú">☰</button>
         <div class="menu-items" id="menu-items">
@@ -299,6 +339,7 @@
           <button class="menu-item" id="back-btn">← Volver al menú</button>
         </div>
       </div>
+
       <div id="game"></div>
     </div>
   </div>
@@ -311,6 +352,10 @@
   //=============================================================================
   const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz_lXVeIGK-YZqkc4HXqy3xfBpOEESNn4GteThwXVnO9b3L9B9FhJqgzaxcFfPXQTCi/exec';
 
+  // Banner — ponés la URL de tu imagen y el link de destino
+  const BANNER_IMG_URL  = '';   // ej: 'https://tudominio.com/banner.png'
+  const BANNER_LINK_URL = '';   // ej: 'https://tudominio.com'
+
   const ROMS_FOLDER = 'roms';
   const AUTO_SAVE_INTERVAL_MS = 30000;
   const NUM_SLOTS = 3;
@@ -319,6 +364,26 @@
     SAVES:       'arcade_saves_v2',
     CURRENT_ROM: 'arcade_current_rom_v1'
   };
+
+  //=============================================================================
+  // BANNER
+  //=============================================================================
+  (function initBanner() {
+    const el = document.getElementById('game-banner');
+    if (BANNER_IMG_URL) {
+      const a = document.createElement('a');
+      a.href = BANNER_LINK_URL || '#';
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      const img = document.createElement('img');
+      img.src = BANNER_IMG_URL;
+      img.alt = 'Publicidad';
+      a.appendChild(img);
+      el.appendChild(a);
+    } else {
+      el.innerHTML = '<div class="banner-placeholder">Tu banner aquí · 728 × 46 px</div>';
+    }
+  })();
 
   //=============================================================================
   // STORAGE UTILS
@@ -343,9 +408,8 @@
     if (!u8 || u8.length === 0) return '';
     let s = '';
     const chunk = 0x8000;
-    for (let i = 0; i < u8.length; i += chunk) {
+    for (let i = 0; i < u8.length; i += chunk)
       s += String.fromCharCode.apply(null, u8.subarray(i, Math.min(i + chunk, u8.length)));
-    }
     return btoa(s);
   }
   function base64ToUint8(b64) {
@@ -401,8 +465,7 @@
     }
 
     const btn = document.getElementById('reg-submit');
-    btn.disabled = true;
-    btn.textContent = 'Guardando…';
+    btn.disabled = true; btn.textContent = 'Guardando…';
     setRegMsg('', '');
 
     try { submitToGoogleSheet(name, email); } catch(_) {}
@@ -411,8 +474,7 @@
     saveStore(STORE.SESSION, user);
     enterApp(user);
 
-    btn.disabled = false;
-    btn.textContent = 'Jugar';
+    btn.disabled = false; btn.textContent = 'Jugar';
   }
 
   function submitToGoogleSheet(name, email) {
@@ -447,8 +509,7 @@
     }
 
     if (!roms || roms.length === 0) {
-      grid.innerHTML = '<div class="empty error">No se encontraron ROMs en la carpeta /' + ROMS_FOLDER + '/. ' +
-                       'Subí archivos .gb o .gbc al repo.</div>';
+      grid.innerHTML = '<div class="empty error">No se encontraron ROMs en la carpeta /' + ROMS_FOLDER + '/.</div>';
       return;
     }
 
@@ -465,19 +526,16 @@
       card.className = 'rom-card';
       const isGBC = /\.gbc$/i.test(rom.name);
       const title = rom.name.replace(/\.(gb|gbc)$/i, '').replace(/[-_]/g, ' ');
-      const fallbackIcon = isGBC ? '🎨' : '🎮';
       card.innerHTML =
         '<div class="cover">' +
           '<img alt="" loading="lazy">' +
-          '<div class="fallback">' + fallbackIcon + '</div>' +
+          '<div class="fallback">' + (isGBC ? '🎨' : '🎮') + '</div>' +
         '</div>' +
         '<div class="title">' + escapeHTML(title) + '</div>' +
         '<div class="badge">' + (isGBC ? 'GBC' : 'GB') + '</div>';
       card.addEventListener('click', () => selectROM(rom));
       grid.appendChild(card);
-
-      const img = card.querySelector('img');
-      tryLoadCover(img, rom, manualCovers[rom.name]);
+      tryLoadCover(card.querySelector('img'), rom, manualCovers[rom.name]);
     });
 
     document.getElementById('rom-search').addEventListener('input', e => {
@@ -495,12 +553,8 @@
     img.onload = () => { img.classList.add('loaded'); };
     img.onerror = () => {
       idx++;
-      if (idx < candidates.length) {
-        img.src = candidates[idx];
-      } else {
-        img.style.display = 'none';
-        img.onerror = null;
-      }
+      if (idx < candidates.length) img.src = candidates[idx];
+      else { img.style.display = 'none'; img.onerror = null; }
     };
     img.src = candidates[0];
   }
@@ -516,42 +570,27 @@
       : ['Nintendo_-_Game_Boy', 'Nintendo_-_Game_Boy_Color'];
 
     const variants = [];
-    const add = (s) => {
-      const t = (s || '').trim().replace(/\s+/g, ' ');
-      if (t && variants.indexOf(t) === -1) variants.push(t);
-    };
+    const add = s => { const t = (s||'').trim().replace(/\s+/g,' '); if (t && !variants.includes(t)) variants.push(t); };
 
     add(base);
     let stripped = base;
-    while (/\s*\([^)]*\)\s*$/.test(stripped)) {
-      stripped = stripped.replace(/\s*\([^)]*\)\s*$/, '').trim();
-      add(stripped);
-    }
+    while (/\s*\([^)]*\)\s*$/.test(stripped)) { stripped = stripped.replace(/\s*\([^)]*\)\s*$/,'').trim(); add(stripped); }
     const coreName = stripped;
 
-    if (coreName) {
-      ['(World)', '(USA, Europe)', '(USA)', '(Europe)', '(Japan)',
-       '(USA, Europe, Korea)', '(World) (Rev 1)', '(USA, Europe) (Rev 1)']
-        .forEach(tag => add(coreName + ' ' + tag));
-    }
+    if (coreName) ['(World)','(USA, Europe)','(USA)','(Europe)','(Japan)',
+      '(USA, Europe, Korea)','(World) (Rev 1)','(USA, Europe) (Rev 1)']
+      .forEach(tag => add(coreName + ' ' + tag));
 
-    if (/Pokemon/i.test(base)) {
-      variants.slice().forEach(v => add(v.replace(/Pokemon/g, 'Pokémon')));
-    }
-
+    if (/Pokemon/i.test(base)) variants.slice().forEach(v => add(v.replace(/Pokemon/g, 'Pokémon')));
     variants.slice().forEach(v => {
-      if (/\bII\b/.test(v)) add(v.replace(/\bII\b/g, '2'));
-      if (/\b2\b/.test(v))  add(v.replace(/\b2\b/g, 'II'));
+      if (/\bII\b/.test(v)) add(v.replace(/\bII\b/g,'2'));
+      if (/\b2\b/.test(v))  add(v.replace(/\b2\b/g,'II'));
     });
 
-    for (const folder of folders) {
-      for (const v of variants) {
-        list.push(
-          'https://raw.githubusercontent.com/libretro-thumbnails/' + folder +
-          '/master/Named_Boxarts/' + encodeURIComponent(v) + '.png'
-        );
-      }
-    }
+    for (const folder of folders)
+      for (const v of variants)
+        list.push('https://raw.githubusercontent.com/libretro-thumbnails/' + folder +
+          '/master/Named_Boxarts/' + encodeURIComponent(v) + '.png');
     return list;
   }
 
@@ -562,24 +601,17 @@
   async function detectROMsViaGitHubAPI() {
     const host = window.location.hostname;
     if (!host.endsWith('.github.io')) return null;
-
     const owner = host.split('.')[0];
     const pathParts = window.location.pathname.split('/').filter(Boolean);
     const repo = pathParts[0] || (owner + '.github.io');
-
     try {
-      const url = `https://api.github.com/repos/${owner}/${repo}/contents/${ROMS_FOLDER}`;
-      const r = await fetch(url);
+      const r = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${ROMS_FOLDER}`);
       if (!r.ok) return null;
       const files = await r.json();
       if (!Array.isArray(files)) return null;
-      return files
-        .filter(f => f.type === 'file' && /\.(gb|gbc)$/i.test(f.name))
-        .map(f => ({ name: f.name, path: ROMS_FOLDER + '/' + f.name }));
-    } catch (e) {
-      console.warn('GitHub API listing failed:', e);
-      return null;
-    }
+      return files.filter(f => f.type === 'file' && /\.(gb|gbc)$/i.test(f.name))
+                  .map(f => ({ name: f.name, path: ROMS_FOLDER + '/' + f.name }));
+    } catch (e) { console.warn('GitHub API listing failed:', e); return null; }
   }
 
   function selectROM(rom) {
@@ -600,12 +632,12 @@
     document.getElementById('loading-game-name').textContent =
       rom.name.replace(/\.(gb|gbc)$/i, '').replace(/[-_]/g, ' ');
 
-    window.EJS_player     = '#game';
-    window.EJS_gameUrl    = rom.path;
-    window.EJS_core       = 'gb';
-    window.EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
+    window.EJS_player        = '#game';
+    window.EJS_gameUrl       = rom.path;
+    window.EJS_core          = 'gb';
+    window.EJS_pathtodata    = 'https://cdn.emulatorjs.org/stable/data/';
     window.EJS_startOnLoaded = true;
-    window.EJS_volume     = 0.6;
+    window.EJS_volume        = 0.6;
     window.EJS_disableDatabases = true;
     window.EJS_Buttons = {
       playPause: false, restart: false, mute: false, settings: false,
@@ -616,9 +648,8 @@
     };
 
     const slot0 = getSaveSlot(0);
-    if (slot0 && slot0.state) {
+    if (slot0 && slot0.state)
       window.EJS_loadStateURL = 'data:application/octet-stream;base64,' + slot0.state;
-    }
 
     window.EJS_ready = function () {
       emulatorReady = true;
@@ -637,9 +668,7 @@
   //=============================================================================
   // SAVE SLOTS
   //=============================================================================
-  function getSlotKey() {
-    return currentUser.email + '|' + currentROM.name;
-  }
+  function getSlotKey()  { return currentUser.email + '|' + currentROM.name; }
   function getAllSlots() {
     const saves = loadStore(STORE.SAVES, {});
     const slots = saves[getSlotKey()] || [];
@@ -651,13 +680,10 @@
     saves[getSlotKey()] = slots;
     saveStore(STORE.SAVES, saves);
   }
-  function getSaveSlot(idx) {
-    return getAllSlots()[idx] || null;
-  }
+  function getSaveSlot(idx) { return getAllSlots()[idx] || null; }
 
   function getEmulatorState() {
-    const e = window.EJS_emulator;
-    if (!e) return null;
+    const e = window.EJS_emulator; if (!e) return null;
     try {
       if (e.gameManager && typeof e.gameManager.getState === 'function') return e.gameManager.getState();
       if (typeof e.getState === 'function') return e.getState();
@@ -665,8 +691,7 @@
     return null;
   }
   function getEmulatorSRAM() {
-    const e = window.EJS_emulator;
-    if (!e) return null;
+    const e = window.EJS_emulator; if (!e) return null;
     try {
       if (e.gameManager && typeof e.gameManager.getSaveFile === 'function') return e.gameManager.getSaveFile();
     } catch (err) { console.warn('getSaveFile error:', err); }
@@ -680,11 +705,7 @@
       const sram  = getEmulatorSRAM();
       if (!state) return false;
       const slots = getAllSlots();
-      slots[idx] = {
-        state: uint8ToBase64(state),
-        sram:  sram ? uint8ToBase64(sram) : '',
-        t:     Date.now()
-      };
+      slots[idx] = { state: uint8ToBase64(state), sram: sram ? uint8ToBase64(sram) : '', t: Date.now() };
       persistSlots(slots);
       if (!silent) toast('Slot ' + (idx + 1) + ' guardado ✓');
       return true;
@@ -696,35 +717,23 @@
   }
 
   function loadFromSlot(idx) {
-    if (!emulatorReady || !currentUser || !currentROM) {
-      toast('El juego todavía no está listo', 'error'); return;
-    }
+    if (!emulatorReady || !currentUser || !currentROM) { toast('El juego todavía no está listo', 'error'); return; }
     const slot = getSaveSlot(idx);
-    if (!slot || !slot.state) {
-      toast('Slot ' + (idx + 1) + ' vacío', 'error'); return;
-    }
+    if (!slot || !slot.state) { toast('Slot ' + (idx + 1) + ' vacío', 'error'); return; }
     try {
       const stateBytes = base64ToUint8(slot.state);
       const e = window.EJS_emulator;
       let ok = false;
-      if (e && e.gameManager && typeof e.gameManager.loadState === 'function') {
-        e.gameManager.loadState(stateBytes); ok = true;
-      } else if (e && typeof e.loadState === 'function') {
-        e.loadState(stateBytes); ok = true;
-      }
+      if (e && e.gameManager && typeof e.gameManager.loadState === 'function') { e.gameManager.loadState(stateBytes); ok = true; }
+      else if (e && typeof e.loadState === 'function') { e.loadState(stateBytes); ok = true; }
       if (ok) toast('Slot ' + (idx + 1) + ' cargado (' + new Date(slot.t).toLocaleString() + ') ✓');
-      else toast('No se pudo cargar (API del emulador)', 'error');
-    } catch (err) {
-      console.warn('loadState error:', err);
-      toast('Error al cargar', 'error');
-    }
+      else    toast('No se pudo cargar (API del emulador)', 'error');
+    } catch (err) { console.warn('loadState error:', err); toast('Error al cargar', 'error'); }
   }
 
   function deleteSlot(idx) {
     if (!confirm('¿Borrar slot ' + (idx + 1) + '?')) return;
-    const slots = getAllSlots();
-    slots[idx] = null;
-    persistSlots(slots);
+    const slots = getAllSlots(); slots[idx] = null; persistSlots(slots);
     toast('Slot ' + (idx + 1) + ' borrado');
     openSlotsModal(currentModalMode);
   }
@@ -754,18 +763,14 @@
       const saveBtn = '<button class="slot-btn save" data-idx="' + i + '" data-action="save">Guardar</button>';
       const loadBtn = s ? '<button class="slot-btn load" data-idx="' + i + '" data-action="load">Cargar</button>' : '';
       const delBtn  = s ? '<button class="slot-btn del"  data-idx="' + i + '" data-action="del">✕</button>' : '';
-      slotsHTML += '<div class="slot">' +
-        '<div class="slot-num">' + (i + 1) + '</div>' +
+      slotsHTML += '<div class="slot"><div class="slot-num">' + (i+1) + '</div>' +
         '<div class="slot-info">' + info + '</div>' +
-        '<div class="slot-actions">' + saveBtn + loadBtn + delBtn + '</div>' +
-        '</div>';
+        '<div class="slot-actions">' + saveBtn + loadBtn + delBtn + '</div></div>';
     }
 
-    overlay.innerHTML = '<div class="modal">' +
-      '<h3>💾 Slots de guardado</h3>' +
+    overlay.innerHTML = '<div class="modal"><h3>💾 Slots de guardado</h3>' +
       '<div class="slot-list">' + slotsHTML + '</div>' +
-      '<div class="modal-footer"><button class="btn-cancel" id="modal-cancel">Cerrar</button></div>' +
-      '</div>';
+      '<div class="modal-footer"><button class="btn-cancel" id="modal-cancel">Cerrar</button></div></div>';
 
     overlay.addEventListener('click', e => {
       const btn = e.target.closest('[data-action]');
@@ -789,15 +794,15 @@
     menuItems.classList.remove('open');
     menuToggle.classList.remove('open');
   }
-  menuToggle.addEventListener('click', (e) => {
+  menuToggle.addEventListener('click', e => {
     e.stopPropagation();
     menuItems.classList.toggle('open');
     menuToggle.classList.toggle('open');
   });
-  document.addEventListener('click', (e) => {
+  document.addEventListener('click', e => {
     if (!e.target.closest('.game-menu') && !e.target.closest('.modal-overlay')) closeMenu();
   });
-  document.addEventListener('touchstart', (e) => {
+  document.addEventListener('touchstart', e => {
     if (!e.target.closest('.game-menu') && !e.target.closest('.modal-overlay')) closeMenu();
   }, { passive: true });
 
@@ -812,10 +817,10 @@
   //=============================================================================
   // KIOSK SHORTCUTS BLOCKER
   //=============================================================================
-  document.addEventListener('keydown', function (e) {
+  document.addEventListener('keydown', e => {
     if (e.ctrlKey || e.metaKey) {
       const k = (e.key || '').toLowerCase();
-      if (['s','p','u','o','j','w','t','n','r','d','h'].indexOf(k) !== -1) e.preventDefault();
+      if ('spuojwtnrdh'.includes(k)) e.preventDefault();
     }
   });
   window.addEventListener('dragover', e => e.preventDefault());
@@ -828,22 +833,13 @@
   function enterApp(user) {
     currentUser = user;
     document.getElementById('hello-user').textContent = 'Hola, ' + user.name;
-
     const rom = loadStore(STORE.CURRENT_ROM, null, true);
-    if (rom && rom.name && rom.path) {
-      bootEmulator(rom);
-    } else {
-      showScreen('picker');
-      loadROMList();
-    }
+    if (rom && rom.name && rom.path) bootEmulator(rom);
+    else { showScreen('picker'); loadROMList(); }
   }
 
-  window.addEventListener('beforeunload', () => {
-    if (currentROM && emulatorReady) saveToSlot(0, true);
-  });
-  window.addEventListener('pagehide', () => {
-    if (currentROM && emulatorReady) saveToSlot(0, true);
-  });
+  window.addEventListener('beforeunload', () => { if (currentROM && emulatorReady) saveToSlot(0, true); });
+  window.addEventListener('pagehide',     () => { if (currentROM && emulatorReady) saveToSlot(0, true); });
 
   (function init() {
     const session = loadStore(STORE.SESSION, null);
