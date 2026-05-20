@@ -154,6 +154,7 @@
     border-bottom: 1px solid rgba(123,63,200,0.35);
     display: flex; align-items: center; justify-content: center;
     z-index: 1000; overflow: hidden;
+    transition: height 0.35s ease, opacity 0.35s ease, border-color 0.35s;
   }
   .game-banner a { display: flex; align-items: center; height: 100%; max-height: 50px; }
   .game-banner img { max-height: 46px; width: auto; object-fit: contain; }
@@ -161,10 +162,27 @@
     color: var(--muted); font-size: 12px; letter-spacing: 1px; text-transform: uppercase;
     border: 1px dashed var(--border); padding: 6px 20px; border-radius: 6px;
   }
+  .noads-btn {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    background: transparent; border: 1px solid rgba(123,63,200,0.25);
+    color: rgba(144,112,184,0.45); padding: 4px 10px; border-radius: 50px;
+    font-size: 10px; font-weight: 600; letter-spacing: 0.5px;
+    text-transform: uppercase; cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .noads-btn:hover { color: var(--text); border-color: var(--accent); }
+
+  /* No-ads state — banner collapses, game takes full screen */
+  #game-container.no-ads .game-banner {
+    height: 0; opacity: 0; pointer-events: none; border-color: transparent;
+  }
+  #game-container.no-ads #game   { top: 0; }
+  #game-container.no-ads .game-menu { top: 8px; }
 
   /* Game canvas area below banner */
   #game {
     position: absolute; top: 58px; left: 0; right: 0; bottom: 0;
+    transition: top 0.35s ease;
   }
 
   /* Loading overlay */
@@ -368,8 +386,18 @@
   //=============================================================================
   // BANNER
   //=============================================================================
-  (function initBanner() {
-    const el = document.getElementById('game-banner');
+  function setupBanner() {
+    const container = document.getElementById('game-container');
+    const el        = document.getElementById('game-banner');
+
+    // Si el usuario ya confirmó, ocultar banner directamente (sin animación)
+    if (currentUser && currentUser.noAds) {
+      container.classList.add('no-ads');
+      return;
+    }
+
+    // Contenido del banner
+    el.innerHTML = '';
     if (BANNER_IMG_URL) {
       const a = document.createElement('a');
       a.href = BANNER_LINK_URL || '#';
@@ -381,9 +409,67 @@
       a.appendChild(img);
       el.appendChild(a);
     } else {
-      el.innerHTML = '<div class="banner-placeholder">Tu banner aquí · 728 × 46 px</div>';
+      const ph = document.createElement('div');
+      ph.className = 'banner-placeholder';
+      ph.textContent = 'Tu banner aquí · 728 × 46 px';
+      el.appendChild(ph);
     }
-  })();
+
+    // Botón "No ads" — discreto, esquina derecha
+    const btn = document.createElement('button');
+    btn.className = 'noads-btn';
+    btn.textContent = '× No ads';
+    btn.addEventListener('click', openNoAdsModal);
+    el.appendChild(btn);
+  }
+
+  function openNoAdsModal() {
+    const existing = document.getElementById('noads-modal');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'noads-modal';
+    overlay.innerHTML =
+      '<div class="modal">' +
+        '<h3>🚫 Quitar publicidad</h3>' +
+        '<p style="color:var(--muted);font-size:13px;margin:0 0 16px">Confirmá el email con el que te registraste.</p>' +
+        '<div class="field" style="margin-bottom:4px">' +
+          '<input type="email" id="noads-email" placeholder="tu@email.com" autocomplete="email" inputmode="email"' +
+          ' style="-webkit-user-select:text;user-select:text">' +
+        '</div>' +
+        '<div class="msg error" id="noads-err" style="min-height:16px;margin-bottom:8px"></div>' +
+        '<button class="btn-primary" id="noads-confirm">Confirmar</button>' +
+        '<div class="modal-footer" style="margin-top:12px">' +
+          '<button class="btn-cancel" id="noads-cancel">Cancelar</button>' +
+        '</div>' +
+      '</div>';
+
+    // Pre-rellenar con el email actual
+    if (currentUser) overlay.querySelector('#noads-email').value = currentUser.email;
+
+    overlay.querySelector('#noads-confirm').addEventListener('click', () => {
+      const input = overlay.querySelector('#noads-email').value.trim().toLowerCase();
+      const errEl = overlay.querySelector('#noads-err');
+      if (!currentUser || input !== currentUser.email) {
+        errEl.textContent = 'El email no coincide con tu cuenta.';
+        return;
+      }
+      // Marcar usuario como no-ads y persistir
+      currentUser.noAds = true;
+      saveStore(STORE.SESSION, currentUser);
+
+      // Animar cierre del banner
+      document.getElementById('game-container').classList.add('no-ads');
+      overlay.remove();
+      toast('¡Publicidad desactivada! ✓');
+    });
+
+    overlay.querySelector('#noads-cancel').addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
+    setTimeout(() => overlay.querySelector('#noads-email').focus(), 80);
+  }
 
   //=============================================================================
   // STORAGE UTILS
@@ -629,6 +715,7 @@
   function bootEmulator(rom) {
     currentROM = rom;
     showScreen('game');
+    setupBanner();
     document.getElementById('loading-game-name').textContent =
       rom.name.replace(/\.(gb|gbc)$/i, '').replace(/[-_]/g, ' ');
 
