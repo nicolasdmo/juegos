@@ -54,11 +54,28 @@
   #screen-picker { padding: 16px; }
   .picker-header {
     display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 16px; flex-shrink: 0;
+    margin-bottom: 10px; flex-shrink: 0;
   }
   .picker-header h2 { margin: 0; font-size: 18px; font-weight: 600; }
   .picker-header .user-info { display: flex; align-items: center; gap: 10px; }
   .picker-header .hello { color: #888; font-size: 13px; }
+
+  .search-bar {
+    position: relative; margin-bottom: 12px; flex-shrink: 0;
+  }
+  .search-bar input {
+    width: 100%; padding: 10px 14px 10px 36px;
+    background: #161616; border: 1px solid #2a2a2a; border-radius: 8px;
+    color: #fff; font-size: 14px;
+    -webkit-user-select: text; user-select: text;
+  }
+  .search-bar input:focus { outline: none; border-color: #555; }
+  .search-bar input::placeholder { color: #555; }
+  .search-icon {
+    position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+    color: #555; font-size: 15px; pointer-events: none;
+  }
+
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
@@ -116,6 +133,26 @@
   #screen-game { padding: 0; }
   #game-container { width: 100%; height: 100%; background: #000; position: relative; }
   #game { width: 100%; height: 100%; }
+
+  /* Loading overlay */
+  .game-loading {
+    position: absolute; inset: 0; background: #000;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9999; transition: opacity 0.4s;
+  }
+  .game-loading.hidden { opacity: 0; pointer-events: none; }
+  .loading-content { text-align: center; }
+  .loading-spinner {
+    width: 48px; height: 48px;
+    border: 3px solid #2a2a2a;
+    border-top-color: #4070d0;
+    border-radius: 50%;
+    margin: 0 auto 16px;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-game-name { color: #888; font-size: 13px; margin-top: 8px; }
+
   .game-menu {
     position: fixed; top: 8px; left: 8px; z-index: 99999;
   }
@@ -136,7 +173,7 @@
     flex-direction: column;
     margin-top: 6px;
     gap: 4px;
-    min-width: 140px;
+    min-width: 160px;
   }
   .menu-items.open { display: flex; }
   .menu-item {
@@ -150,6 +187,45 @@
   }
   .menu-item:hover { background: rgba(50,50,50,0.95); }
   .menu-item:active { transform: scale(0.97); }
+
+  /* ===== Save Slots Modal ===== */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 999999; padding: 16px;
+    animation: fadeIn 0.15s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .modal {
+    background: #161616; border: 1px solid #2a2a2a; border-radius: 14px;
+    padding: 20px; width: 100%; max-width: 340px;
+  }
+  .modal h3 { margin: 0 0 16px; font-size: 16px; font-weight: 600; }
+  .slot-list { display: flex; flex-direction: column; gap: 8px; }
+  .slot {
+    background: #0a0a0a; border: 1px solid #2a2a2a; border-radius: 8px;
+    padding: 12px; display: flex; align-items: center; gap: 10px;
+  }
+  .slot-num { font-size: 13px; color: #888; min-width: 20px; font-weight: 500; }
+  .slot-info { flex: 1; }
+  .slot-info .slot-date { font-size: 12px; color: #eee; }
+  .slot-info .slot-empty { font-size: 12px; color: #555; }
+  .slot-actions { display: flex; gap: 6px; }
+  .slot-btn {
+    background: #2a2a2a; border: 1px solid #3a3a3a; color: #eee;
+    padding: 5px 10px; border-radius: 5px; font-size: 11px; cursor: pointer;
+  }
+  .slot-btn:hover { background: #3a3a3a; }
+  .slot-btn.save { color: #4caf50; border-color: #2a5c2a; }
+  .slot-btn.load { color: #4070d0; border-color: #2a3c6a; }
+  .slot-btn.del  { color: #ff6b6b; border-color: #6a2a2a; }
+  .modal-footer { margin-top: 16px; text-align: right; }
+  .btn-cancel {
+    background: #2a2a2a; border: 1px solid #3a3a3a; color: #aaa;
+    padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer;
+  }
+  .btn-cancel:hover { background: #3a3a3a; }
+
   .toast {
     position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
     background: rgba(0,0,0,0.9); border: 1px solid #4caf50; color: #4caf50;
@@ -196,6 +272,10 @@
         <button class="btn-small" id="logout-btn">Salir</button>
       </div>
     </div>
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="rom-search" placeholder="Buscar juego…" autocomplete="off">
+    </div>
     <div class="grid" id="rom-grid">
       <div class="empty">Cargando lista…</div>
     </div>
@@ -204,6 +284,13 @@
   <!-- ===== GAME SCREEN ===== -->
   <div id="screen-game" class="screen">
     <div id="game-container">
+      <div class="game-loading" id="game-loading">
+        <div class="loading-content">
+          <div class="loading-spinner"></div>
+          <div style="color:#eee;font-size:15px;">Iniciando emulador…</div>
+          <div class="loading-game-name" id="loading-game-name"></div>
+        </div>
+      </div>
       <div class="game-menu">
         <button class="menu-toggle" id="menu-toggle" aria-label="Menú">☰</button>
         <div class="menu-items" id="menu-items">
@@ -218,18 +305,18 @@
 
   <div class="toast" id="toast"></div>
 
-
   <script>
   //=============================================================================
-  // CONFIG — Google Apps Script para captura de emails
+  // CONFIG
   //=============================================================================
   const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz_lXVeIGK-YZqkc4HXqy3xfBpOEESNn4GteThwXVnO9b3L9B9FhJqgzaxcFfPXQTCi/exec';
 
   const ROMS_FOLDER = 'roms';
   const AUTO_SAVE_INTERVAL_MS = 30000;
+  const NUM_SLOTS = 3;
   const STORE = {
     SESSION:     'arcade_session_v2',
-    SAVES:       'arcade_saves_v1',
+    SAVES:       'arcade_saves_v2',
     CURRENT_ROM: 'arcade_current_rom_v1'
   };
 
@@ -318,10 +405,8 @@
     btn.textContent = 'Guardando…';
     setRegMsg('', '');
 
-    // Enviar a Google Sheets (en segundo plano, sin bloquear el juego)
     try { submitToGoogleSheet(name, email); } catch(_) {}
 
-    // Guardar sesión local y entrar
     const user = { name, email, synced: true };
     saveStore(STORE.SESSION, user);
     enterApp(user);
@@ -331,13 +416,8 @@
   }
 
   function submitToGoogleSheet(name, email) {
-    const params = new URLSearchParams({ name, email });
-    const url = APPS_SCRIPT_URL + '?' + params.toString();
-    const s = document.createElement('script');
-    s.src = url;
-    s.onload = () => { toast('📋 Email registrado ✓'); s.remove(); };
-    s.onerror = () => { toast('⚠️ No se pudo registrar el email', 'error'); s.remove(); };
-    document.head.appendChild(s);
+    const url = APPS_SCRIPT_URL + '?' + new URLSearchParams({ name, email });
+    fetch(url, { method: 'GET', mode: 'no-cors' }).catch(() => {});
   }
 
   document.getElementById('logout-btn').addEventListener('click', () => {
@@ -398,6 +478,14 @@
 
       const img = card.querySelector('img');
       tryLoadCover(img, rom, manualCovers[rom.name]);
+    });
+
+    document.getElementById('rom-search').addEventListener('input', e => {
+      const q = e.target.value.toLowerCase().trim();
+      document.querySelectorAll('.rom-card').forEach(card => {
+        const title = card.querySelector('.title').textContent.toLowerCase();
+        card.style.display = (!q || title.includes(q)) ? '' : 'none';
+      });
     });
   }
 
@@ -509,10 +597,8 @@
   function bootEmulator(rom) {
     currentROM = rom;
     showScreen('game');
-
-    const saveKey = currentUser.email + '|' + rom.name;
-    const saves = loadStore(STORE.SAVES, {});
-    const userSave = saves[saveKey];
+    document.getElementById('loading-game-name').textContent =
+      rom.name.replace(/\.(gb|gbc)$/i, '').replace(/[-_]/g, ' ');
 
     window.EJS_player     = '#game';
     window.EJS_gameUrl    = rom.path;
@@ -529,19 +615,44 @@
       quickLoad: false, screenshot: false, cacheManager: false, exitEmulation: false
     };
 
-    if (userSave && userSave.state) {
-      window.EJS_loadStateURL = 'data:application/octet-stream;base64,' + userSave.state;
+    const slot0 = getSaveSlot(0);
+    if (slot0 && slot0.state) {
+      window.EJS_loadStateURL = 'data:application/octet-stream;base64,' + slot0.state;
     }
 
     window.EJS_ready = function () {
       emulatorReady = true;
+      const overlay = document.getElementById('game-loading');
+      overlay.classList.add('hidden');
+      setTimeout(() => { overlay.style.display = 'none'; }, 400);
       if (autoSaveTimer) clearInterval(autoSaveTimer);
-      autoSaveTimer = setInterval(() => saveProgress(true), AUTO_SAVE_INTERVAL_MS);
+      autoSaveTimer = setInterval(() => saveToSlot(0, true), AUTO_SAVE_INTERVAL_MS);
     };
 
     const sc = document.createElement('script');
     sc.src = 'https://cdn.emulatorjs.org/stable/data/loader.js';
     document.body.appendChild(sc);
+  }
+
+  //=============================================================================
+  // SAVE SLOTS
+  //=============================================================================
+  function getSlotKey() {
+    return currentUser.email + '|' + currentROM.name;
+  }
+  function getAllSlots() {
+    const saves = loadStore(STORE.SAVES, {});
+    const slots = saves[getSlotKey()] || [];
+    while (slots.length < NUM_SLOTS) slots.push(null);
+    return slots;
+  }
+  function persistSlots(slots) {
+    const saves = loadStore(STORE.SAVES, {});
+    saves[getSlotKey()] = slots;
+    saveStore(STORE.SAVES, saves);
+  }
+  function getSaveSlot(idx) {
+    return getAllSlots()[idx] || null;
   }
 
   function getEmulatorState() {
@@ -562,27 +673,116 @@
     return null;
   }
 
-  function saveProgress(silent) {
-    if (!emulatorReady || !currentUser || !currentROM) return;
+  function saveToSlot(idx, silent) {
+    if (!emulatorReady || !currentUser || !currentROM) return false;
     try {
       const state = getEmulatorState();
       const sram  = getEmulatorSRAM();
-      if (!state) return;
-      const saves = loadStore(STORE.SAVES, {});
-      const key = currentUser.email + '|' + currentROM.name;
-      saves[key] = {
+      if (!state) return false;
+      const slots = getAllSlots();
+      slots[idx] = {
         state: uint8ToBase64(state),
         sram:  sram ? uint8ToBase64(sram) : '',
         t:     Date.now()
       };
-      saveStore(STORE.SAVES, saves);
-      if (!silent) toast('Partida guardada ✓');
+      persistSlots(slots);
+      if (!silent) toast('Slot ' + (idx + 1) + ' guardado ✓');
+      return true;
     } catch (e) {
       console.warn('save failed:', e);
       if (!silent) toast('Error al guardar', 'error');
+      return false;
     }
   }
 
+  function loadFromSlot(idx) {
+    if (!emulatorReady || !currentUser || !currentROM) {
+      toast('El juego todavía no está listo', 'error'); return;
+    }
+    const slot = getSaveSlot(idx);
+    if (!slot || !slot.state) {
+      toast('Slot ' + (idx + 1) + ' vacío', 'error'); return;
+    }
+    try {
+      const stateBytes = base64ToUint8(slot.state);
+      const e = window.EJS_emulator;
+      let ok = false;
+      if (e && e.gameManager && typeof e.gameManager.loadState === 'function') {
+        e.gameManager.loadState(stateBytes); ok = true;
+      } else if (e && typeof e.loadState === 'function') {
+        e.loadState(stateBytes); ok = true;
+      }
+      if (ok) toast('Slot ' + (idx + 1) + ' cargado (' + new Date(slot.t).toLocaleString() + ') ✓');
+      else toast('No se pudo cargar (API del emulador)', 'error');
+    } catch (err) {
+      console.warn('loadState error:', err);
+      toast('Error al cargar', 'error');
+    }
+  }
+
+  function deleteSlot(idx) {
+    if (!confirm('¿Borrar slot ' + (idx + 1) + '?')) return;
+    const slots = getAllSlots();
+    slots[idx] = null;
+    persistSlots(slots);
+    toast('Slot ' + (idx + 1) + ' borrado');
+    openSlotsModal(currentModalMode);
+  }
+
+  //=============================================================================
+  // SLOTS MODAL
+  //=============================================================================
+  let currentModalMode = 'save';
+
+  function openSlotsModal(mode) {
+    currentModalMode = mode;
+    closeMenu();
+    const existing = document.getElementById('slots-modal');
+    if (existing) existing.remove();
+
+    const slots = getAllSlots();
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'slots-modal';
+
+    let slotsHTML = '';
+    for (let i = 0; i < NUM_SLOTS; i++) {
+      const s = slots[i];
+      const info = s
+        ? '<span class="slot-date">' + new Date(s.t).toLocaleString() + '</span>'
+        : '<span class="slot-empty">Vacío</span>';
+      const saveBtn = '<button class="slot-btn save" data-idx="' + i + '" data-action="save">Guardar</button>';
+      const loadBtn = s ? '<button class="slot-btn load" data-idx="' + i + '" data-action="load">Cargar</button>' : '';
+      const delBtn  = s ? '<button class="slot-btn del"  data-idx="' + i + '" data-action="del">✕</button>' : '';
+      slotsHTML += '<div class="slot">' +
+        '<div class="slot-num">' + (i + 1) + '</div>' +
+        '<div class="slot-info">' + info + '</div>' +
+        '<div class="slot-actions">' + saveBtn + loadBtn + delBtn + '</div>' +
+        '</div>';
+    }
+
+    overlay.innerHTML = '<div class="modal">' +
+      '<h3>💾 Slots de guardado</h3>' +
+      '<div class="slot-list">' + slotsHTML + '</div>' +
+      '<div class="modal-footer"><button class="btn-cancel" id="modal-cancel">Cerrar</button></div>' +
+      '</div>';
+
+    overlay.addEventListener('click', e => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) { if (e.target === overlay) overlay.remove(); return; }
+      const idx = parseInt(btn.dataset.idx);
+      const action = btn.dataset.action;
+      if (action === 'save') { saveToSlot(idx, false); openSlotsModal(mode); }
+      if (action === 'load') { loadFromSlot(idx); overlay.remove(); }
+      if (action === 'del')  { deleteSlot(idx); }
+    });
+    overlay.querySelector('#modal-cancel').addEventListener('click', () => overlay.remove());
+    document.body.appendChild(overlay);
+  }
+
+  //=============================================================================
+  // MENU
+  //=============================================================================
   const menuToggle = document.getElementById('menu-toggle');
   const menuItems  = document.getElementById('menu-items');
   function closeMenu() {
@@ -595,66 +795,18 @@
     menuToggle.classList.toggle('open');
   });
   document.addEventListener('click', (e) => {
-    if (!e.target.closest('.game-menu')) closeMenu();
+    if (!e.target.closest('.game-menu') && !e.target.closest('.modal-overlay')) closeMenu();
   });
   document.addEventListener('touchstart', (e) => {
-    if (!e.target.closest('.game-menu')) closeMenu();
+    if (!e.target.closest('.game-menu') && !e.target.closest('.modal-overlay')) closeMenu();
   }, { passive: true });
 
-  document.getElementById('save-btn').addEventListener('click', () => {
-    saveProgress(false);
-    closeMenu();
-  });
-  document.getElementById('load-btn').addEventListener('click', () => {
-    loadProgress();
-    closeMenu();
-  });
+  document.getElementById('save-btn').addEventListener('click', () => openSlotsModal('save'));
+  document.getElementById('load-btn').addEventListener('click', () => openSlotsModal('load'));
   document.getElementById('back-btn').addEventListener('click', () => {
-    saveProgress(true);
+    saveToSlot(0, true);
     delStore(STORE.CURRENT_ROM, true);
     location.reload();
-  });
-
-  function loadProgress() {
-    if (!emulatorReady || !currentUser || !currentROM) {
-      toast('El juego todavía no está listo', 'error');
-      return;
-    }
-    const key = currentUser.email + '|' + currentROM.name;
-    const saves = loadStore(STORE.SAVES, {});
-    const entry = saves[key];
-    if (!entry || !entry.state) {
-      toast('No hay partida guardada', 'error');
-      return;
-    }
-    try {
-      const stateBytes = base64ToUint8(entry.state);
-      const e = window.EJS_emulator;
-      let ok = false;
-      if (e && e.gameManager && typeof e.gameManager.loadState === 'function') {
-        e.gameManager.loadState(stateBytes);
-        ok = true;
-      } else if (e && typeof e.loadState === 'function') {
-        e.loadState(stateBytes);
-        ok = true;
-      }
-      if (ok) {
-        const when = new Date(entry.t || 0).toLocaleString();
-        toast('Partida cargada (' + when + ') ✓');
-      } else {
-        toast('No se pudo cargar (API del emulador)', 'error');
-      }
-    } catch (err) {
-      console.warn('loadState error:', err);
-      toast('Error al cargar la partida', 'error');
-    }
-  }
-
-  window.addEventListener('beforeunload', () => {
-    if (currentROM && emulatorReady) saveProgress(true);
-  });
-  window.addEventListener('pagehide', () => {
-    if (currentROM && emulatorReady) saveProgress(true);
   });
 
   //=============================================================================
@@ -686,10 +838,16 @@
     }
   }
 
+  window.addEventListener('beforeunload', () => {
+    if (currentROM && emulatorReady) saveToSlot(0, true);
+  });
+  window.addEventListener('pagehide', () => {
+    if (currentROM && emulatorReady) saveToSlot(0, true);
+  });
+
   (function init() {
     const session = loadStore(STORE.SESSION, null);
     if (session && session.email && session.name) {
-      // Si todavía no se registró en Sheets (sesión vieja), lo mandamos ahora
       if (!session.synced) {
         try { submitToGoogleSheet(session.name, session.email); } catch(_) {}
         session.synced = true;
