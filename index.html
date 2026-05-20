@@ -6,6 +6,10 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Arcade</title>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
   :root {
     --bg:        #08000f;
@@ -14,9 +18,9 @@
     --border:    #3a1868;
     --accent:    #7b3fc8;
     --accent-hi: #a55ef0;
-    --btn-a:     #c0244a;   /* Game Boy A button */
+    --btn-a:     #c0244a;
     --btn-a-sh:  #7a0028;
-    --btn-b:     #2a1050;   /* secondary/select */
+    --btn-b:     #2a1050;
     --btn-b-sh:  #0e0030;
     --text:      #f0e5ff;
     --muted:     #9070b8;
@@ -28,12 +32,10 @@
     margin: 0; padding: 0; height: 100%; width: 100%;
     background: var(--bg); color: var(--text);
     font-family: system-ui, -apple-system, sans-serif;
-    overflow: hidden;
-    -webkit-user-select: none; user-select: none;
+    overflow: hidden; -webkit-user-select: none; user-select: none;
   }
   body { touch-action: none; }
 
-  /* ===== Screens ===== */
   .screen { display: none; width: 100vw; height: 100vh; }
   .screen.active { display: flex; flex-direction: column; }
 
@@ -44,7 +46,7 @@
     padding: 30px; width: 100%; max-width: 380px;
     box-shadow: 0 0 40px rgba(123,63,200,0.18);
   }
-  .register-card h1 { margin: 0 0 4px; font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+  .register-card h1 { margin: 0 0 4px; font-size: 26px; font-weight: 700; }
   .register-card .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
   .field { margin-bottom: 14px; }
   .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -55,22 +57,16 @@
     -webkit-user-select: text; user-select: text;
   }
   .field input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(123,63,200,0.2); }
-
-  /* Game Boy A-button style for primary */
   .btn-primary {
-    width: 100%; padding: 14px;
-    background: var(--btn-a);
-    box-shadow: 0 5px 0 var(--btn-a-sh);
-    border: none; border-radius: 50px;
+    width: 100%; padding: 14px; background: var(--btn-a);
+    box-shadow: 0 5px 0 var(--btn-a-sh); border: none; border-radius: 50px;
     color: #fff; font-size: 15px; font-weight: 700;
-    letter-spacing: 1px; text-transform: uppercase;
-    cursor: pointer; margin-top: 8px;
+    letter-spacing: 1px; text-transform: uppercase; cursor: pointer; margin-top: 8px;
     transition: transform 0.08s, box-shadow 0.08s;
   }
   .btn-primary:hover { background: #d42e56; }
   .btn-primary:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--btn-a-sh); }
   .btn-primary:disabled { background: var(--border); box-shadow: none; color: var(--muted); cursor: not-allowed; }
-
   .msg { margin-top: 12px; font-size: 13px; min-height: 18px; text-align: center; }
   .msg.error { color: var(--red); }
   .msg.ok    { color: var(--green); }
@@ -84,7 +80,6 @@
   .picker-header h2 { margin: 0; font-size: 18px; font-weight: 700; }
   .picker-header .user-info { display: flex; align-items: center; gap: 10px; }
   .picker-header .hello { color: var(--muted); font-size: 13px; }
-
   .search-bar { position: relative; margin-bottom: 12px; flex-shrink: 0; }
   .search-bar input {
     width: 100%; padding: 10px 14px 10px 38px;
@@ -94,11 +89,7 @@
   }
   .search-bar input:focus { outline: none; border-color: var(--accent); }
   .search-bar input::placeholder { color: var(--muted); }
-  .search-icon {
-    position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
-    color: var(--muted); font-size: 15px; pointer-events: none;
-  }
-
+  .search-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 15px; pointer-events: none; }
   .grid {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
     gap: 10px; overflow-y: auto; flex: 1; padding-bottom: 16px;
@@ -115,13 +106,10 @@
     overflow: hidden; margin-bottom: 8px;
     display: flex; align-items: center; justify-content: center; position: relative;
   }
-  .rom-card .cover img { width: 100%; height: 100%; object-fit: cover; background: var(--bg); }
-  .rom-card .cover .fallback {
-    position: absolute; inset: 0; display: flex; align-items: center;
-    justify-content: center; font-size: 42px; color: var(--muted);
-  }
+  .rom-card .cover img { width: 100%; height: 100%; object-fit: cover; }
+  .rom-card .cover .fallback { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 42px; color: var(--muted); }
   .rom-card .cover img.loaded + .fallback { display: none; }
-  .rom-card .title { font-size: 12px; word-break: break-word; flex: 1; line-height: 1.3; color: var(--text); }
+  .rom-card .title { font-size: 12px; word-break: break-word; flex: 1; line-height: 1.3; }
   .rom-card .badge {
     display: inline-block; padding: 2px 7px; background: var(--border); border-radius: 50px;
     font-size: 10px; color: var(--accent-hi); margin-top: 6px; text-transform: uppercase;
@@ -129,15 +117,11 @@
   }
   .empty { grid-column: 1 / -1; color: var(--muted); text-align: center; padding: 40px 16px; font-size: 14px; }
   .empty.error { color: var(--red); }
-
-  /* Game Boy Start/Select style for small buttons */
   .btn-small {
-    background: var(--btn-b);
-    box-shadow: 0 3px 0 var(--btn-b-sh);
+    background: var(--btn-b); box-shadow: 0 3px 0 var(--btn-b-sh);
     border: 1px solid var(--border); color: var(--text);
     padding: 6px 16px; border-radius: 50px; font-size: 11px;
-    font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
-    cursor: pointer;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer;
     transition: transform 0.08s, box-shadow 0.08s;
   }
   .btn-small:hover { background: #3a1870; }
@@ -147,7 +131,6 @@
   #screen-game { padding: 0; }
   #game-container { width: 100%; height: 100%; background: var(--bg); position: relative; }
 
-  /* Banner strip — contiene el ad Y el botón de menú */
   .game-banner {
     position: absolute; top: 0; left: 0; right: 0; height: 58px;
     background: rgba(18,8,37,0.95); backdrop-filter: blur(10px);
@@ -162,35 +145,28 @@
   }
   .banner-ad a { display: flex; align-items: center; height: 100%; }
   .banner-ad img { max-height: 46px; width: auto; object-fit: contain; }
-  .banner-ad .banner-placeholder {
+  .banner-placeholder {
     color: var(--muted); font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
     border: 1px dashed rgba(123,63,200,0.3); padding: 5px 16px; border-radius: 6px;
   }
   .noads-btn {
-    position: absolute; bottom: -22px; right: 8px;
+    position: absolute; bottom: -20px; right: 8px;
     background: transparent; border: none;
-    color: rgba(144,112,184,0.3); padding: 2px 8px;
+    color: rgba(144,112,184,0.28); padding: 2px 6px;
     font-size: 9px; font-weight: 600; letter-spacing: 0.5px;
-    text-transform: uppercase; cursor: pointer;
-    transition: color 0.15s;
+    text-transform: uppercase; cursor: pointer; transition: color 0.15s;
   }
-  .noads-btn:hover { color: rgba(144,112,184,0.7); }
+  .noads-btn:hover { color: rgba(144,112,184,0.65); }
 
-  /* No-ads: banner colapsa, juego sube */
-  #game-container.no-ads .game-banner {
-    height: 0; opacity: 0; pointer-events: none; border-color: transparent;
-  }
+  #game-container.no-ads .game-banner { height: 0; opacity: 0; pointer-events: none; border-color: transparent; }
   #game-container.no-ads #game { top: 0; }
-  #game-container.no-ads .game-menu { top: 8px; }
+  #game-container.no-ads .game-menu { top: auto; bottom: 80px; }
 
-  /* Game canvas — empieza bajo el banner */
   #game {
     position: absolute; top: 58px; left: 0; right: 0; bottom: 0;
-    background: var(--bg);
-    transition: top 0.35s ease;
+    background: var(--bg); transition: top 0.35s ease;
   }
 
-  /* Loading overlay */
   .game-loading {
     position: absolute; inset: 0; background: var(--bg);
     display: flex; align-items: center; justify-content: center;
@@ -199,34 +175,28 @@
   .game-loading.hidden { opacity: 0; pointer-events: none; }
   .loading-content { text-align: center; }
   .loading-spinner {
-    width: 48px; height: 48px;
-    border: 3px solid var(--border); border-top-color: var(--accent-hi);
-    border-radius: 50%; margin: 0 auto 16px;
-    animation: spin 0.8s linear infinite;
+    width: 48px; height: 48px; border: 3px solid var(--border);
+    border-top-color: var(--accent-hi); border-radius: 50%;
+    margin: 0 auto 16px; animation: spin 0.8s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
   .loading-game-name { color: var(--muted); font-size: 13px; margin-top: 8px; }
 
-  /* Botón MENÚ — dentro del banner, lado derecho, estilo Game Boy Start */
   .game-menu {
     position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
     z-index: 99999;
   }
   .menu-toggle {
     padding: 7px 18px; height: auto; width: auto;
-    background: var(--btn-b);
-    box-shadow: 0 3px 0 var(--btn-b-sh);
-    border: 1px solid rgba(123,63,200,0.5);
-    color: rgba(240,229,255,0.8);
+    background: var(--btn-b); box-shadow: 0 3px 0 var(--btn-b-sh);
+    border: 1px solid rgba(123,63,200,0.5); color: rgba(240,229,255,0.8);
     border-radius: 50px; font-size: 10px; font-weight: 800;
-    letter-spacing: 1.5px; text-transform: uppercase;
-    cursor: pointer; display: flex; align-items: center; gap: 5px;
+    letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer;
+    display: flex; align-items: center; gap: 5px;
     transition: background 0.12s, color 0.12s, transform 0.08s, box-shadow 0.08s;
   }
   .menu-toggle:hover { background: rgba(58,24,104,0.95); color: var(--text); }
-  .menu-toggle.open  { background: var(--accent); color: #fff; box-shadow: 0 1px 0 #4a1890; transform: translateY(2px); }
-  .menu-toggle:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--btn-b-sh); }
-
+  .menu-toggle.open { background: var(--accent); color: #fff; box-shadow: 0 1px 0 #4a1890; transform: translateY(calc(-50% + 2px)); }
   .menu-items {
     display: none; flex-direction: column;
     position: absolute; right: 0; top: calc(100% + 10px);
@@ -234,54 +204,55 @@
   }
   .menu-items.open { display: flex; }
   .menu-item {
-    background: rgba(18,8,37,0.96);
-    border: 1px solid var(--border); color: var(--text);
-    padding: 10px 16px; border-radius: 50px;
-    font-size: 13px; font-weight: 600; cursor: pointer;
-    text-align: left; backdrop-filter: blur(8px); white-space: nowrap;
+    background: rgba(18,8,37,0.96); border: 1px solid var(--border); color: var(--text);
+    padding: 10px 16px; border-radius: 50px; font-size: 13px; font-weight: 600;
+    cursor: pointer; text-align: left; backdrop-filter: blur(8px); white-space: nowrap;
     transition: background 0.12s;
   }
   .menu-item:hover { background: rgba(58,24,104,0.95); border-color: var(--accent); }
   .menu-item:active { transform: scale(0.97); }
 
-  /* Ocultar TODO el UI de EmulatorJS agresivamente */
-  .ejs_menu_bar, .ejs_menu_bar_hidden, .ejs_menu_button,
-  .ejs_settings_parent, .ejs_cheat_parent, .ejs_netplay_parent,
-  .ejs_save_states_menu, .ejs_context_menu, .ejs_popout_container,
-  .ejs_loading_text, .ejs_pause_div, .ejs_main_button,
-  [class^="ejs_"][class$="button"],
-  [class*="ejs_menu"] {
-    display: none !important;
-    visibility: hidden !important;
-    pointer-events: none !important;
-  }
-
-  /* ===== Save Slots Modal ===== */
+  /* ===== Modal ===== */
   .modal-overlay {
-    position: fixed; inset: 0; background: rgba(4,0,10,0.80);
+    position: fixed; inset: 0; background: rgba(4,0,10,0.82);
     display: flex; align-items: center; justify-content: center;
     z-index: 999999; padding: 16px; animation: fadeIn 0.15s ease;
   }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   .modal {
     background: var(--surface); border: 1px solid var(--border); border-radius: 18px;
-    padding: 22px; width: 100%; max-width: 340px;
+    padding: 22px; width: 100%; max-width: 360px;
     box-shadow: 0 0 40px rgba(123,63,200,0.25);
+    max-height: 90vh; overflow-y: auto;
   }
   .modal h3 { margin: 0 0 16px; font-size: 16px; font-weight: 700; }
-  .slot-list { display: flex; flex-direction: column; gap: 8px; }
+
+  /* Slot sections */
+  .slot-section { margin-bottom: 14px; }
+  .slot-section-hdr {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 11px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px;
+  }
+  .tier-badge {
+    padding: 2px 8px; border-radius: 50px; font-size: 9px; letter-spacing: 0.5px;
+    background: var(--surface2); color: var(--muted); border: 1px solid var(--border);
+  }
+  .tier-badge.premium { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .slot-list { display: flex; flex-direction: column; gap: 7px; }
   .slot {
     background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
-    padding: 12px; display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; display: flex; align-items: center; gap: 10px;
   }
-  .slot-num { font-size: 13px; color: var(--muted); min-width: 20px; font-weight: 700; }
+  .slot-num { font-size: 13px; color: var(--muted); min-width: 18px; font-weight: 700; }
   .slot-info { flex: 1; }
-  .slot-info .slot-date { font-size: 12px; color: var(--text); }
-  .slot-info .slot-empty { font-size: 12px; color: var(--muted); }
-  .slot-actions { display: flex; gap: 6px; }
+  .slot-info .slot-date { font-size: 11px; color: var(--text); }
+  .slot-info .slot-empty { font-size: 11px; color: var(--muted); }
+  .slot-actions { display: flex; gap: 5px; }
   .slot-btn {
     border: 1px solid var(--border); color: var(--text);
-    padding: 5px 10px; border-radius: 50px; font-size: 11px;
+    padding: 4px 9px; border-radius: 50px; font-size: 10px;
     font-weight: 600; cursor: pointer; background: var(--surface2);
     transition: transform 0.08s;
   }
@@ -289,6 +260,45 @@
   .slot-btn.save { color: var(--green); border-color: #1a5c2a; background: #0a1f0e; }
   .slot-btn.load { color: var(--accent-hi); border-color: var(--border); }
   .slot-btn.del  { color: var(--red); border-color: #6a1a1a; background: #1a0808; }
+
+  .cloud-msg {
+    color: var(--muted); font-size: 13px; text-align: center;
+    padding: 14px; border: 1px solid var(--border); border-radius: 8px;
+  }
+  .cloud-msg.error { color: var(--red); border-color: #6a1a1a; }
+
+  /* Premium CTA */
+  .premium-cta {
+    background: linear-gradient(135deg, var(--surface), #2a1050);
+    border: 1px solid var(--accent); border-radius: 12px;
+    padding: 18px; text-align: center;
+  }
+  .premium-cta-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .premium-cta-desc { font-size: 12px; color: var(--muted); }
+  .premium-price { font-size: 28px; font-weight: 800; color: var(--accent-hi); margin: 10px 0 4px; }
+  .premium-price span { font-size: 14px; color: var(--muted); font-weight: 400; }
+  .btn-mp {
+    display: inline-block; padding: 11px 24px;
+    background: #009EE3; color: #fff; border-radius: 50px;
+    font-size: 13px; font-weight: 700; text-decoration: none;
+    margin: 10px 0 6px; transition: background 0.15s;
+  }
+  .btn-mp:hover { background: #00b4ff; }
+  .btn-mp-disabled {
+    display: inline-block; padding: 11px 24px;
+    background: var(--surface2); color: var(--muted); border-radius: 50px;
+    font-size: 13px; font-weight: 600; margin: 10px 0 6px;
+    border: 1px dashed var(--border);
+  }
+  .premium-note { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
+  .verify-btn {
+    display: block; width: 100%; margin-top: 10px;
+    background: transparent; border: 1px solid var(--border);
+    color: var(--muted); padding: 8px; border-radius: 50px;
+    font-size: 11px; cursor: pointer; transition: color 0.15s, border-color 0.15s;
+  }
+  .verify-btn:hover { color: var(--text); border-color: var(--accent); }
+
   .modal-footer { margin-top: 16px; text-align: right; }
   .btn-cancel {
     background: var(--btn-b); box-shadow: 0 3px 0 var(--btn-b-sh);
@@ -308,15 +318,19 @@
   .toast.show { opacity: 1; }
   .toast.error { border-color: var(--red); color: var(--red); }
 
+  /* Ocultar UI de EmulatorJS */
   .ejs_menu_bar, .ejs_menu_bar_hidden, .ejs_menu_button,
   .ejs_settings_parent, .ejs_cheat_parent, .ejs_netplay_parent,
   .ejs_save_states_menu, .ejs_context_menu, .ejs_popout_container,
-  .ejs_loading_text { display: none !important; }
+  .ejs_loading_text, .ejs_pause_div, .ejs_main_button,
+  [class^="ejs_"][class$="button"], [class*="ejs_menu"] {
+    display: none !important; visibility: hidden !important; pointer-events: none !important;
+  }
 </style>
 </head>
 <body oncontextmenu="return false" ondragstart="return false">
 
-  <!-- ===== REGISTER SCREEN ===== -->
+  <!-- REGISTER -->
   <div id="screen-register" class="screen active">
     <div class="register-card">
       <h1>Arcade</h1>
@@ -334,7 +348,7 @@
     </div>
   </div>
 
-  <!-- ===== ROM PICKER SCREEN ===== -->
+  <!-- ROM PICKER -->
   <div id="screen-picker" class="screen">
     <div class="picker-header">
       <h2>Elegí un juego</h2>
@@ -352,11 +366,9 @@
     </div>
   </div>
 
-  <!-- ===== GAME SCREEN ===== -->
+  <!-- GAME -->
   <div id="screen-game" class="screen">
     <div id="game-container">
-
-      <!-- Banner: el contenido ad se inyecta por JS; el botón MENÚ vive acá -->
       <div class="game-banner" id="game-banner">
         <div class="banner-ad" id="banner-ad-content"></div>
         <div class="game-menu">
@@ -368,7 +380,6 @@
           </div>
         </div>
       </div>
-
       <div class="game-loading" id="game-loading">
         <div class="loading-content">
           <div class="loading-spinner"></div>
@@ -376,7 +387,6 @@
           <div class="loading-game-name" id="loading-game-name"></div>
         </div>
       </div>
-
       <div id="game"></div>
     </div>
   </div>
@@ -387,116 +397,399 @@
   //=============================================================================
   // CONFIG
   //=============================================================================
+  const FIREBASE_CONFIG = {
+    apiKey:            'AIzaSyCUzZrPgdCaiM5o6HpA6x1KbHp1o8u-who',
+    authDomain:        'arcade-saves.firebaseapp.com',
+    projectId:         'arcade-saves',
+    storageBucket:     'arcade-saves.firebasestorage.app',
+    messagingSenderId: '93255950338',
+    appId:             '1:93255950338:web:0be6e4ff2032613aa8471b'
+  };
+
+  // Completá con tu link de MercadoPago ($1/mes)
+  // Crealo en https://www.mercadopago.com.ar/tools/create
+  const MERCADOPAGO_LINK = '';
+
   const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz_lXVeIGK-YZqkc4HXqy3xfBpOEESNn4GteThwXVnO9b3L9B9FhJqgzaxcFfPXQTCi/exec';
-
-  // Banner — ponés la URL de tu imagen y el link de destino
-  const BANNER_IMG_URL  = '';   // ej: 'https://tudominio.com/banner.png'
-  const BANNER_LINK_URL = '';   // ej: 'https://tudominio.com'
-
-  const ROMS_FOLDER = 'roms';
-  const AUTO_SAVE_INTERVAL_MS = 30000;
-  const NUM_SLOTS = 3;
+  const BANNER_IMG_URL  = '';
+  const BANNER_LINK_URL = '';
+  const ROMS_FOLDER     = 'roms';
+  const AUTO_SAVE_MS    = 30000;
   const STORE = {
-    SESSION:     'arcade_session_v2',
-    SAVES:       'arcade_saves_v2',
-    CURRENT_ROM: 'arcade_current_rom_v1'
+    SESSION:    'arcade_session_v2',
+    CURRENT_ROM:'arcade_current_rom_v1',
+    LOCAL_SAVE: 'arcade_local_v3'
   };
 
   //=============================================================================
-  // BANNER
+  // FIREBASE
+  //=============================================================================
+  let _auth = null, _db = null, _isPremium = null;
+
+  function initFirebase() {
+    try {
+      firebase.initializeApp(FIREBASE_CONFIG);
+      _auth = firebase.auth();
+      _db   = firebase.firestore();
+    } catch(e) { console.warn('[FB] init:', e); }
+  }
+
+  function fbPassword(email) {
+    const k = 'arcade_fbpw_' + email;
+    let pw = localStorage.getItem(k);
+    if (!pw) {
+      const arr = new Uint8Array(24);
+      crypto.getRandomValues(arr);
+      pw = Array.from(arr, b => b.toString(16).padStart(2,'0')).join('');
+      localStorage.setItem(k, pw);
+    }
+    return pw;
+  }
+
+  async function firebaseSignIn(email) {
+    if (!_auth) return;
+    const pw = fbPassword(email);
+    try {
+      await _auth.signInWithEmailAndPassword(email, pw);
+    } catch(e) {
+      if (['auth/user-not-found','auth/invalid-credential','auth/invalid-login-credentials'].includes(e.code)) {
+        try { await _auth.createUserWithEmailAndPassword(email, pw); }
+        catch(e2) { console.warn('[FB] create user:', e2); }
+      } else { console.warn('[FB] sign in:', e); }
+    }
+  }
+
+  async function checkPremium(forceRefresh) {
+    if (!forceRefresh && _isPremium !== null) return _isPremium;
+    if (!_db || !_auth?.currentUser) return false;
+    try {
+      const snap = await _db.doc('users/' + _auth.currentUser.uid).get();
+      _isPremium = snap.exists && snap.data().premium === true;
+    } catch { _isPremium = false; }
+    return _isPremium;
+  }
+
+  //=============================================================================
+  // LOCAL SAVE — 1 ranura gratis
+  //=============================================================================
+  function localKey() { return currentUser.email + '|' + currentROM.name; }
+
+  function getLocalSave() {
+    const db = loadStore(STORE.LOCAL_SAVE, {});
+    return db[localKey()] || null;
+  }
+  function setLocalSave(data) {
+    const db = loadStore(STORE.LOCAL_SAVE, {});
+    db[localKey()] = data;
+    saveStore(STORE.LOCAL_SAVE, db);
+  }
+
+  //=============================================================================
+  // CLOUD SAVES — 10 ranuras premium
+  //=============================================================================
+  function cloudRef() {
+    const uid = _auth?.currentUser?.uid;
+    if (!uid || !_db) return null;
+    const key = currentROM.name.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 100);
+    return _db.doc('saves/' + uid + '/roms/' + key);
+  }
+
+  async function loadCloudSlots() {
+    const ref = cloudRef();
+    if (!ref) return Array(10).fill(null);
+    const snap = await ref.get();
+    const slots = snap.exists ? (snap.data().slots || []) : [];
+    while (slots.length < 10) slots.push(null);
+    return slots;
+  }
+
+  async function saveCloudSlot(idx, data) {
+    const ref = cloudRef();
+    if (!ref) throw new Error('Sin conexión Firebase');
+    const slots = await loadCloudSlots();
+    slots[idx] = data;
+    await ref.set({ slots });
+  }
+
+  async function deleteCloudSlot(idx) {
+    const ref = cloudRef();
+    if (!ref) throw new Error('Sin conexión Firebase');
+    const slots = await loadCloudSlots();
+    slots[idx] = null;
+    await ref.set({ slots });
+  }
+
+  //=============================================================================
+  // STATE HELPERS
+  //=============================================================================
+  function captureState() {
+    if (!emulatorReady) return null;
+    try {
+      const state = getEmulatorState();
+      if (!state) return null;
+      const sram = getEmulatorSRAM();
+      return { state: uint8ToBase64(state), sram: sram ? uint8ToBase64(sram) : '', t: Date.now() };
+    } catch { return null; }
+  }
+
+  function applyState(slot) {
+    if (!slot?.state) return false;
+    try {
+      const bytes = base64ToUint8(slot.state);
+      const e = window.EJS_emulator;
+      if (e?.gameManager?.loadState) { e.gameManager.loadState(bytes); return true; }
+      if (e?.loadState)              { e.loadState(bytes); return true; }
+      return false;
+    } catch { return false; }
+  }
+
+  function autoSaveLocal() {
+    if (!emulatorReady || !currentUser || !currentROM) return;
+    const data = captureState();
+    if (data) setLocalSave(data);
+  }
+
+  //=============================================================================
+  // SLOTS MODAL
+  //=============================================================================
+  async function openSlotsModal() {
+    closeMenu();
+    document.getElementById('slots-modal')?.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'slots-modal';
+
+    const premium  = await checkPremium();
+    const localSave = getLocalSave();
+
+    overlay.innerHTML =
+      '<div class="modal">' +
+        '<h3>💾 Guardar / Cargar</h3>' +
+
+        // LOCAL
+        '<div class="slot-section">' +
+          '<div class="slot-section-hdr">' +
+            '<span>📱 Local · Solo en este dispositivo</span>' +
+            '<span class="tier-badge">GRATIS</span>' +
+          '</div>' +
+          '<div class="slot-list" id="local-slot-wrap">' + renderLocalHTML(localSave) + '</div>' +
+        '</div>' +
+
+        // CLOUD
+        '<div class="slot-section">' +
+          '<div class="slot-section-hdr">' +
+            '<span>☁️ Nube · 10 ranuras</span>' +
+            (premium
+              ? '<span class="tier-badge premium">PREMIUM ✓</span>'
+              : '<span class="tier-badge">$1/mes</span>') +
+          '</div>' +
+          '<div id="cloud-slot-wrap">' +
+            (premium ? '<div class="cloud-msg">Cargando…</div>' : renderPremiumCTA()) +
+          '</div>' +
+        '</div>' +
+
+        '<div class="modal-footer"><button class="btn-cancel" id="modal-cancel">Cerrar</button></div>' +
+      '</div>';
+
+    if (premium) {
+      loadCloudSlots()
+        .then(slots => {
+          const w = overlay.querySelector('#cloud-slot-wrap');
+          if (w) w.innerHTML = '<div class="slot-list">' +
+            slots.map((s, i) => renderCloudHTML(i, s)).join('') + '</div>';
+        })
+        .catch(() => {
+          const w = overlay.querySelector('#cloud-slot-wrap');
+          if (w) w.innerHTML = '<div class="cloud-msg error">Error de conexión.</div>';
+        });
+    }
+
+    overlay.addEventListener('click', async e => {
+      if (e.target === overlay) { overlay.remove(); return; }
+      const btn = e.target.closest('[data-sa]');
+      if (!btn) return;
+      const { sa, st, si } = btn.dataset;
+      if (st === 'local') await handleLocal(sa, overlay);
+      else                await handleCloud(sa, parseInt(si || '0'), overlay);
+    });
+
+    overlay.querySelector('#modal-cancel').addEventListener('click', () => overlay.remove());
+    document.body.appendChild(overlay);
+  }
+
+  function renderLocalHTML(save) {
+    const info = save
+      ? '<span class="slot-date">' + new Date(save.t).toLocaleString() + '</span>'
+      : '<span class="slot-empty">Vacío · Solo en este dispositivo</span>';
+    const extra = save
+      ? '<button class="slot-btn load" data-sa="load" data-st="local">Cargar</button>' +
+        '<button class="slot-btn del"  data-sa="del"  data-st="local">✕</button>'
+      : '';
+    return '<div class="slot">' +
+      '<div class="slot-num">1</div>' +
+      '<div class="slot-info">' + info + '</div>' +
+      '<div class="slot-actions">' +
+        '<button class="slot-btn save" data-sa="save" data-st="local">Guardar</button>' + extra +
+      '</div></div>';
+  }
+
+  function renderCloudHTML(idx, save) {
+    const i = idx, info = save
+      ? '<span class="slot-date">' + new Date(save.t).toLocaleString() + '</span>'
+      : '<span class="slot-empty">Vacío</span>';
+    const extra = save
+      ? '<button class="slot-btn load" data-sa="load" data-st="cloud" data-si="'+i+'">Cargar</button>' +
+        '<button class="slot-btn del"  data-sa="del"  data-st="cloud" data-si="'+i+'">✕</button>'
+      : '';
+    return '<div class="slot">' +
+      '<div class="slot-num">' + (i + 1) + '</div>' +
+      '<div class="slot-info">' + info + '</div>' +
+      '<div class="slot-actions">' +
+        '<button class="slot-btn save" data-sa="save" data-st="cloud" data-si="'+i+'">Guardar</button>' + extra +
+      '</div></div>';
+  }
+
+  function renderPremiumCTA() {
+    const payBtn = MERCADOPAGO_LINK
+      ? '<a href="' + MERCADOPAGO_LINK + '" target="_blank" rel="noopener noreferrer" class="btn-mp">Pagar con MercadoPago</a>'
+      : '<div class="btn-mp-disabled">MercadoPago · Próximamente</div>';
+    return '<div class="premium-cta">' +
+      '<div class="premium-cta-title">🔒 Guardado en la nube</div>' +
+      '<div class="premium-cta-desc">10 ranuras · Acceso desde cualquier dispositivo</div>' +
+      '<div class="premium-price">$1 <span>/ mes</span></div>' +
+      payBtn +
+      '<div class="premium-note">Después de pagar tu cuenta se activa en las próximas horas.<br>El guardado local siempre es gratis.</div>' +
+      '<button class="verify-btn" data-sa="verify" data-st="cloud">Ya pagué — verificar activación</button>' +
+      '</div>';
+  }
+
+  async function handleLocal(action, overlay) {
+    if (action === 'save') {
+      const data = captureState();
+      if (!data) { toast('El emulador no está listo', 'error'); return; }
+      setLocalSave(data);
+      overlay.querySelector('#local-slot-wrap').innerHTML = renderLocalHTML(getLocalSave());
+      toast('Guardado local ✓');
+    } else if (action === 'load') {
+      const s = getLocalSave();
+      if (!s) { toast('No hay guardado local', 'error'); return; }
+      if (applyState(s)) { toast('Cargado ✓'); overlay.remove(); }
+      else toast('Error al cargar', 'error');
+    } else if (action === 'del') {
+      if (!confirm('¿Borrar el guardado local?')) return;
+      setLocalSave(null);
+      overlay.querySelector('#local-slot-wrap').innerHTML = renderLocalHTML(null);
+      toast('Borrado ✓');
+    }
+  }
+
+  async function handleCloud(action, idx, overlay) {
+    const wrap = overlay.querySelector('#cloud-slot-wrap');
+
+    if (action === 'verify') {
+      _isPremium = null;
+      wrap.innerHTML = '<div class="cloud-msg">Verificando…</div>';
+      const ok = await checkPremium(true);
+      if (ok) {
+        loadCloudSlots()
+          .then(slots => { wrap.innerHTML = '<div class="slot-list">' + slots.map((s,i) => renderCloudHTML(i,s)).join('') + '</div>'; })
+          .catch(() => { wrap.innerHTML = '<div class="cloud-msg error">Error de conexión.</div>'; });
+        toast('¡Premium activado! ✓');
+      } else {
+        wrap.innerHTML = renderPremiumCTA();
+        toast('Tu cuenta aún no tiene Premium activo', 'error');
+      }
+      return;
+    }
+
+    if (action === 'save') {
+      const data = captureState();
+      if (!data) { toast('El emulador no está listo', 'error'); return; }
+      wrap.style.opacity = '0.5';
+      try {
+        await saveCloudSlot(idx, data);
+        const slots = await loadCloudSlots();
+        wrap.style.opacity = '';
+        wrap.innerHTML = '<div class="slot-list">' + slots.map((s,i) => renderCloudHTML(i,s)).join('') + '</div>';
+        toast('Guardado en la nube ✓');
+      } catch { wrap.style.opacity = ''; toast('Error al guardar en la nube', 'error'); }
+
+    } else if (action === 'load') {
+      try {
+        const slots = await loadCloudSlots();
+        if (!slots[idx]?.state) { toast('Ranura vacía', 'error'); return; }
+        if (applyState(slots[idx])) { toast('Cargado desde la nube ✓'); overlay.remove(); }
+        else toast('Error al cargar', 'error');
+      } catch { toast('Error de conexión', 'error'); }
+
+    } else if (action === 'del') {
+      if (!confirm('¿Borrar ranura ' + (idx + 1) + '?')) return;
+      wrap.style.opacity = '0.5';
+      try {
+        await deleteCloudSlot(idx);
+        const slots = await loadCloudSlots();
+        wrap.style.opacity = '';
+        wrap.innerHTML = '<div class="slot-list">' + slots.map((s,i) => renderCloudHTML(i,s)).join('') + '</div>';
+        toast('Borrado ✓');
+      } catch { wrap.style.opacity = ''; toast('Error al borrar', 'error'); }
+    }
+  }
+
+  //=============================================================================
+  // BANNER + NO-ADS
   //=============================================================================
   function setupBanner() {
     const container = document.getElementById('game-container');
     const adSlot    = document.getElementById('banner-ad-content');
 
-    if (currentUser && currentUser.noAds) {
-      container.classList.add('no-ads');
-      return;
-    }
+    if (currentUser?.noAds) { container.classList.add('no-ads'); return; }
 
-    // Contenido publicitario en el slot central
     adSlot.innerHTML = '';
     if (BANNER_IMG_URL) {
       const a = document.createElement('a');
-      a.href = BANNER_LINK_URL || '#';
-      a.target = '_blank'; a.rel = 'noopener noreferrer';
-      const img = document.createElement('img');
-      img.src = BANNER_IMG_URL; img.alt = 'Publicidad';
+      a.href = BANNER_LINK_URL || '#'; a.target = '_blank'; a.rel = 'noopener noreferrer';
+      const img = document.createElement('img'); img.src = BANNER_IMG_URL; img.alt = 'Publicidad';
       a.appendChild(img); adSlot.appendChild(a);
     } else {
       const ph = document.createElement('div');
-      ph.className = 'banner-placeholder';
-      ph.textContent = 'Tu banner aquí';
+      ph.className = 'banner-placeholder'; ph.textContent = 'Tu banner aquí';
       adSlot.appendChild(ph);
     }
 
-    // Botón "× No ads" debajo del banner, casi invisible
     const noadsBtn = document.createElement('button');
-    noadsBtn.className = 'noads-btn';
-    noadsBtn.textContent = '× quitar publicidad';
+    noadsBtn.className = 'noads-btn'; noadsBtn.textContent = '× quitar publicidad';
     noadsBtn.addEventListener('click', openNoAdsModal);
     document.getElementById('game-banner').appendChild(noadsBtn);
   }
 
-  // Oculta agresivamente cualquier elemento UI de EmulatorJS que aparezca
-  function hideEJSUI() {
-    const selectors = [
-      '.ejs_menu_bar', '.ejs_menu_bar_hidden', '.ejs_menu_button',
-      '.ejs_settings_parent', '.ejs_cheat_parent', '.ejs_netplay_parent',
-      '.ejs_save_states_menu', '.ejs_context_menu', '.ejs_popout_container',
-      '.ejs_loading_text', '.ejs_pause_div', '.ejs_main_button',
-    ];
-    document.querySelectorAll(selectors.join(',')).forEach(el => {
-      el.style.cssText += 'display:none!important;visibility:hidden!important;';
-    });
-    // Ocultar cualquier botón con ≡ que EmulatorJS inyecte
-    document.querySelectorAll('#game button, #game [class*="menu"]').forEach(el => {
-      el.style.cssText += 'display:none!important;';
-    });
-  }
-
   function openNoAdsModal() {
-    const existing = document.getElementById('noads-modal');
-    if (existing) existing.remove();
-
+    document.getElementById('noads-modal')?.remove();
     const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.id = 'noads-modal';
+    overlay.className = 'modal-overlay'; overlay.id = 'noads-modal';
     overlay.innerHTML =
       '<div class="modal">' +
         '<h3>🚫 Quitar publicidad</h3>' +
         '<p style="color:var(--muted);font-size:13px;margin:0 0 16px">Confirmá el email con el que te registraste.</p>' +
         '<div class="field" style="margin-bottom:4px">' +
-          '<input type="email" id="noads-email" placeholder="tu@email.com" autocomplete="email" inputmode="email"' +
-          ' style="-webkit-user-select:text;user-select:text">' +
+          '<input type="email" id="noads-email" placeholder="tu@email.com" style="-webkit-user-select:text;user-select:text">' +
         '</div>' +
         '<div class="msg error" id="noads-err" style="min-height:16px;margin-bottom:8px"></div>' +
         '<button class="btn-primary" id="noads-confirm">Confirmar</button>' +
-        '<div class="modal-footer" style="margin-top:12px">' +
-          '<button class="btn-cancel" id="noads-cancel">Cancelar</button>' +
-        '</div>' +
+        '<div class="modal-footer" style="margin-top:12px"><button class="btn-cancel" id="noads-cancel">Cancelar</button></div>' +
       '</div>';
 
-    // Pre-rellenar con el email actual
     if (currentUser) overlay.querySelector('#noads-email').value = currentUser.email;
-
     overlay.querySelector('#noads-confirm').addEventListener('click', () => {
       const input = overlay.querySelector('#noads-email').value.trim().toLowerCase();
-      const errEl = overlay.querySelector('#noads-err');
       if (!currentUser || input !== currentUser.email) {
-        errEl.textContent = 'El email no coincide con tu cuenta.';
-        return;
+        overlay.querySelector('#noads-err').textContent = 'El email no coincide.'; return;
       }
-      // Marcar usuario como no-ads y persistir
       currentUser.noAds = true;
       saveStore(STORE.SESSION, currentUser);
-
-      // Animar cierre del banner
       document.getElementById('game-container').classList.add('no-ads');
-      overlay.remove();
-      toast('¡Publicidad desactivada! ✓');
+      overlay.remove(); toast('¡Publicidad desactivada! ✓');
     });
-
     overlay.querySelector('#noads-cancel').addEventListener('click', () => overlay.remove());
     overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
     document.body.appendChild(overlay);
@@ -504,13 +797,25 @@
   }
 
   //=============================================================================
+  // EMULATORJS — ocultar UI interna
+  //=============================================================================
+  function hideEJSUI() {
+    document.querySelectorAll(
+      '.ejs_menu_bar,.ejs_menu_bar_hidden,.ejs_menu_button,' +
+      '.ejs_settings_parent,.ejs_cheat_parent,.ejs_save_states_menu,' +
+      '.ejs_context_menu,.ejs_popout_container,.ejs_loading_text'
+    ).forEach(el => { el.style.cssText += 'display:none!important;visibility:hidden!important;'; });
+    document.querySelectorAll('#game button,[class*="ejs_menu"]').forEach(el => {
+      el.style.cssText += 'display:none!important;';
+    });
+  }
+
+  //=============================================================================
   // STORAGE UTILS
   //=============================================================================
   function loadStore(key, fallback, useSession) {
-    try {
-      const v = (useSession ? sessionStorage : localStorage).getItem(key);
-      return v ? JSON.parse(v) : fallback;
-    } catch { return fallback; }
+    try { const v = (useSession ? sessionStorage : localStorage).getItem(key); return v ? JSON.parse(v) : fallback; }
+    catch { return fallback; }
   }
   function saveStore(key, value, useSession) {
     (useSession ? sessionStorage : localStorage).setItem(key, JSON.stringify(value));
@@ -524,16 +829,14 @@
   //=============================================================================
   function uint8ToBase64(u8) {
     if (!u8 || u8.length === 0) return '';
-    let s = '';
-    const chunk = 0x8000;
+    let s = ''; const chunk = 0x8000;
     for (let i = 0; i < u8.length; i += chunk)
-      s += String.fromCharCode.apply(null, u8.subarray(i, Math.min(i + chunk, u8.length)));
+      s += String.fromCharCode.apply(null, u8.subarray(i, Math.min(i+chunk, u8.length)));
     return btoa(s);
   }
   function base64ToUint8(b64) {
     if (!b64) return new Uint8Array(0);
-    const s = atob(b64);
-    const u8 = new Uint8Array(s.length);
+    const s = atob(b64), u8 = new Uint8Array(s.length);
     for (let i = 0; i < s.length; i++) u8[i] = s.charCodeAt(i);
     return u8;
   }
@@ -543,13 +846,11 @@
   //=============================================================================
   function showScreen(name) {
     document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-    const target = document.getElementById('screen-' + name);
-    if (target) target.classList.add('active');
+    document.getElementById('screen-' + name)?.classList.add('active');
   }
   function setRegMsg(text, type) {
     const m = document.getElementById('reg-msg');
-    m.textContent = text;
-    m.className = 'msg ' + (type || '');
+    m.textContent = text; m.className = 'msg ' + (type || '');
   }
   let toastTimer = null;
   function toast(msg, type) {
@@ -566,38 +867,32 @@
   let currentUser = null;
 
   document.getElementById('reg-submit').addEventListener('click', handleRegister);
-  ['reg-name', 'reg-email'].forEach(id => {
-    document.getElementById(id).addEventListener('keydown', e => {
-      if (e.key === 'Enter') handleRegister();
-    });
+  ['reg-name','reg-email'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') handleRegister(); });
   });
 
   async function handleRegister() {
     const name  = document.getElementById('reg-name').value.trim();
     const email = document.getElementById('reg-email').value.trim().toLowerCase();
-
     if (!name)  { setRegMsg('Ingresá tu nombre', 'error'); return; }
     if (!email) { setRegMsg('Ingresá tu email', 'error'); return; }
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-      setRegMsg('Email inválido', 'error'); return;
-    }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { setRegMsg('Email inválido', 'error'); return; }
 
     const btn = document.getElementById('reg-submit');
     btn.disabled = true; btn.textContent = 'Guardando…';
-    setRegMsg('', '');
 
     try { submitToGoogleSheet(name, email); } catch(_) {}
 
     const user = { name, email, synced: true };
     saveStore(STORE.SESSION, user);
+    firebaseSignIn(email); // fire-and-forget
     enterApp(user);
 
     btn.disabled = false; btn.textContent = 'Jugar';
   }
 
   function submitToGoogleSheet(name, email) {
-    const url = APPS_SCRIPT_URL + '?' + new URLSearchParams({ name, email });
-    fetch(url, { method: 'GET', mode: 'no-cors' }).catch(() => {});
+    fetch(APPS_SCRIPT_URL + '?' + new URLSearchParams({ name, email }), { method:'GET', mode:'no-cors' }).catch(()=>{});
   }
 
   document.getElementById('logout-btn').addEventListener('click', () => {
@@ -615,42 +910,29 @@
     grid.innerHTML = '<div class="empty">Cargando lista…</div>';
 
     let roms = await detectROMsViaGitHubAPI();
-
     if (!roms) {
       try {
         const r = await fetch(ROMS_FOLDER + '/manifest.json', { cache: 'no-store' });
-        if (r.ok) {
-          const arr = await r.json();
-          roms = arr.map(name => ({ name, path: ROMS_FOLDER + '/' + name }));
-        }
-      } catch (_) {}
+        if (r.ok) { const arr = await r.json(); roms = arr.map(n => ({ name: n, path: ROMS_FOLDER+'/'+n })); }
+      } catch(_) {}
     }
-
     if (!roms || roms.length === 0) {
-      grid.innerHTML = '<div class="empty error">No se encontraron ROMs en la carpeta /' + ROMS_FOLDER + '/.</div>';
-      return;
+      grid.innerHTML = '<div class="empty error">No se encontraron ROMs en /' + ROMS_FOLDER + '/.</div>'; return;
     }
 
-    roms.sort((a, b) => a.name.localeCompare(b.name));
+    roms.sort((a,b) => a.name.localeCompare(b.name));
     let manualCovers = {};
-    try {
-      const r = await fetch(ROMS_FOLDER + '/covers.json', { cache: 'no-store' });
-      if (r.ok) manualCovers = await r.json();
-    } catch (_) {}
+    try { const r = await fetch(ROMS_FOLDER + '/covers.json', { cache:'no-store' }); if (r.ok) manualCovers = await r.json(); } catch(_) {}
 
     grid.innerHTML = '';
     roms.forEach(rom => {
-      const card = document.createElement('div');
-      card.className = 'rom-card';
+      const card = document.createElement('div'); card.className = 'rom-card';
       const isGBC = /\.gbc$/i.test(rom.name);
-      const title = rom.name.replace(/\.(gb|gbc)$/i, '').replace(/[-_]/g, ' ');
+      const title = rom.name.replace(/\.(gb|gbc)$/i,'').replace(/[-_]/g,' ');
       card.innerHTML =
-        '<div class="cover">' +
-          '<img alt="" loading="lazy">' +
-          '<div class="fallback">' + (isGBC ? '🎨' : '🎮') + '</div>' +
-        '</div>' +
-        '<div class="title">' + escapeHTML(title) + '</div>' +
-        '<div class="badge">' + (isGBC ? 'GBC' : 'GB') + '</div>';
+        '<div class="cover"><img alt="" loading="lazy"><div class="fallback">'+(isGBC?'🎨':'🎮')+'</div></div>' +
+        '<div class="title">'+escapeHTML(title)+'</div>' +
+        '<div class="badge">'+(isGBC?'GBC':'GB')+'</div>';
       card.addEventListener('click', () => selectROM(rom));
       grid.appendChild(card);
       tryLoadCover(card.querySelector('img'), rom, manualCovers[rom.name]);
@@ -658,98 +940,77 @@
 
     document.getElementById('rom-search').addEventListener('input', e => {
       const q = e.target.value.toLowerCase().trim();
-      document.querySelectorAll('.rom-card').forEach(card => {
-        const title = card.querySelector('.title').textContent.toLowerCase();
-        card.style.display = (!q || title.includes(q)) ? '' : 'none';
+      document.querySelectorAll('.rom-card').forEach(c => {
+        c.style.display = (!q || c.querySelector('.title').textContent.toLowerCase().includes(q)) ? '' : 'none';
       });
     });
   }
 
   function tryLoadCover(img, rom, manualUrl) {
-    const candidates = buildCoverCandidates(rom, manualUrl);
-    let idx = 0;
-    img.onload = () => { img.classList.add('loaded'); };
-    img.onerror = () => {
-      idx++;
-      if (idx < candidates.length) img.src = candidates[idx];
-      else { img.style.display = 'none'; img.onerror = null; }
-    };
+    const candidates = buildCoverCandidates(rom, manualUrl); let idx = 0;
+    img.onload = () => img.classList.add('loaded');
+    img.onerror = () => { idx++; if (idx < candidates.length) img.src = candidates[idx]; else { img.style.display='none'; img.onerror=null; } };
     img.src = candidates[0];
   }
 
   function buildCoverCandidates(rom, manualUrl) {
-    const list = [];
-    if (manualUrl) list.push(manualUrl);
-
-    const base = rom.name.replace(/\.(gb|gbc)$/i, '').trim();
+    const list = []; if (manualUrl) list.push(manualUrl);
+    const base = rom.name.replace(/\.(gb|gbc)$/i,'').trim();
     const isGBC = /\.gbc$/i.test(rom.name);
-    const folders = isGBC
-      ? ['Nintendo_-_Game_Boy_Color', 'Nintendo_-_Game_Boy']
-      : ['Nintendo_-_Game_Boy', 'Nintendo_-_Game_Boy_Color'];
-
+    const folders = isGBC ? ['Nintendo_-_Game_Boy_Color','Nintendo_-_Game_Boy'] : ['Nintendo_-_Game_Boy','Nintendo_-_Game_Boy_Color'];
     const variants = [];
-    const add = s => { const t = (s||'').trim().replace(/\s+/g,' '); if (t && !variants.includes(t)) variants.push(t); };
-
+    const add = s => { const t=(s||'').trim().replace(/\s+/g,' '); if(t&&!variants.includes(t)) variants.push(t); };
     add(base);
     let stripped = base;
-    while (/\s*\([^)]*\)\s*$/.test(stripped)) { stripped = stripped.replace(/\s*\([^)]*\)\s*$/,'').trim(); add(stripped); }
-    const coreName = stripped;
-
-    if (coreName) ['(World)','(USA, Europe)','(USA)','(Europe)','(Japan)',
-      '(USA, Europe, Korea)','(World) (Rev 1)','(USA, Europe) (Rev 1)']
-      .forEach(tag => add(coreName + ' ' + tag));
-
-    if (/Pokemon/i.test(base)) variants.slice().forEach(v => add(v.replace(/Pokemon/g, 'Pokémon')));
-    variants.slice().forEach(v => {
-      if (/\bII\b/.test(v)) add(v.replace(/\bII\b/g,'2'));
-      if (/\b2\b/.test(v))  add(v.replace(/\b2\b/g,'II'));
-    });
-
-    for (const folder of folders)
-      for (const v of variants)
-        list.push('https://raw.githubusercontent.com/libretro-thumbnails/' + folder +
-          '/master/Named_Boxarts/' + encodeURIComponent(v) + '.png');
+    while (/\s*\([^)]*\)\s*$/.test(stripped)) { stripped=stripped.replace(/\s*\([^)]*\)\s*$/,'').trim(); add(stripped); }
+    const core = stripped;
+    if (core) ['(World)','(USA, Europe)','(USA)','(Europe)','(Japan)','(USA, Europe, Korea)','(World) (Rev 1)','(USA, Europe) (Rev 1)'].forEach(t=>add(core+' '+t));
+    if (/Pokemon/i.test(base)) variants.slice().forEach(v=>add(v.replace(/Pokemon/g,'Pokémon')));
+    variants.slice().forEach(v=>{ if(/\bII\b/.test(v)) add(v.replace(/\bII\b/g,'2')); if(/\b2\b/.test(v)) add(v.replace(/\b2\b/g,'II')); });
+    for (const f of folders) for (const v of variants) list.push('https://raw.githubusercontent.com/libretro-thumbnails/'+f+'/master/Named_Boxarts/'+encodeURIComponent(v)+'.png');
     return list;
   }
 
-  function escapeHTML(s) {
-    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  }
+  function escapeHTML(s) { return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
   async function detectROMsViaGitHubAPI() {
     const host = window.location.hostname;
     if (!host.endsWith('.github.io')) return null;
     const owner = host.split('.')[0];
-    const pathParts = window.location.pathname.split('/').filter(Boolean);
-    const repo = pathParts[0] || (owner + '.github.io');
+    const repo  = window.location.pathname.split('/').filter(Boolean)[0] || owner+'.github.io';
     try {
-      const r = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${ROMS_FOLDER}`);
+      const r = await fetch('https://api.github.com/repos/'+owner+'/'+repo+'/contents/'+ROMS_FOLDER);
       if (!r.ok) return null;
       const files = await r.json();
       if (!Array.isArray(files)) return null;
-      return files.filter(f => f.type === 'file' && /\.(gb|gbc)$/i.test(f.name))
-                  .map(f => ({ name: f.name, path: ROMS_FOLDER + '/' + f.name }));
-    } catch (e) { console.warn('GitHub API listing failed:', e); return null; }
+      return files.filter(f=>f.type==='file'&&/\.(gb|gbc)$/i.test(f.name)).map(f=>({name:f.name,path:ROMS_FOLDER+'/'+f.name}));
+    } catch(e) { console.warn('GitHub API:', e); return null; }
   }
 
-  function selectROM(rom) {
-    saveStore(STORE.CURRENT_ROM, rom, true);
-    location.reload();
-  }
+  function selectROM(rom) { saveStore(STORE.CURRENT_ROM, rom, true); location.reload(); }
 
   //=============================================================================
   // EMULATOR
   //=============================================================================
-  let currentROM = null;
-  let autoSaveTimer = null;
-  let emulatorReady = false;
+  let currentROM = null, autoSaveTimer = null, emulatorReady = false;
+
+  function getEmulatorState() {
+    const e = window.EJS_emulator; if (!e) return null;
+    try { if (e.gameManager?.getState) return e.gameManager.getState(); if (e.getState) return e.getState(); } catch(err) {}
+    return null;
+  }
+  function getEmulatorSRAM() {
+    const e = window.EJS_emulator; if (!e) return null;
+    try { if (e.gameManager?.getSaveFile) return e.gameManager.getSaveFile(); } catch(err) {}
+    return null;
+  }
 
   function bootEmulator(rom) {
     currentROM = rom;
     showScreen('game');
     setupBanner();
     document.getElementById('loading-game-name').textContent =
-      rom.name.replace(/\.(gb|gbc)$/i, '').replace(/[-_]/g, ' ');
+      rom.name.replace(/\.(gb|gbc)$/i,'').replace(/[-_]/g,' ');
 
     window.EJS_player        = '#game';
     window.EJS_gameUrl       = rom.path;
@@ -759,31 +1020,25 @@
     window.EJS_volume        = 0.6;
     window.EJS_disableDatabases = true;
     window.EJS_Buttons = {
-      playPause: false, restart: false, mute: false, settings: false,
-      fullscreen: true, saveState: false, loadState: false,
-      screenRecord: false, gamepad: false, cheat: false, volume: false,
-      saveSavFiles: false, loadSavFiles: false, quickSave: false,
-      quickLoad: false, screenshot: false, cacheManager: false, exitEmulation: false
+      playPause:false, restart:false, mute:false, settings:false, fullscreen:true,
+      saveState:false, loadState:false, screenRecord:false, gamepad:false, cheat:false,
+      volume:false, saveSavFiles:false, loadSavFiles:false, quickSave:false,
+      quickLoad:false, screenshot:false, cacheManager:false, exitEmulation:false
     };
 
-    const slot0 = getSaveSlot(0);
-    if (slot0 && slot0.state)
-      window.EJS_loadStateURL = 'data:application/octet-stream;base64,' + slot0.state;
+    const saved = getLocalSave();
+    if (saved?.state)
+      window.EJS_loadStateURL = 'data:application/octet-stream;base64,' + saved.state;
 
-    window.EJS_ready = function () {
+    window.EJS_ready = function() {
       emulatorReady = true;
-      const overlay = document.getElementById('game-loading');
-      overlay.classList.add('hidden');
-      setTimeout(() => { overlay.style.display = 'none'; }, 400);
+      const ov = document.getElementById('game-loading');
+      ov.classList.add('hidden');
+      setTimeout(() => { ov.style.display = 'none'; }, 400);
       if (autoSaveTimer) clearInterval(autoSaveTimer);
-      autoSaveTimer = setInterval(() => saveToSlot(0, true), AUTO_SAVE_INTERVAL_MS);
-
-      // Ocultar UI de EmulatorJS inmediatamente y vigilar nuevas adiciones
+      autoSaveTimer = setInterval(autoSaveLocal, AUTO_SAVE_MS);
       hideEJSUI();
-      const ejsObserver = new MutationObserver(hideEJSUI);
-      ejsObserver.observe(document.getElementById('game'), {
-        childList: true, subtree: true
-      });
+      new MutationObserver(hideEJSUI).observe(document.getElementById('game'), { childList:true, subtree:true });
     };
 
     const sc = document.createElement('script');
@@ -792,161 +1047,34 @@
   }
 
   //=============================================================================
-  // SAVE SLOTS
-  //=============================================================================
-  function getSlotKey()  { return currentUser.email + '|' + currentROM.name; }
-  function getAllSlots() {
-    const saves = loadStore(STORE.SAVES, {});
-    const slots = saves[getSlotKey()] || [];
-    while (slots.length < NUM_SLOTS) slots.push(null);
-    return slots;
-  }
-  function persistSlots(slots) {
-    const saves = loadStore(STORE.SAVES, {});
-    saves[getSlotKey()] = slots;
-    saveStore(STORE.SAVES, saves);
-  }
-  function getSaveSlot(idx) { return getAllSlots()[idx] || null; }
-
-  function getEmulatorState() {
-    const e = window.EJS_emulator; if (!e) return null;
-    try {
-      if (e.gameManager && typeof e.gameManager.getState === 'function') return e.gameManager.getState();
-      if (typeof e.getState === 'function') return e.getState();
-    } catch (err) { console.warn('getState error:', err); }
-    return null;
-  }
-  function getEmulatorSRAM() {
-    const e = window.EJS_emulator; if (!e) return null;
-    try {
-      if (e.gameManager && typeof e.gameManager.getSaveFile === 'function') return e.gameManager.getSaveFile();
-    } catch (err) { console.warn('getSaveFile error:', err); }
-    return null;
-  }
-
-  function saveToSlot(idx, silent) {
-    if (!emulatorReady || !currentUser || !currentROM) return false;
-    try {
-      const state = getEmulatorState();
-      const sram  = getEmulatorSRAM();
-      if (!state) return false;
-      const slots = getAllSlots();
-      slots[idx] = { state: uint8ToBase64(state), sram: sram ? uint8ToBase64(sram) : '', t: Date.now() };
-      persistSlots(slots);
-      if (!silent) toast('Slot ' + (idx + 1) + ' guardado ✓');
-      return true;
-    } catch (e) {
-      console.warn('save failed:', e);
-      if (!silent) toast('Error al guardar', 'error');
-      return false;
-    }
-  }
-
-  function loadFromSlot(idx) {
-    if (!emulatorReady || !currentUser || !currentROM) { toast('El juego todavía no está listo', 'error'); return; }
-    const slot = getSaveSlot(idx);
-    if (!slot || !slot.state) { toast('Slot ' + (idx + 1) + ' vacío', 'error'); return; }
-    try {
-      const stateBytes = base64ToUint8(slot.state);
-      const e = window.EJS_emulator;
-      let ok = false;
-      if (e && e.gameManager && typeof e.gameManager.loadState === 'function') { e.gameManager.loadState(stateBytes); ok = true; }
-      else if (e && typeof e.loadState === 'function') { e.loadState(stateBytes); ok = true; }
-      if (ok) toast('Slot ' + (idx + 1) + ' cargado (' + new Date(slot.t).toLocaleString() + ') ✓');
-      else    toast('No se pudo cargar (API del emulador)', 'error');
-    } catch (err) { console.warn('loadState error:', err); toast('Error al cargar', 'error'); }
-  }
-
-  function deleteSlot(idx) {
-    if (!confirm('¿Borrar slot ' + (idx + 1) + '?')) return;
-    const slots = getAllSlots(); slots[idx] = null; persistSlots(slots);
-    toast('Slot ' + (idx + 1) + ' borrado');
-    openSlotsModal(currentModalMode);
-  }
-
-  //=============================================================================
-  // SLOTS MODAL
-  //=============================================================================
-  let currentModalMode = 'save';
-
-  function openSlotsModal(mode) {
-    currentModalMode = mode;
-    closeMenu();
-    const existing = document.getElementById('slots-modal');
-    if (existing) existing.remove();
-
-    const slots = getAllSlots();
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.id = 'slots-modal';
-
-    let slotsHTML = '';
-    for (let i = 0; i < NUM_SLOTS; i++) {
-      const s = slots[i];
-      const info = s
-        ? '<span class="slot-date">' + new Date(s.t).toLocaleString() + '</span>'
-        : '<span class="slot-empty">Vacío</span>';
-      const saveBtn = '<button class="slot-btn save" data-idx="' + i + '" data-action="save">Guardar</button>';
-      const loadBtn = s ? '<button class="slot-btn load" data-idx="' + i + '" data-action="load">Cargar</button>' : '';
-      const delBtn  = s ? '<button class="slot-btn del"  data-idx="' + i + '" data-action="del">✕</button>' : '';
-      slotsHTML += '<div class="slot"><div class="slot-num">' + (i+1) + '</div>' +
-        '<div class="slot-info">' + info + '</div>' +
-        '<div class="slot-actions">' + saveBtn + loadBtn + delBtn + '</div></div>';
-    }
-
-    overlay.innerHTML = '<div class="modal"><h3>💾 Slots de guardado</h3>' +
-      '<div class="slot-list">' + slotsHTML + '</div>' +
-      '<div class="modal-footer"><button class="btn-cancel" id="modal-cancel">Cerrar</button></div></div>';
-
-    overlay.addEventListener('click', e => {
-      const btn = e.target.closest('[data-action]');
-      if (!btn) { if (e.target === overlay) overlay.remove(); return; }
-      const idx = parseInt(btn.dataset.idx);
-      const action = btn.dataset.action;
-      if (action === 'save') { saveToSlot(idx, false); openSlotsModal(mode); }
-      if (action === 'load') { loadFromSlot(idx); overlay.remove(); }
-      if (action === 'del')  { deleteSlot(idx); }
-    });
-    overlay.querySelector('#modal-cancel').addEventListener('click', () => overlay.remove());
-    document.body.appendChild(overlay);
-  }
-
-  //=============================================================================
   // MENU
   //=============================================================================
   const menuToggle = document.getElementById('menu-toggle');
   const menuItems  = document.getElementById('menu-items');
-  function closeMenu() {
-    menuItems.classList.remove('open');
-    menuToggle.classList.remove('open');
-  }
+  function closeMenu() { menuItems.classList.remove('open'); menuToggle.classList.remove('open'); }
+
   menuToggle.addEventListener('click', e => {
     e.stopPropagation();
     menuItems.classList.toggle('open');
     menuToggle.classList.toggle('open');
   });
-  function isOutsideMenu(e) {
-    return !e.target.closest('.game-menu') && !e.target.closest('.modal-overlay');
-  }
-  document.addEventListener('click',      e => { if (isOutsideMenu(e)) closeMenu(); });
-  document.addEventListener('touchstart', e => { if (isOutsideMenu(e)) closeMenu(); }, { passive: true });
+  const outsideMenu = e => !e.target.closest('.game-menu') && !e.target.closest('.modal-overlay');
+  document.addEventListener('click',      e => { if (outsideMenu(e)) closeMenu(); });
+  document.addEventListener('touchstart', e => { if (outsideMenu(e)) closeMenu(); }, { passive:true });
 
-  document.getElementById('save-btn').addEventListener('click', () => openSlotsModal('save'));
-  document.getElementById('load-btn').addEventListener('click', () => openSlotsModal('load'));
+  document.getElementById('save-btn').addEventListener('click', openSlotsModal);
+  document.getElementById('load-btn').addEventListener('click', openSlotsModal);
   document.getElementById('back-btn').addEventListener('click', () => {
-    saveToSlot(0, true);
+    autoSaveLocal();
     delStore(STORE.CURRENT_ROM, true);
     location.reload();
   });
 
   //=============================================================================
-  // KIOSK SHORTCUTS BLOCKER
+  // KIOSK PROTECTION
   //=============================================================================
   document.addEventListener('keydown', e => {
-    if (e.ctrlKey || e.metaKey) {
-      const k = (e.key || '').toLowerCase();
-      if ('spuojwtnrdh'.includes(k)) e.preventDefault();
-    }
+    if ((e.ctrlKey||e.metaKey) && 'spuojwtnrdh'.includes((e.key||'').toLowerCase())) e.preventDefault();
   });
   window.addEventListener('dragover', e => e.preventDefault());
   window.addEventListener('drop',     e => e.preventDefault());
@@ -959,21 +1087,22 @@
     currentUser = user;
     document.getElementById('hello-user').textContent = 'Hola, ' + user.name;
     const rom = loadStore(STORE.CURRENT_ROM, null, true);
-    if (rom && rom.name && rom.path) bootEmulator(rom);
+    if (rom?.name && rom?.path) bootEmulator(rom);
     else { showScreen('picker'); loadROMList(); }
   }
 
-  window.addEventListener('beforeunload', () => { if (currentROM && emulatorReady) saveToSlot(0, true); });
-  window.addEventListener('pagehide',     () => { if (currentROM && emulatorReady) saveToSlot(0, true); });
+  window.addEventListener('beforeunload', () => { if (currentROM && emulatorReady) autoSaveLocal(); });
+  window.addEventListener('pagehide',     () => { if (currentROM && emulatorReady) autoSaveLocal(); });
 
   (function init() {
+    initFirebase();
     const session = loadStore(STORE.SESSION, null);
-    if (session && session.email && session.name) {
+    if (session?.email && session?.name) {
       if (!session.synced) {
         try { submitToGoogleSheet(session.name, session.email); } catch(_) {}
-        session.synced = true;
-        saveStore(STORE.SESSION, session);
+        session.synced = true; saveStore(STORE.SESSION, session);
       }
+      firebaseSignIn(session.email); // reconectar en background
       enterApp(session);
       return;
     }
