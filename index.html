@@ -431,6 +431,9 @@
       firebase.initializeApp(FIREBASE_CONFIG);
       _auth = firebase.auth();
       _db   = firebase.firestore();
+      _auth.onAuthStateChanged(user => {
+        if (user?.emailVerified && currentUser && !currentUser.noAds) grantNoAds();
+      });
     } catch(e) { console.warn('[FB] init:', e); }
   }
 
@@ -743,7 +746,7 @@
     const container = document.getElementById('game-container');
     const adSlot    = document.getElementById('banner-ad-content');
 
-    if (currentUser?.noAds) { container.classList.add('no-ads'); return; }
+    if (currentUser?.noAds || _auth?.currentUser?.emailVerified) { grantNoAds(); return; }
 
     adSlot.innerHTML = '';
     if (BANNER_IMG_URL) {
@@ -763,6 +766,13 @@
     document.getElementById('game-banner').appendChild(noadsBtn);
   }
 
+  function grantNoAds() {
+    if (!currentUser) return;
+    currentUser.noAds = true;
+    saveStore(STORE.SESSION, currentUser);
+    document.getElementById('game-container')?.classList.add('no-ads');
+  }
+
   function openNoAdsModal() {
     document.getElementById('noads-modal')?.remove();
     const overlay = document.createElement('div');
@@ -770,30 +780,81 @@
     overlay.innerHTML =
       '<div class="modal">' +
         '<h3>🚫 Quitar publicidad</h3>' +
-        '<p style="color:var(--muted);font-size:13px;margin:0 0 16px">Confirmá el email con el que te registraste.</p>' +
-        '<div class="field" style="margin-bottom:4px">' +
-          '<input type="email" id="noads-email" placeholder="tu@email.com" style="-webkit-user-select:text;user-select:text">' +
+        '<div id="noads-body"><div class="cloud-msg">Verificando…</div></div>' +
+        '<div class="modal-footer" style="margin-top:12px">' +
+          '<button class="btn-cancel" id="noads-cancel">Cerrar</button>' +
         '</div>' +
-        '<div class="msg error" id="noads-err" style="min-height:16px;margin-bottom:8px"></div>' +
-        '<button class="btn-primary" id="noads-confirm">Confirmar</button>' +
-        '<div class="modal-footer" style="margin-top:12px"><button class="btn-cancel" id="noads-cancel">Cancelar</button></div>' +
       '</div>';
-
-    if (currentUser) overlay.querySelector('#noads-email').value = currentUser.email;
-    overlay.querySelector('#noads-confirm').addEventListener('click', () => {
-      const input = overlay.querySelector('#noads-email').value.trim().toLowerCase();
-      if (!currentUser || input !== currentUser.email) {
-        overlay.querySelector('#noads-err').textContent = 'El email no coincide.'; return;
-      }
-      currentUser.noAds = true;
-      saveStore(STORE.SESSION, currentUser);
-      document.getElementById('game-container').classList.add('no-ads');
-      overlay.remove(); toast('¡Publicidad desactivada! ✓');
-    });
     overlay.querySelector('#noads-cancel').addEventListener('click', () => overlay.remove());
     overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
     document.body.appendChild(overlay);
-    setTimeout(() => overlay.querySelector('#noads-email').focus(), 80);
+    initNoAdsFlow(overlay);
+  }
+
+  async function initNoAdsFlow(overlay) {
+    const body  = overlay.querySelector('#noads-body');
+    const email = currentUser?.email || '';
+
+    if (!_auth?.currentUser) {
+      body.innerHTML = '<div class="cloud-msg error" style="font-size:12px">Conectando… intentá en unos segundos.</div>';
+      return;
+    }
+
+    try { await _auth.currentUser.reload(); } catch(_) {}
+
+    if (_auth.currentUser.emailVerified) {
+      grantNoAds(); overlay.remove(); toast('¡Publicidad desactivada! ✓'); return;
+    }
+
+    body.innerHTML =
+      '<p style="color:var(--muted);font-size:13px;margin:0 0 14px">' +
+        'Te mandamos un link de verificación a:<br>' +
+        '<strong style="color:var(--text)">' + escapeHTML(email) + '</strong>' +
+      '</p>' +
+      '<button class="btn-primary" id="noads-send">Enviar código al correo</button>' +
+      '<div class="msg" id="noads-msg" style="margin-top:10px"></div>' +
+      '<button class="verify-btn" id="noads-check" style="display:none;margin-top:12px">' +
+        'Ya hice clic en el link → verificar' +
+      '</button>';
+
+    body.querySelector('#noads-send').addEventListener('click', async () => {
+      const btn   = body.querySelector('#noads-send');
+      const msgEl = body.querySelector('#noads-msg');
+      btn.disabled = true; btn.textContent = 'Enviando…';
+      try {
+        await _auth.currentUser.sendEmailVerification({
+          url: window.location.origin + window.location.pathname,
+          handleCodeInApp: false
+        });
+        localStorage.setItem('arcade_noads_' + email, '1');
+        msgEl.className = 'msg ok';
+        msgEl.textContent = '✓ Revisá tu casilla y hacé clic en el link.';
+        body.querySelector('#noads-check').style.display = '';
+        btn.textContent = 'Reenviar'; btn.disabled = false;
+      } catch(e) {
+        msgEl.className = 'msg error';
+        msgEl.textContent = e.code === 'auth/too-many-requests'
+          ? 'Demasiados intentos. Esperá unos minutos.'
+          : 'Error al enviar. Intentá de nuevo.';
+        btn.disabled = false; btn.textContent = 'Enviar código al correo';
+      }
+    });
+
+    body.querySelector('#noads-check').addEventListener('click', async () => {
+      const msgEl = body.querySelector('#noads-msg');
+      try {
+        await _auth.currentUser.reload();
+        if (_auth.currentUser.emailVerified) {
+          grantNoAds(); overlay.remove(); toast('¡Publicidad desactivada! ✓');
+        } else {
+          msgEl.className = 'msg error';
+          msgEl.textContent = 'El email todavía no fue verificado. Revisá tu casilla.';
+        }
+      } catch(e) {
+        msgEl.className = 'msg error';
+        msgEl.textContent = 'Error de conexión.';
+      }
+    });
   }
 
   //=============================================================================
