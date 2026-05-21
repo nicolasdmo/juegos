@@ -6,7 +6,6 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Arcade</title>
-<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -35,7 +34,6 @@
     overflow: hidden; -webkit-user-select: none; user-select: none;
   }
   body { touch-action: none; }
-
   .screen { display: none; width: 100vw; height: 100vh; }
   .screen.active { display: flex; flex-direction: column; }
 
@@ -71,14 +69,33 @@
   .msg.error { color: var(--red); }
   .msg.ok    { color: var(--green); }
 
-  /* ===== Picker ===== */
+  /* ===== Console Picker ===== */
+  #screen-consoles { padding: 16px; }
+  .console-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr);
+    gap: 12px; overflow-y: auto; flex: 1; padding-bottom: 16px;
+  }
+  .console-card {
+    background: var(--surface); border: 2px solid var(--border);
+    border-radius: 18px; padding: 24px 10px 18px;
+    cursor: pointer; text-align: center;
+    transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+  }
+  .console-card:hover  { background: var(--surface2); }
+  .console-card:active { transform: scale(0.95); }
+  .console-emoji { font-size: 46px; line-height: 1; margin-bottom: 2px; }
+  .console-name { font-size: 14px; font-weight: 700; }
+  .console-sub  { font-size: 10px; color: var(--muted); }
+
+  /* ===== ROM Picker ===== */
   #screen-picker { padding: 16px; }
   .picker-header {
     display: flex; justify-content: space-between; align-items: center;
     margin-bottom: 10px; flex-shrink: 0;
   }
   .picker-header h2 { margin: 0; font-size: 18px; font-weight: 700; }
-  .picker-header .user-info { display: flex; align-items: center; gap: 10px; }
+  .picker-header .user-info { display: flex; align-items: center; gap: 8px; }
   .picker-header .hello { color: var(--muted); font-size: 13px; }
   .search-bar { position: relative; margin-bottom: 12px; flex-shrink: 0; }
   .search-bar input {
@@ -120,9 +137,9 @@
   .btn-small {
     background: var(--btn-b); box-shadow: 0 3px 0 var(--btn-b-sh);
     border: 1px solid var(--border); color: var(--text);
-    padding: 6px 16px; border-radius: 50px; font-size: 11px;
+    padding: 6px 14px; border-radius: 50px; font-size: 11px;
     font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer;
-    transition: transform 0.08s, box-shadow 0.08s;
+    transition: transform 0.08s, box-shadow 0.08s; white-space: nowrap;
   }
   .btn-small:hover { background: #3a1870; }
   .btn-small:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--btn-b-sh); }
@@ -140,23 +157,13 @@
     z-index: 10000; overflow: hidden;
     transition: height 0.35s ease, opacity 0.35s ease, border-color 0.35s;
   }
-  .banner-ad {
-    display: flex; align-items: center; justify-content: center;
-    flex: 1; height: 100%; overflow: hidden;
-  }
-  .banner-ad a { display: flex; align-items: center; height: 100%; }
-  .banner-ad img { max-height: 46px; width: auto; object-fit: contain; }
-  .banner-placeholder {
-    color: rgba(255,255,255,0.9); font-size: 13px; font-weight: 600;
-    letter-spacing: 0.5px; padding: 6px 16px;
-  }
+  .banner-ad { display: flex; align-items: center; justify-content: center; flex: 1; height: 100%; overflow: hidden; }
   .noads-btn {
     position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
     background: transparent; border: none;
     color: rgba(255,255,255,0.2); padding: 2px 6px;
     font-size: 9px; font-weight: 600; letter-spacing: 0.5px;
-    text-transform: uppercase; cursor: pointer; transition: color 0.15s;
-    white-space: nowrap;
+    text-transform: uppercase; cursor: pointer; transition: color 0.15s; white-space: nowrap;
   }
   .noads-btn:hover { color: rgba(255,255,255,0.55); }
 
@@ -168,7 +175,6 @@
     position: absolute; top: 58px; left: 0; right: 0; bottom: 0;
     background: var(--bg); transition: top 0.35s ease;
   }
-
   .game-loading {
     position: absolute; inset: 0; background: var(--bg);
     display: flex; align-items: center; justify-content: center;
@@ -190,13 +196,12 @@
     z-index: 99999;
   }
   .menu-toggle {
-    padding: 7px 18px; height: auto; width: auto;
-    background: var(--btn-b); box-shadow: 0 3px 0 var(--btn-b-sh);
+    padding: 7px 18px; background: var(--btn-b); box-shadow: 0 3px 0 var(--btn-b-sh);
     border: 1px solid rgba(123,63,200,0.5); color: rgba(240,229,255,0.8);
     border-radius: 50px; font-size: 10px; font-weight: 800;
     letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer;
     display: flex; align-items: center; gap: 5px;
-    transition: background 0.12s, color 0.12s, transform 0.08s, box-shadow 0.08s;
+    transition: background 0.12s, color 0.12s;
   }
   .menu-toggle:hover { background: rgba(58,24,104,0.95); color: var(--text); }
   .menu-toggle.open { background: var(--accent); color: #fff; box-shadow: 0 1px 0 #4a1890; }
@@ -229,8 +234,6 @@
     max-height: 90vh; overflow-y: auto;
   }
   .modal h3 { margin: 0 0 16px; font-size: 16px; font-weight: 700; }
-
-  /* Slot sections */
   .slot-section { margin-bottom: 14px; }
   .slot-section-hdr {
     display: flex; align-items: center; justify-content: space-between;
@@ -242,7 +245,6 @@
     background: var(--surface2); color: var(--muted); border: 1px solid var(--border);
   }
   .tier-badge.premium { background: var(--accent); color: #fff; border-color: var(--accent); }
-
   .slot-list { display: flex; flex-direction: column; gap: 7px; }
   .slot {
     background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
@@ -250,7 +252,7 @@
   }
   .slot-num { font-size: 13px; color: var(--muted); min-width: 18px; font-weight: 700; }
   .slot-info { flex: 1; }
-  .slot-info .slot-date { font-size: 11px; color: var(--text); }
+  .slot-info .slot-date  { font-size: 11px; color: var(--text); }
   .slot-info .slot-empty { font-size: 11px; color: var(--muted); }
   .slot-actions { display: flex; gap: 5px; }
   .slot-btn {
@@ -263,45 +265,34 @@
   .slot-btn.save { color: var(--green); border-color: #1a5c2a; background: #0a1f0e; }
   .slot-btn.load { color: var(--accent-hi); border-color: var(--border); }
   .slot-btn.del  { color: var(--red); border-color: #6a1a1a; background: #1a0808; }
-
-  .cloud-msg {
-    color: var(--muted); font-size: 13px; text-align: center;
-    padding: 14px; border: 1px solid var(--border); border-radius: 8px;
-  }
+  .cloud-msg { color: var(--muted); font-size: 13px; text-align: center; padding: 14px; border: 1px solid var(--border); border-radius: 8px; }
   .cloud-msg.error { color: var(--red); border-color: #6a1a1a; }
-
-  /* Premium CTA */
   .premium-cta {
     background: linear-gradient(135deg, var(--surface), #2a1050);
-    border: 1px solid var(--accent); border-radius: 12px;
-    padding: 18px; text-align: center;
+    border: 1px solid var(--accent); border-radius: 12px; padding: 18px; text-align: center;
   }
   .premium-cta-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
-  .premium-cta-desc { font-size: 12px; color: var(--muted); }
+  .premium-cta-desc  { font-size: 12px; color: var(--muted); }
   .premium-price { font-size: 28px; font-weight: 800; color: var(--accent-hi); margin: 10px 0 4px; }
   .premium-price span { font-size: 14px; color: var(--muted); font-weight: 400; }
   .btn-mp {
-    display: inline-block; padding: 11px 24px;
-    background: #009EE3; color: #fff; border-radius: 50px;
-    font-size: 13px; font-weight: 700; text-decoration: none;
+    display: inline-block; padding: 11px 24px; background: #009EE3; color: #fff;
+    border-radius: 50px; font-size: 13px; font-weight: 700; text-decoration: none;
     margin: 10px 0 6px; transition: background 0.15s;
   }
   .btn-mp:hover { background: #00b4ff; }
   .btn-mp-disabled {
-    display: inline-block; padding: 11px 24px;
-    background: var(--surface2); color: var(--muted); border-radius: 50px;
-    font-size: 13px; font-weight: 600; margin: 10px 0 6px;
-    border: 1px dashed var(--border);
+    display: inline-block; padding: 11px 24px; background: var(--surface2);
+    color: var(--muted); border-radius: 50px; font-size: 13px; font-weight: 600;
+    margin: 10px 0 6px; border: 1px dashed var(--border);
   }
   .premium-note { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
   .verify-btn {
-    display: block; width: 100%; margin-top: 10px;
-    background: transparent; border: 1px solid var(--border);
-    color: var(--muted); padding: 8px; border-radius: 50px;
+    display: block; width: 100%; margin-top: 10px; background: transparent;
+    border: 1px solid var(--border); color: var(--muted); padding: 8px; border-radius: 50px;
     font-size: 11px; cursor: pointer; transition: color 0.15s, border-color 0.15s;
   }
   .verify-btn:hover { color: var(--text); border-color: var(--accent); }
-
   .modal-footer { margin-top: 16px; text-align: right; }
   .btn-cancel {
     background: var(--btn-b); box-shadow: 0 3px 0 var(--btn-b-sh);
@@ -321,11 +312,10 @@
   .toast.show { opacity: 1; }
   .toast.error { border-color: var(--red); color: var(--red); }
 
-  /* Ocultar UI de EmulatorJS */
   .ejs_menu_bar, .ejs_menu_bar_hidden, .ejs_menu_button,
-  .ejs_settings_parent, .ejs_cheat_parent, .ejs_netplay_parent,
-  .ejs_save_states_menu, .ejs_context_menu, .ejs_popout_container,
-  .ejs_loading_text, .ejs_pause_div, .ejs_main_button,
+  .ejs_settings_parent, .ejs_cheat_parent, .ejs_save_states_menu,
+  .ejs_context_menu, .ejs_popout_container, .ejs_loading_text,
+  .ejs_pause_div, .ejs_main_button,
   [class^="ejs_"][class$="button"], [class*="ejs_menu"] {
     display: none !important; visibility: hidden !important; pointer-events: none !important;
   }
@@ -351,13 +341,25 @@
     </div>
   </div>
 
+  <!-- CONSOLES -->
+  <div id="screen-consoles" class="screen">
+    <div class="picker-header">
+      <h2>Elegí la consola</h2>
+      <div class="user-info">
+        <span class="hello" id="hello-consoles"></span>
+        <button class="btn-small" id="logout-btn">Salir</button>
+      </div>
+    </div>
+    <div class="console-grid" id="console-grid"></div>
+  </div>
+
   <!-- ROM PICKER -->
   <div id="screen-picker" class="screen">
     <div class="picker-header">
-      <h2>Elegí un juego</h2>
+      <h2 id="picker-title">Elegí un juego</h2>
       <div class="user-info">
-        <span class="hello" id="hello-user"></span>
-        <button class="btn-small" id="logout-btn">Salir</button>
+        <button class="btn-small" id="back-to-consoles">← Consolas</button>
+        <button class="btn-small" id="logout-btn-picker">Salir</button>
       </div>
     </div>
     <div class="search-bar">
@@ -408,21 +410,54 @@
     messagingSenderId: '93255950338',
     appId:             '1:93255950338:web:0be6e4ff2032613aa8471b'
   };
-
-  // Completá con tu link de MercadoPago ($1/mes)
-  // Crealo en https://www.mercadopago.com.ar/tools/create
   const MERCADOPAGO_LINK = '';
+  const APPS_SCRIPT_URL  = 'https://script.google.com/macros/s/AKfycbz_lXVeIGK-YZqkc4HXqy3xfBpOEESNn4GteThwXVnO9b3L9B9FhJqgzaxcFfPXQTCi/exec';
+  const BANNER_IMG_URL   = '';
+  const BANNER_LINK_URL  = 'https://prisma-v2-six.vercel.app/';
+  const AUTO_SAVE_MS     = 30000;
 
-  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz_lXVeIGK-YZqkc4HXqy3xfBpOEESNn4GteThwXVnO9b3L9B9FhJqgzaxcFfPXQTCi/exec';
-  const BANNER_IMG_URL  = '';
-  const BANNER_LINK_URL = 'https://prisma-v2-six.vercel.app/';
-  const ROMS_FOLDER     = 'roms';
-  const AUTO_SAVE_MS    = 30000;
   const STORE = {
-    SESSION:    'arcade_session_v2',
-    CURRENT_ROM:'arcade_current_rom_v1',
-    LOCAL_SAVE: 'arcade_local_v3'
+    SESSION:         'arcade_session_v2',
+    CURRENT_ROM:     'arcade_current_rom_v1',
+    CURRENT_CONSOLE: 'arcade_console_v1',
+    LOCAL_SAVE:      'arcade_local_v3'
   };
+
+  //=============================================================================
+  // CONSOLES
+  //=============================================================================
+  const CONSOLES = [
+    {
+      id: 'gb', name: 'Game Boy', sub: 'GB & GBC', emoji: '🎮',
+      core: 'gb', exts: ['gb','gbc'], folder: 'roms/gb',
+      color: '#4ade80', shade: '#041a0a',
+      libretro: ['Nintendo_-_Game_Boy_Color','Nintendo_-_Game_Boy']
+    },
+    {
+      id: 'nes', name: 'NES', sub: 'Nintendo 8-bit', emoji: '🕹️',
+      core: 'nes', exts: ['nes'], folder: 'roms/nes',
+      color: '#f87171', shade: '#1a0404',
+      libretro: ['Nintendo_-_Nintendo_Entertainment_System']
+    },
+    {
+      id: 'sms', name: 'Master System', sub: 'Sega 8-bit', emoji: '📟',
+      core: 'segaMS', exts: ['sms'], folder: 'roms/sms',
+      color: '#38bdf8', shade: '#041018',
+      libretro: ['Sega_-_Master_System_-_Mark_III']
+    },
+    {
+      id: 'gg', name: 'Game Gear', sub: 'Sega portátil', emoji: '🎯',
+      core: 'segaGG', exts: ['gg'], folder: 'roms/gg',
+      color: '#fb923c', shade: '#180a02',
+      libretro: ['Sega_-_Game_Gear']
+    },
+    {
+      id: 'atari', name: 'Atari 2600', sub: 'Clásico retro', emoji: '👾',
+      core: 'atari2600', exts: ['a26','bin'], folder: 'roms/atari',
+      color: '#c084fc', shade: '#100418',
+      libretro: ['Atari_-_2600']
+    }
+  ];
 
   //=============================================================================
   // FIREBASE
@@ -480,17 +515,9 @@
   //=============================================================================
   // LOCAL SAVE — 1 ranura gratis
   //=============================================================================
-  function localKey() { return currentUser.email + '|' + currentROM.name; }
-
-  function getLocalSave() {
-    const db = loadStore(STORE.LOCAL_SAVE, {});
-    return db[localKey()] || null;
-  }
-  function setLocalSave(data) {
-    const db = loadStore(STORE.LOCAL_SAVE, {});
-    db[localKey()] = data;
-    saveStore(STORE.LOCAL_SAVE, db);
-  }
+  function localKey() { return currentUser.email + '|' + currentConsole.id + '|' + currentROM.name; }
+  function getLocalSave() { const db = loadStore(STORE.LOCAL_SAVE,{}); return db[localKey()]||null; }
+  function setLocalSave(data) { const db = loadStore(STORE.LOCAL_SAVE,{}); db[localKey()]=data; saveStore(STORE.LOCAL_SAVE,db); }
 
   //=============================================================================
   // CLOUD SAVES — 10 ranuras premium
@@ -498,33 +525,24 @@
   function cloudRef() {
     const uid = _auth?.currentUser?.uid;
     if (!uid || !_db) return null;
-    const key = currentROM.name.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 100);
+    const key = (currentConsole.id + '_' + currentROM.name).replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,100);
     return _db.doc('saves/' + uid + '/roms/' + key);
   }
 
   async function loadCloudSlots() {
-    const ref = cloudRef();
-    if (!ref) return Array(10).fill(null);
+    const ref = cloudRef(); if (!ref) return Array(10).fill(null);
     const snap = await ref.get();
-    const slots = snap.exists ? (snap.data().slots || []) : [];
+    const slots = snap.exists ? (snap.data().slots||[]) : [];
     while (slots.length < 10) slots.push(null);
     return slots;
   }
-
   async function saveCloudSlot(idx, data) {
-    const ref = cloudRef();
-    if (!ref) throw new Error('Sin conexión Firebase');
-    const slots = await loadCloudSlots();
-    slots[idx] = data;
-    await ref.set({ slots });
+    const ref = cloudRef(); if (!ref) throw new Error('Sin conexión Firebase');
+    const slots = await loadCloudSlots(); slots[idx] = data; await ref.set({ slots });
   }
-
   async function deleteCloudSlot(idx) {
-    const ref = cloudRef();
-    if (!ref) throw new Error('Sin conexión Firebase');
-    const slots = await loadCloudSlots();
-    slots[idx] = null;
-    await ref.set({ slots });
+    const ref = cloudRef(); if (!ref) throw new Error('Sin conexión Firebase');
+    const slots = await loadCloudSlots(); slots[idx] = null; await ref.set({ slots });
   }
 
   //=============================================================================
@@ -533,13 +551,11 @@
   function captureState() {
     if (!emulatorReady) return null;
     try {
-      const state = getEmulatorState();
-      if (!state) return null;
-      const sram = getEmulatorSRAM();
+      const state = getEmulatorState(); if (!state) return null;
+      const sram  = getEmulatorSRAM();
       return { state: uint8ToBase64(state), sram: sram ? uint8ToBase64(sram) : '', t: Date.now() };
     } catch { return null; }
   }
-
   function applyState(slot) {
     if (!slot?.state) return false;
     try {
@@ -550,11 +566,9 @@
       return false;
     } catch { return false; }
   }
-
   function autoSaveLocal() {
     if (!emulatorReady || !currentUser || !currentROM) return;
-    const data = captureState();
-    if (data) setLocalSave(data);
+    const data = captureState(); if (data) setLocalSave(data);
   }
 
   //=============================================================================
@@ -563,40 +577,24 @@
   async function openSlotsModal() {
     closeMenu();
     document.getElementById('slots-modal')?.remove();
-
     const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.id = 'slots-modal';
-
-    const premium  = await checkPremium();
+    overlay.className = 'modal-overlay'; overlay.id = 'slots-modal';
+    const premium   = await checkPremium();
     const localSave = getLocalSave();
 
     overlay.innerHTML =
       '<div class="modal">' +
         '<h3>💾 Guardar / Cargar</h3>' +
-
-        // LOCAL
         '<div class="slot-section">' +
-          '<div class="slot-section-hdr">' +
-            '<span>📱 Local · Solo en este dispositivo</span>' +
-            '<span class="tier-badge">GRATIS</span>' +
-          '</div>' +
+          '<div class="slot-section-hdr"><span>📱 Local · Solo en este dispositivo</span><span class="tier-badge">GRATIS</span></div>' +
           '<div class="slot-list" id="local-slot-wrap">' + renderLocalHTML(localSave) + '</div>' +
         '</div>' +
-
-        // CLOUD
         '<div class="slot-section">' +
-          '<div class="slot-section-hdr">' +
-            '<span>☁️ Nube · 10 ranuras</span>' +
-            (premium
-              ? '<span class="tier-badge premium">PREMIUM ✓</span>'
-              : '<span class="tier-badge">$1/mes</span>') +
+          '<div class="slot-section-hdr"><span>☁️ Nube · 10 ranuras</span>' +
+            (premium ? '<span class="tier-badge premium">PREMIUM ✓</span>' : '<span class="tier-badge">$1/mes</span>') +
           '</div>' +
-          '<div id="cloud-slot-wrap">' +
-            (premium ? '<div class="cloud-msg">Cargando…</div>' : renderPremiumCTA()) +
-          '</div>' +
+          '<div id="cloud-slot-wrap">' + (premium ? '<div class="cloud-msg">Cargando…</div>' : renderPremiumCTA()) + '</div>' +
         '</div>' +
-
         '<div class="modal-footer"><button class="btn-cancel" id="modal-cancel">Cerrar</button></div>' +
       '</div>';
 
@@ -604,8 +602,7 @@
       loadCloudSlots()
         .then(slots => {
           const w = overlay.querySelector('#cloud-slot-wrap');
-          if (w) w.innerHTML = '<div class="slot-list">' +
-            slots.map((s, i) => renderCloudHTML(i, s)).join('') + '</div>';
+          if (w) w.innerHTML = '<div class="slot-list">' + slots.map((s,i)=>renderCloudHTML(i,s)).join('') + '</div>';
         })
         .catch(() => {
           const w = overlay.querySelector('#cloud-slot-wrap');
@@ -615,75 +612,43 @@
 
     overlay.addEventListener('click', async e => {
       if (e.target === overlay) { overlay.remove(); return; }
-      const btn = e.target.closest('[data-sa]');
-      if (!btn) return;
+      const btn = e.target.closest('[data-sa]'); if (!btn) return;
       const { sa, st, si } = btn.dataset;
       if (st === 'local') await handleLocal(sa, overlay);
-      else                await handleCloud(sa, parseInt(si || '0'), overlay);
+      else                await handleCloud(sa, parseInt(si||'0'), overlay);
     });
-
     overlay.querySelector('#modal-cancel').addEventListener('click', () => overlay.remove());
     document.body.appendChild(overlay);
   }
 
   function renderLocalHTML(save) {
-    const info = save
-      ? '<span class="slot-date">' + new Date(save.t).toLocaleString() + '</span>'
-      : '<span class="slot-empty">Vacío · Solo en este dispositivo</span>';
-    const extra = save
-      ? '<button class="slot-btn load" data-sa="load" data-st="local">Cargar</button>' +
-        '<button class="slot-btn del"  data-sa="del"  data-st="local">✕</button>'
-      : '';
-    return '<div class="slot">' +
-      '<div class="slot-num">1</div>' +
-      '<div class="slot-info">' + info + '</div>' +
-      '<div class="slot-actions">' +
-        '<button class="slot-btn save" data-sa="save" data-st="local">Guardar</button>' + extra +
-      '</div></div>';
+    const info  = save ? '<span class="slot-date">' + new Date(save.t).toLocaleString() + '</span>' : '<span class="slot-empty">Vacío</span>';
+    const extra = save ? '<button class="slot-btn load" data-sa="load" data-st="local">Cargar</button><button class="slot-btn del" data-sa="del" data-st="local">✕</button>' : '';
+    return '<div class="slot"><div class="slot-num">1</div><div class="slot-info">' + info + '</div><div class="slot-actions"><button class="slot-btn save" data-sa="save" data-st="local">Guardar</button>' + extra + '</div></div>';
   }
-
   function renderCloudHTML(idx, save) {
-    const i = idx, info = save
-      ? '<span class="slot-date">' + new Date(save.t).toLocaleString() + '</span>'
-      : '<span class="slot-empty">Vacío</span>';
-    const extra = save
-      ? '<button class="slot-btn load" data-sa="load" data-st="cloud" data-si="'+i+'">Cargar</button>' +
-        '<button class="slot-btn del"  data-sa="del"  data-st="cloud" data-si="'+i+'">✕</button>'
-      : '';
-    return '<div class="slot">' +
-      '<div class="slot-num">' + (i + 1) + '</div>' +
-      '<div class="slot-info">' + info + '</div>' +
-      '<div class="slot-actions">' +
-        '<button class="slot-btn save" data-sa="save" data-st="cloud" data-si="'+i+'">Guardar</button>' + extra +
-      '</div></div>';
+    const i = idx;
+    const info  = save ? '<span class="slot-date">' + new Date(save.t).toLocaleString() + '</span>' : '<span class="slot-empty">Vacío</span>';
+    const extra = save ? '<button class="slot-btn load" data-sa="load" data-st="cloud" data-si="'+i+'">Cargar</button><button class="slot-btn del" data-sa="del" data-st="cloud" data-si="'+i+'">✕</button>' : '';
+    return '<div class="slot"><div class="slot-num">'+(i+1)+'</div><div class="slot-info">'+info+'</div><div class="slot-actions"><button class="slot-btn save" data-sa="save" data-st="cloud" data-si="'+i+'">Guardar</button>'+extra+'</div></div>';
   }
-
   function renderPremiumCTA() {
     const payBtn = MERCADOPAGO_LINK
-      ? '<a href="' + MERCADOPAGO_LINK + '" target="_blank" rel="noopener noreferrer" class="btn-mp">Pagar con MercadoPago</a>'
+      ? '<a href="'+MERCADOPAGO_LINK+'" target="_blank" rel="noopener noreferrer" class="btn-mp">Pagar con MercadoPago</a>'
       : '<div class="btn-mp-disabled">MercadoPago · Próximamente</div>';
-    return '<div class="premium-cta">' +
-      '<div class="premium-cta-title">🔒 Guardado en la nube</div>' +
-      '<div class="premium-cta-desc">10 ranuras · Acceso desde cualquier dispositivo</div>' +
-      '<div class="premium-price">$1 <span>/ mes</span></div>' +
-      payBtn +
-      '<div class="premium-note">Después de pagar tu cuenta se activa en las próximas horas.<br>El guardado local siempre es gratis.</div>' +
-      '<button class="verify-btn" data-sa="verify" data-st="cloud">Ya pagué — verificar activación</button>' +
-      '</div>';
+    return '<div class="premium-cta"><div class="premium-cta-title">🔒 Guardado en la nube</div><div class="premium-cta-desc">10 ranuras · Acceso desde cualquier dispositivo</div><div class="premium-price">$1 <span>/ mes</span></div>' + payBtn + '<div class="premium-note">Después de pagar tu cuenta se activa en las próximas horas.<br>El guardado local siempre es gratis.</div><button class="verify-btn" data-sa="verify" data-st="cloud">Ya pagué — verificar activación</button></div>';
   }
 
   async function handleLocal(action, overlay) {
     if (action === 'save') {
-      const data = captureState();
-      if (!data) { toast('El emulador no está listo', 'error'); return; }
+      const data = captureState(); if (!data) { toast('El emulador no está listo','error'); return; }
       setLocalSave(data);
       overlay.querySelector('#local-slot-wrap').innerHTML = renderLocalHTML(getLocalSave());
       toast('Guardado local ✓');
     } else if (action === 'load') {
-      const s = getLocalSave();
-      if (!s) { toast('No hay guardado local', 'error'); return; }
+      const s = getLocalSave(); if (!s) { toast('No hay guardado local','error'); return; }
       if (applyState(s)) { toast('Cargado ✓'); overlay.remove(); }
-      else toast('Error al cargar', 'error');
+      else toast('Error al cargar','error');
     } else if (action === 'del') {
       if (!confirm('¿Borrar el guardado local?')) return;
       setLocalSave(null);
@@ -694,53 +659,42 @@
 
   async function handleCloud(action, idx, overlay) {
     const wrap = overlay.querySelector('#cloud-slot-wrap');
-
     if (action === 'verify') {
-      _isPremium = null;
-      wrap.innerHTML = '<div class="cloud-msg">Verificando…</div>';
+      _isPremium = null; wrap.innerHTML = '<div class="cloud-msg">Verificando…</div>';
       const ok = await checkPremium(true);
       if (ok) {
         loadCloudSlots()
-          .then(slots => { wrap.innerHTML = '<div class="slot-list">' + slots.map((s,i) => renderCloudHTML(i,s)).join('') + '</div>'; })
+          .then(slots => { wrap.innerHTML = '<div class="slot-list">' + slots.map((s,i)=>renderCloudHTML(i,s)).join('') + '</div>'; })
           .catch(() => { wrap.innerHTML = '<div class="cloud-msg error">Error de conexión.</div>'; });
         toast('¡Premium activado! ✓');
-      } else {
-        wrap.innerHTML = renderPremiumCTA();
-        toast('Tu cuenta aún no tiene Premium activo', 'error');
-      }
+      } else { wrap.innerHTML = renderPremiumCTA(); toast('Tu cuenta aún no tiene Premium activo','error'); }
       return;
     }
-
     if (action === 'save') {
-      const data = captureState();
-      if (!data) { toast('El emulador no está listo', 'error'); return; }
+      const data = captureState(); if (!data) { toast('El emulador no está listo','error'); return; }
       wrap.style.opacity = '0.5';
       try {
         await saveCloudSlot(idx, data);
-        const slots = await loadCloudSlots();
-        wrap.style.opacity = '';
-        wrap.innerHTML = '<div class="slot-list">' + slots.map((s,i) => renderCloudHTML(i,s)).join('') + '</div>';
+        const slots = await loadCloudSlots(); wrap.style.opacity = '';
+        wrap.innerHTML = '<div class="slot-list">' + slots.map((s,i)=>renderCloudHTML(i,s)).join('') + '</div>';
         toast('Guardado en la nube ✓');
-      } catch { wrap.style.opacity = ''; toast('Error al guardar en la nube', 'error'); }
-
+      } catch { wrap.style.opacity = ''; toast('Error al guardar en la nube','error'); }
     } else if (action === 'load') {
       try {
         const slots = await loadCloudSlots();
-        if (!slots[idx]?.state) { toast('Ranura vacía', 'error'); return; }
+        if (!slots[idx]?.state) { toast('Ranura vacía','error'); return; }
         if (applyState(slots[idx])) { toast('Cargado desde la nube ✓'); overlay.remove(); }
-        else toast('Error al cargar', 'error');
-      } catch { toast('Error de conexión', 'error'); }
-
+        else toast('Error al cargar','error');
+      } catch { toast('Error de conexión','error'); }
     } else if (action === 'del') {
-      if (!confirm('¿Borrar ranura ' + (idx + 1) + '?')) return;
+      if (!confirm('¿Borrar ranura ' + (idx+1) + '?')) return;
       wrap.style.opacity = '0.5';
       try {
         await deleteCloudSlot(idx);
-        const slots = await loadCloudSlots();
-        wrap.style.opacity = '';
-        wrap.innerHTML = '<div class="slot-list">' + slots.map((s,i) => renderCloudHTML(i,s)).join('') + '</div>';
+        const slots = await loadCloudSlots(); wrap.style.opacity = '';
+        wrap.innerHTML = '<div class="slot-list">' + slots.map((s,i)=>renderCloudHTML(i,s)).join('') + '</div>';
         toast('Borrado ✓');
-      } catch { wrap.style.opacity = ''; toast('Error al borrar', 'error'); }
+      } catch { wrap.style.opacity = ''; toast('Error al borrar','error'); }
     }
   }
 
@@ -748,15 +702,15 @@
   // BANNER + NO-ADS
   //=============================================================================
   function setupBanner() {
-    const container = document.getElementById('game-container');
-    const adSlot    = document.getElementById('banner-ad-content');
-
     if (currentUser?.noAds) { grantNoAds(); return; }
 
+    const adSlot = document.getElementById('banner-ad-content');
     adSlot.innerHTML = '';
+
     const a = document.createElement('a');
     a.href = BANNER_LINK_URL || '#'; a.target = '_blank'; a.rel = 'noopener noreferrer';
     a.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:100%;text-decoration:none;padding:0 12px;';
+
     if (BANNER_IMG_URL) {
       const img = document.createElement('img'); img.src = BANNER_IMG_URL; img.alt = '';
       img.style.cssText = 'max-height:42px;width:auto;object-fit:contain;';
@@ -771,7 +725,8 @@
         '<span style="background:#f59e0b;color:#1c0a00;font-size:10px;font-weight:800;padding:5px 10px;border-radius:50px;letter-spacing:0.5px;white-space:nowrap;flex-shrink:0">Hacé el test →</span>';
     } else {
       const ph = document.createElement('div');
-      ph.className = 'banner-placeholder'; ph.textContent = 'Tu banner aquí';
+      ph.style.cssText = 'color:rgba(255,255,255,0.6);font-size:12px;';
+      ph.textContent = 'Tu banner aquí';
       a.appendChild(ph);
     }
     adSlot.appendChild(a);
@@ -810,71 +765,46 @@
   async function initNoAdsFlow(overlay) {
     const body  = overlay.querySelector('#noads-body');
     const email = currentUser?.email || '';
-
     if (!_auth?.currentUser) {
-      body.innerHTML = '<div class="cloud-msg error" style="font-size:12px">Conectando… intentá en unos segundos.</div>';
-      return;
+      body.innerHTML = '<div class="cloud-msg error" style="font-size:12px">Conectando… intentá en unos segundos.</div>'; return;
     }
-
     try { await _auth.currentUser.reload(); } catch(_) {}
-
-    if (_auth.currentUser.emailVerified) {
-      grantNoAds(); overlay.remove(); toast('¡Publicidad desactivada! ✓'); return;
-    }
+    if (_auth.currentUser.emailVerified) { grantNoAds(); overlay.remove(); toast('¡Publicidad desactivada! ✓'); return; }
 
     body.innerHTML =
-      '<p style="color:var(--muted);font-size:13px;margin:0 0 14px">' +
-        'Te mandamos un link de verificación a:<br>' +
-        '<strong style="color:var(--text)">' + escapeHTML(email) + '</strong>' +
-      '</p>' +
+      '<p style="color:var(--muted);font-size:13px;margin:0 0 14px">Te mandamos un link de verificación a:<br>' +
+        '<strong style="color:var(--text)">' + escapeHTML(email) + '</strong></p>' +
       '<button class="btn-primary" id="noads-send">Enviar código al correo</button>' +
       '<div class="msg" id="noads-msg" style="margin-top:10px"></div>' +
-      '<button class="verify-btn" id="noads-check" style="display:none;margin-top:12px">' +
-        'Ya hice clic en el link → verificar' +
-      '</button>';
+      '<button class="verify-btn" id="noads-check" style="display:none;margin-top:12px">Ya hice clic en el link → verificar</button>';
 
     body.querySelector('#noads-send').addEventListener('click', async () => {
-      const btn   = body.querySelector('#noads-send');
-      const msgEl = body.querySelector('#noads-msg');
+      const btn = body.querySelector('#noads-send'); const msgEl = body.querySelector('#noads-msg');
       btn.disabled = true; btn.textContent = 'Enviando…';
       try {
-        await _auth.currentUser.sendEmailVerification({
-          url: window.location.origin + window.location.pathname,
-          handleCodeInApp: false
-        });
+        await _auth.currentUser.sendEmailVerification({ url: window.location.origin + window.location.pathname, handleCodeInApp: false });
         localStorage.setItem('arcade_noads_' + email, '1');
-        msgEl.className = 'msg ok';
-        msgEl.textContent = '✓ Revisá tu casilla y hacé clic en el link.';
+        msgEl.className = 'msg ok'; msgEl.textContent = '✓ Revisá tu casilla y hacé clic en el link.';
         body.querySelector('#noads-check').style.display = '';
         btn.textContent = 'Reenviar'; btn.disabled = false;
       } catch(e) {
         msgEl.className = 'msg error';
-        msgEl.textContent = e.code === 'auth/too-many-requests'
-          ? 'Demasiados intentos. Esperá unos minutos.'
-          : 'Error al enviar. Intentá de nuevo.';
+        msgEl.textContent = e.code === 'auth/too-many-requests' ? 'Demasiados intentos. Esperá unos minutos.' : 'Error al enviar. Intentá de nuevo.';
         btn.disabled = false; btn.textContent = 'Enviar código al correo';
       }
     });
-
     body.querySelector('#noads-check').addEventListener('click', async () => {
       const msgEl = body.querySelector('#noads-msg');
       try {
         await _auth.currentUser.reload();
-        if (_auth.currentUser.emailVerified) {
-          grantNoAds(); overlay.remove(); toast('¡Publicidad desactivada! ✓');
-        } else {
-          msgEl.className = 'msg error';
-          msgEl.textContent = 'El email todavía no fue verificado. Revisá tu casilla.';
-        }
-      } catch(e) {
-        msgEl.className = 'msg error';
-        msgEl.textContent = 'Error de conexión.';
-      }
+        if (_auth.currentUser.emailVerified) { grantNoAds(); overlay.remove(); toast('¡Publicidad desactivada! ✓'); }
+        else { msgEl.className = 'msg error'; msgEl.textContent = 'El email todavía no fue verificado. Revisá tu casilla.'; }
+      } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Error de conexión.'; }
     });
   }
 
   //=============================================================================
-  // EMULATORJS — ocultar UI interna
+  // EMULATORJS UI — ocultar
   //=============================================================================
   function hideEJSUI() {
     document.querySelectorAll(
@@ -882,39 +812,32 @@
       '.ejs_settings_parent,.ejs_cheat_parent,.ejs_save_states_menu,' +
       '.ejs_context_menu,.ejs_popout_container,.ejs_loading_text'
     ).forEach(el => { el.style.cssText += 'display:none!important;visibility:hidden!important;'; });
-    document.querySelectorAll('#game button,[class*="ejs_menu"]').forEach(el => {
-      el.style.cssText += 'display:none!important;';
-    });
+    document.querySelectorAll('#game button,[class*="ejs_menu"]').forEach(el => { el.style.cssText += 'display:none!important;'; });
   }
 
   //=============================================================================
   // STORAGE UTILS
   //=============================================================================
   function loadStore(key, fallback, useSession) {
-    try { const v = (useSession ? sessionStorage : localStorage).getItem(key); return v ? JSON.parse(v) : fallback; }
+    try { const v = (useSession?sessionStorage:localStorage).getItem(key); return v ? JSON.parse(v) : fallback; }
     catch { return fallback; }
   }
-  function saveStore(key, value, useSession) {
-    (useSession ? sessionStorage : localStorage).setItem(key, JSON.stringify(value));
-  }
-  function delStore(key, useSession) {
-    (useSession ? sessionStorage : localStorage).removeItem(key);
-  }
+  function saveStore(key, value, useSession) { (useSession?sessionStorage:localStorage).setItem(key, JSON.stringify(value)); }
+  function delStore(key, useSession)         { (useSession?sessionStorage:localStorage).removeItem(key); }
 
   //=============================================================================
   // BINARY UTILS
   //=============================================================================
   function uint8ToBase64(u8) {
-    if (!u8 || u8.length === 0) return '';
-    let s = ''; const chunk = 0x8000;
-    for (let i = 0; i < u8.length; i += chunk)
-      s += String.fromCharCode.apply(null, u8.subarray(i, Math.min(i+chunk, u8.length)));
+    if (!u8||u8.length===0) return '';
+    let s=''; const chunk=0x8000;
+    for (let i=0;i<u8.length;i+=chunk) s+=String.fromCharCode.apply(null,u8.subarray(i,Math.min(i+chunk,u8.length)));
     return btoa(s);
   }
   function base64ToUint8(b64) {
     if (!b64) return new Uint8Array(0);
-    const s = atob(b64), u8 = new Uint8Array(s.length);
-    for (let i = 0; i < s.length; i++) u8[i] = s.charCodeAt(i);
+    const s=atob(b64), u8=new Uint8Array(s.length);
+    for (let i=0;i<s.length;i++) u8[i]=s.charCodeAt(i);
     return u8;
   }
 
@@ -922,21 +845,18 @@
   // UI HELPERS
   //=============================================================================
   function showScreen(name) {
-    document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-    document.getElementById('screen-' + name)?.classList.add('active');
+    document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active'));
+    document.getElementById('screen-'+name)?.classList.add('active');
   }
-  function setRegMsg(text, type) {
-    const m = document.getElementById('reg-msg');
-    m.textContent = text; m.className = 'msg ' + (type || '');
-  }
-  let toastTimer = null;
+  function setRegMsg(text, type) { const m=document.getElementById('reg-msg'); m.textContent=text; m.className='msg '+(type||''); }
+  let toastTimer=null;
   function toast(msg, type) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.className = 'toast show' + (type === 'error' ? ' error' : '');
-    if (toastTimer) clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => { t.className = 'toast'; }, 1800);
+    const t=document.getElementById('toast'); t.textContent=msg;
+    t.className='toast show'+(type==='error'?' error':'');
+    if(toastTimer) clearTimeout(toastTimer);
+    toastTimer=setTimeout(()=>{t.className='toast';},1800);
   }
+  function escapeHTML(s) { return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
   //=============================================================================
   // REGISTRO
@@ -945,38 +865,70 @@
 
   document.getElementById('reg-submit').addEventListener('click', handleRegister);
   ['reg-name','reg-email'].forEach(id => {
-    document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') handleRegister(); });
+    document.getElementById(id).addEventListener('keydown', e => { if(e.key==='Enter') handleRegister(); });
   });
 
   async function handleRegister() {
     const name  = document.getElementById('reg-name').value.trim();
     const email = document.getElementById('reg-email').value.trim().toLowerCase();
-    if (!name)  { setRegMsg('Ingresá tu nombre', 'error'); return; }
-    if (!email) { setRegMsg('Ingresá tu email', 'error'); return; }
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { setRegMsg('Email inválido', 'error'); return; }
-
+    if (!name)  { setRegMsg('Ingresá tu nombre','error'); return; }
+    if (!email) { setRegMsg('Ingresá tu email','error'); return; }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { setRegMsg('Email inválido','error'); return; }
     const btn = document.getElementById('reg-submit');
-    btn.disabled = true; btn.textContent = 'Guardando…';
-
+    btn.disabled=true; btn.textContent='Guardando…';
     try { submitToGoogleSheet(name, email); } catch(_) {}
-
     const user = { name, email, synced: true };
     saveStore(STORE.SESSION, user);
-    firebaseSignIn(email); // fire-and-forget
+    firebaseSignIn(email);
     enterApp(user);
-
-    btn.disabled = false; btn.textContent = 'Jugar';
+    btn.disabled=false; btn.textContent='Jugar';
   }
-
   function submitToGoogleSheet(name, email) {
-    fetch(APPS_SCRIPT_URL + '?' + new URLSearchParams({ name, email }), { method:'GET', mode:'no-cors' }).catch(()=>{});
+    fetch(APPS_SCRIPT_URL+'?'+new URLSearchParams({name,email}),{method:'GET',mode:'no-cors'}).catch(()=>{});
   }
 
-  document.getElementById('logout-btn').addEventListener('click', () => {
+  document.getElementById('logout-btn').addEventListener('click', doLogout);
+  document.getElementById('logout-btn-picker').addEventListener('click', doLogout);
+  function doLogout() {
     if (!confirm('¿Salir?')) return;
-    delStore(STORE.SESSION);
-    delStore(STORE.CURRENT_ROM, true);
+    delStore(STORE.SESSION); delStore(STORE.CURRENT_ROM,true); delStore(STORE.CURRENT_CONSOLE,true);
     location.reload();
+  }
+
+  //=============================================================================
+  // CONSOLE PICKER
+  //=============================================================================
+  let currentConsole = null;
+
+  function loadConsoleMenu() {
+    const grid = document.getElementById('console-grid');
+    grid.innerHTML = '';
+    CONSOLES.forEach(con => {
+      const card = document.createElement('div');
+      card.className = 'console-card';
+      card.style.cssText = 'border-color:' + con.color + '33;box-shadow:0 0 18px ' + con.color + '18;';
+      card.innerHTML =
+        '<div class="console-emoji">' + con.emoji + '</div>' +
+        '<div class="console-name" style="color:' + con.color + '">' + escapeHTML(con.name) + '</div>' +
+        '<div class="console-sub">' + escapeHTML(con.sub) + '</div>';
+      card.addEventListener('click', () => selectConsole(con));
+      grid.appendChild(card);
+    });
+  }
+
+  function selectConsole(con) {
+    currentConsole = con;
+    saveStore(STORE.CURRENT_CONSOLE, con.id, true);
+    document.getElementById('picker-title').textContent = con.emoji + ' ' + con.name;
+    showScreen('picker');
+    loadROMList();
+  }
+
+  document.getElementById('back-to-consoles').addEventListener('click', () => {
+    delStore(STORE.CURRENT_CONSOLE, true);
+    delStore(STORE.CURRENT_ROM, true);
+    currentConsole = null;
+    showScreen('consoles');
   });
 
   //=============================================================================
@@ -986,99 +938,120 @@
     const grid = document.getElementById('rom-grid');
     grid.innerHTML = '<div class="empty">Cargando lista…</div>';
 
-    let roms = await detectROMsViaGitHubAPI();
+    let roms = await detectROMsViaGitHubAPI(currentConsole.folder);
     if (!roms) {
       try {
-        const r = await fetch(ROMS_FOLDER + '/manifest.json', { cache: 'no-store' });
-        if (r.ok) { const arr = await r.json(); roms = arr.map(n => ({ name: n, path: ROMS_FOLDER+'/'+n })); }
+        const r = await fetch(currentConsole.folder + '/manifest.json', { cache:'no-store' });
+        if (r.ok) { const arr = await r.json(); roms = arr.map(n=>({name:n, path:currentConsole.folder+'/'+n})); }
       } catch(_) {}
     }
+
+    const extRe = new RegExp('\\.(' + currentConsole.exts.join('|') + ')$', 'i');
+    if (roms) roms = roms.filter(r => extRe.test(r.name));
+
     if (!roms || roms.length === 0) {
-      grid.innerHTML = '<div class="empty error">No se encontraron ROMs en /' + ROMS_FOLDER + '/.</div>'; return;
+      grid.innerHTML = '<div class="empty error">No hay ROMs en /' + currentConsole.folder + '/.<br><span style="font-size:11px;color:var(--muted)">Subí archivos ' + currentConsole.exts.map(e=>'.'+e).join(', ') + ' a esa carpeta.</span></div>';
+      return;
     }
 
     roms.sort((a,b) => a.name.localeCompare(b.name));
     let manualCovers = {};
-    try { const r = await fetch(ROMS_FOLDER + '/covers.json', { cache:'no-store' }); if (r.ok) manualCovers = await r.json(); } catch(_) {}
+    try { const r = await fetch(currentConsole.folder + '/covers.json',{cache:'no-store'}); if(r.ok) manualCovers = await r.json(); } catch(_) {}
 
     grid.innerHTML = '';
     roms.forEach(rom => {
       const card = document.createElement('div'); card.className = 'rom-card';
-      const isGBC = /\.gbc$/i.test(rom.name);
-      const title = rom.name.replace(/\.(gb|gbc)$/i,'').replace(/[-_]/g,' ');
+      const title = rom.name.replace(extRe,'').replace(/[-_]/g,' ');
       card.innerHTML =
-        '<div class="cover"><img alt="" loading="lazy"><div class="fallback">'+(isGBC?'🎨':'🎮')+'</div></div>' +
-        '<div class="title">'+escapeHTML(title)+'</div>' +
-        '<div class="badge">'+(isGBC?'GBC':'GB')+'</div>';
+        '<div class="cover"><img alt="" loading="lazy"><div class="fallback">' + currentConsole.emoji + '</div></div>' +
+        '<div class="title">' + escapeHTML(title) + '</div>' +
+        '<div class="badge" style="color:' + currentConsole.color + '">' + currentConsole.id.toUpperCase() + '</div>';
       card.addEventListener('click', () => selectROM(rom));
       grid.appendChild(card);
       tryLoadCover(card.querySelector('img'), rom, manualCovers[rom.name]);
     });
 
-    document.getElementById('rom-search').addEventListener('input', e => {
+    const searchInput = document.getElementById('rom-search');
+    searchInput.value = '';
+    searchInput.oninput = e => {
       const q = e.target.value.toLowerCase().trim();
       document.querySelectorAll('.rom-card').forEach(c => {
         c.style.display = (!q || c.querySelector('.title').textContent.toLowerCase().includes(q)) ? '' : 'none';
       });
-    });
+    };
   }
 
   function tryLoadCover(img, rom, manualUrl) {
     const candidates = buildCoverCandidates(rom, manualUrl); let idx = 0;
-    img.onload = () => img.classList.add('loaded');
-    img.onerror = () => { idx++; if (idx < candidates.length) img.src = candidates[idx]; else { img.style.display='none'; img.onerror=null; } };
+    img.onload  = () => img.classList.add('loaded');
+    img.onerror = () => { idx++; if(idx<candidates.length) img.src=candidates[idx]; else { img.style.display='none'; img.onerror=null; } };
     img.src = candidates[0];
   }
 
   function buildCoverCandidates(rom, manualUrl) {
     const list = []; if (manualUrl) list.push(manualUrl);
-    const base = rom.name.replace(/\.(gb|gbc)$/i,'').trim();
-    const isGBC = /\.gbc$/i.test(rom.name);
-    const folders = isGBC ? ['Nintendo_-_Game_Boy_Color','Nintendo_-_Game_Boy'] : ['Nintendo_-_Game_Boy','Nintendo_-_Game_Boy_Color'];
+    const extRe = new RegExp('\\.(' + currentConsole.exts.join('|') + ')$', 'i');
+    const base   = rom.name.replace(extRe,'').trim();
+
     const variants = [];
     const add = s => { const t=(s||'').trim().replace(/\s+/g,' '); if(t&&!variants.includes(t)) variants.push(t); };
     add(base);
+
     let stripped = base;
     while (/\s*\([^)]*\)\s*$/.test(stripped)) { stripped=stripped.replace(/\s*\([^)]*\)\s*$/,'').trim(); add(stripped); }
     const core = stripped;
+
     if (core) ['(World)','(USA, Europe)','(USA)','(Europe)','(Japan)','(USA, Europe, Korea)','(World) (Rev 1)','(USA, Europe) (Rev 1)'].forEach(t=>add(core+' '+t));
+
     if (/Pokemon/i.test(base)) variants.slice().forEach(v=>add(v.replace(/Pokemon/g,'Pokémon')));
-    variants.slice().forEach(v=>{ if(/\bII\b/.test(v)) add(v.replace(/\bII\b/g,'2')); if(/\b2\b/.test(v)) add(v.replace(/\b2\b/g,'II')); });
-    for (const f of folders) for (const v of variants) list.push('https://raw.githubusercontent.com/libretro-thumbnails/'+f+'/master/Named_Boxarts/'+encodeURIComponent(v)+'.png');
+    variants.slice().forEach(v=>{
+      if (/\bII\b/.test(v))  add(v.replace(/\bII\b/g,'2'));
+      if (/\b2\b/.test(v))   add(v.replace(/\b2\b/g,'II'));
+      if (/\bIII\b/.test(v)) add(v.replace(/\bIII\b/g,'3'));
+      if (/\b3\b/.test(v))   add(v.replace(/\b3\b/g,'III'));
+    });
+
+    for (const folder of currentConsole.libretro) {
+      for (const v of variants) {
+        list.push('https://raw.githubusercontent.com/libretro-thumbnails/'+folder+'/master/Named_Boxarts/'+encodeURIComponent(v)+'.png');
+      }
+    }
     return list;
   }
 
-  function escapeHTML(s) { return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-
-  async function detectROMsViaGitHubAPI() {
+  async function detectROMsViaGitHubAPI(folder) {
     const host = window.location.hostname;
     if (!host.endsWith('.github.io')) return null;
     const owner = host.split('.')[0];
     const repo  = window.location.pathname.split('/').filter(Boolean)[0] || owner+'.github.io';
     try {
-      const r = await fetch('https://api.github.com/repos/'+owner+'/'+repo+'/contents/'+ROMS_FOLDER);
+      const r = await fetch('https://api.github.com/repos/'+owner+'/'+repo+'/contents/'+folder);
       if (!r.ok) return null;
       const files = await r.json();
       if (!Array.isArray(files)) return null;
-      return files.filter(f=>f.type==='file'&&/\.(gb|gbc)$/i.test(f.name)).map(f=>({name:f.name,path:ROMS_FOLDER+'/'+f.name}));
+      const extRe = new RegExp('\\.(' + currentConsole.exts.join('|') + ')$', 'i');
+      return files.filter(f=>f.type==='file'&&extRe.test(f.name)).map(f=>({name:f.name, path:folder+'/'+f.name}));
     } catch(e) { console.warn('GitHub API:', e); return null; }
   }
 
-  function selectROM(rom) { saveStore(STORE.CURRENT_ROM, rom, true); location.reload(); }
+  function selectROM(rom) {
+    saveStore(STORE.CURRENT_ROM, rom, true);
+    location.reload();
+  }
 
   //=============================================================================
   // EMULATOR
   //=============================================================================
-  let currentROM = null, autoSaveTimer = null, emulatorReady = false;
+  let currentROM=null, autoSaveTimer=null, emulatorReady=false;
 
   function getEmulatorState() {
-    const e = window.EJS_emulator; if (!e) return null;
-    try { if (e.gameManager?.getState) return e.gameManager.getState(); if (e.getState) return e.getState(); } catch(err) {}
+    const e=window.EJS_emulator; if(!e) return null;
+    try { if(e.gameManager?.getState) return e.gameManager.getState(); if(e.getState) return e.getState(); } catch(_){}
     return null;
   }
   function getEmulatorSRAM() {
-    const e = window.EJS_emulator; if (!e) return null;
-    try { if (e.gameManager?.getSaveFile) return e.gameManager.getSaveFile(); } catch(err) {}
+    const e=window.EJS_emulator; if(!e) return null;
+    try { if(e.gameManager?.getSaveFile) return e.gameManager.getSaveFile(); } catch(_){}
     return null;
   }
 
@@ -1087,11 +1060,11 @@
     showScreen('game');
     setupBanner();
     document.getElementById('loading-game-name').textContent =
-      rom.name.replace(/\.(gb|gbc)$/i,'').replace(/[-_]/g,' ');
+      rom.name.replace(new RegExp('\\.(' + currentConsole.exts.join('|') + ')$','i'),'').replace(/[-_]/g,' ');
 
     window.EJS_player        = '#game';
     window.EJS_gameUrl       = rom.path;
-    window.EJS_core          = 'gb';
+    window.EJS_core          = currentConsole.core;
     window.EJS_pathtodata    = 'https://cdn.emulatorjs.org/stable/data/';
     window.EJS_startOnLoaded = true;
     window.EJS_volume        = 0.6;
@@ -1104,18 +1077,17 @@
     };
 
     const saved = getLocalSave();
-    if (saved?.state)
-      window.EJS_loadStateURL = 'data:application/octet-stream;base64,' + saved.state;
+    if (saved?.state) window.EJS_loadStateURL = 'data:application/octet-stream;base64,' + saved.state;
 
     window.EJS_ready = function() {
       emulatorReady = true;
       const ov = document.getElementById('game-loading');
       ov.classList.add('hidden');
-      setTimeout(() => { ov.style.display = 'none'; }, 400);
+      setTimeout(() => { ov.style.display='none'; }, 400);
       if (autoSaveTimer) clearInterval(autoSaveTimer);
       autoSaveTimer = setInterval(autoSaveLocal, AUTO_SAVE_MS);
       hideEJSUI();
-      new MutationObserver(hideEJSUI).observe(document.getElementById('game'), { childList:true, subtree:true });
+      new MutationObserver(hideEJSUI).observe(document.getElementById('game'),{childList:true,subtree:true});
     };
 
     const sc = document.createElement('script');
@@ -1124,7 +1096,7 @@
   }
 
   //=============================================================================
-  // MENU
+  // MENU (in-game)
   //=============================================================================
   const menuToggle = document.getElementById('menu-toggle');
   const menuItems  = document.getElementById('menu-items');
@@ -1132,12 +1104,11 @@
 
   menuToggle.addEventListener('click', e => {
     e.stopPropagation();
-    menuItems.classList.toggle('open');
-    menuToggle.classList.toggle('open');
+    menuItems.classList.toggle('open'); menuToggle.classList.toggle('open');
   });
   const outsideMenu = e => !e.target.closest('.game-menu') && !e.target.closest('.modal-overlay');
-  document.addEventListener('click',      e => { if (outsideMenu(e)) closeMenu(); });
-  document.addEventListener('touchstart', e => { if (outsideMenu(e)) closeMenu(); }, { passive:true });
+  document.addEventListener('click',      e => { if(outsideMenu(e)) closeMenu(); });
+  document.addEventListener('touchstart', e => { if(outsideMenu(e)) closeMenu(); }, {passive:true});
 
   document.getElementById('save-btn').addEventListener('click', openSlotsModal);
   document.getElementById('load-btn').addEventListener('click', openSlotsModal);
@@ -1153,23 +1124,37 @@
   document.addEventListener('keydown', e => {
     if ((e.ctrlKey||e.metaKey) && 'spuojwtnrdh'.includes((e.key||'').toLowerCase())) e.preventDefault();
   });
-  window.addEventListener('dragover', e => e.preventDefault());
-  window.addEventListener('drop',     e => e.preventDefault());
-  document.addEventListener('gesturestart', e => e.preventDefault());
+  window.addEventListener('dragover', e=>e.preventDefault());
+  window.addEventListener('drop',     e=>e.preventDefault());
+  document.addEventListener('gesturestart', e=>e.preventDefault());
 
   //=============================================================================
   // ENTRY POINT
   //=============================================================================
   function enterApp(user) {
     currentUser = user;
-    document.getElementById('hello-user').textContent = 'Hola, ' + user.name;
-    const rom = loadStore(STORE.CURRENT_ROM, null, true);
-    if (rom?.name && rom?.path) bootEmulator(rom);
-    else { showScreen('picker'); loadROMList(); }
+    document.getElementById('hello-consoles').textContent = 'Hola, ' + user.name;
+
+    const romData     = loadStore(STORE.CURRENT_ROM,     null, true);
+    const consoleId   = loadStore(STORE.CURRENT_CONSOLE, null, true);
+    const consoleCfg  = CONSOLES.find(c => c.id === consoleId);
+
+    if (consoleCfg && romData?.name && romData?.path) {
+      currentConsole = consoleCfg;
+      bootEmulator(romData);
+    } else if (consoleCfg) {
+      currentConsole = consoleCfg;
+      document.getElementById('picker-title').textContent = consoleCfg.emoji + ' ' + consoleCfg.name;
+      showScreen('picker');
+      loadROMList();
+    } else {
+      loadConsoleMenu();
+      showScreen('consoles');
+    }
   }
 
-  window.addEventListener('beforeunload', () => { if (currentROM && emulatorReady) autoSaveLocal(); });
-  window.addEventListener('pagehide',     () => { if (currentROM && emulatorReady) autoSaveLocal(); });
+  window.addEventListener('beforeunload', () => { if(currentROM&&emulatorReady) autoSaveLocal(); });
+  window.addEventListener('pagehide',     () => { if(currentROM&&emulatorReady) autoSaveLocal(); });
 
   (function init() {
     initFirebase();
@@ -1179,7 +1164,7 @@
         try { submitToGoogleSheet(session.name, session.email); } catch(_) {}
         session.synced = true; saveStore(STORE.SESSION, session);
       }
-      firebaseSignIn(session.email); // reconectar en background
+      firebaseSignIn(session.email);
       enterApp(session);
       return;
     }
