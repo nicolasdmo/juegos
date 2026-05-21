@@ -144,12 +144,9 @@
   .btn-small:hover { background: #3a1870; }
   .btn-small:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--btn-b-sh); }
 
-  /* ===== Game Screen ===== */
-  #screen-game { padding: 0; }
-  #game-container { width: 100%; height: 100%; background: var(--bg); position: relative; }
-
+  /* ===== Global Banner — siempre visible ===== */
   .game-banner {
-    position: absolute; top: 0; left: 0; right: 0; height: 58px;
+    position: fixed; top: 0; left: 0; right: 0; height: 58px;
     background: linear-gradient(90deg, #1a0840 0%, #35116a 50%, #1a0840 100%);
     border-bottom: 2px solid rgba(165,94,240,0.5);
     box-shadow: 0 2px 12px rgba(123,63,200,0.3);
@@ -167,9 +164,22 @@
   }
   .noads-btn:hover { color: rgba(255,255,255,0.55); }
 
-  #game-container.no-ads .game-banner { height: 0; opacity: 0; pointer-events: none; border-color: transparent; }
-  #game-container.no-ads #game { top: 0; }
-  #game-container.no-ads .game-menu { top: calc(90vw + 10px); }
+  /* Offset de banner en todas las pantallas no-game */
+  #screen-register { padding-top: calc(58px + 16px) !important; }
+  #screen-consoles  { padding-top: calc(58px + 16px) !important; }
+  #screen-picker    { padding-top: calc(58px + 16px) !important; }
+
+  /* No-ads: colapsar banner y ajustar offsets */
+  .game-banner.no-ads { height: 0; opacity: 0; pointer-events: none; border-color: transparent; }
+  body.no-ads #screen-register,
+  body.no-ads #screen-consoles,
+  body.no-ads #screen-picker { padding-top: 16px !important; }
+  body.no-ads #game { top: 0 !important; }
+  body.no-ads .game-menu { top: calc(90vw + 10px) !important; }
+
+  /* ===== Game Screen ===== */
+  #screen-game { padding: 0; }
+  #game-container { width: 100%; height: 100%; background: var(--bg); position: relative; }
 
   #game {
     position: absolute; top: 58px; left: 0; right: 0; bottom: 0;
@@ -323,6 +333,11 @@
 </head>
 <body oncontextmenu="return false" ondragstart="return false">
 
+  <!-- BANNER GLOBAL -->
+  <div class="game-banner" id="game-banner">
+    <div class="banner-ad" id="banner-ad-content"></div>
+  </div>
+
   <!-- REGISTER -->
   <div id="screen-register" class="screen active">
     <div class="register-card">
@@ -374,9 +389,6 @@
   <!-- GAME -->
   <div id="screen-game" class="screen">
     <div id="game-container">
-      <div class="game-banner" id="game-banner">
-        <div class="banner-ad" id="banner-ad-content"></div>
-      </div>
       <div class="game-menu">
         <button class="menu-toggle" id="menu-toggle" aria-label="Menú">⏸ MENÚ</button>
         <div class="menu-items" id="menu-items">
@@ -703,6 +715,7 @@
   //=============================================================================
   function setupBanner() {
     if (currentUser?.noAds) { grantNoAds(); return; }
+    if (document.getElementById('game-banner').querySelector('.noads-btn')) return;
 
     const adSlot = document.getElementById('banner-ad-content');
     adSlot.innerHTML = '';
@@ -741,7 +754,8 @@
     if (!currentUser) return;
     currentUser.noAds = true;
     saveStore(STORE.SESSION, currentUser);
-    document.getElementById('game-container')?.classList.add('no-ads');
+    document.getElementById('game-banner')?.classList.add('no-ads');
+    document.body.classList.add('no-ads');
   }
 
   function openNoAdsModal() {
@@ -1058,7 +1072,6 @@
   function bootEmulator(rom) {
     currentROM = rom;
     showScreen('game');
-    setupBanner();
     document.getElementById('loading-game-name').textContent =
       rom.name.replace(new RegExp('\\.(' + currentConsole.exts.join('|') + ')$','i'),'').replace(/[-_]/g,' ');
 
@@ -1134,6 +1147,7 @@
   function enterApp(user) {
     currentUser = user;
     document.getElementById('hello-consoles').textContent = 'Hola, ' + user.name;
+    setupBanner();
 
     const romData     = loadStore(STORE.CURRENT_ROM,     null, true);
     const consoleId   = loadStore(STORE.CURRENT_CONSOLE, null, true);
