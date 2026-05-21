@@ -779,51 +779,37 @@
     const body  = overlay.querySelector('#noads-body');
     const email = currentUser?.email || '';
 
-    if (!_auth?.currentUser && _auth && email) {
-      body.innerHTML = '<div class="cloud-msg">Conectando…</div>';
-      await firebaseSignIn(email);
-      if (!_auth.currentUser) {
-        await new Promise(resolve => {
-          const timer = setTimeout(resolve, 4000);
-          const unsub = _auth.onAuthStateChanged(user => { if (user) { clearTimeout(timer); unsub(); resolve(); } });
-        });
-      }
-    }
-    if (!_auth?.currentUser) {
-      body.innerHTML = '<div class="cloud-msg error" style="font-size:12px">No se pudo conectar. Recargá la página e intentá de nuevo.</div>'; return;
-    }
-    try { await _auth.currentUser.reload(); } catch(_) {}
-    if (_auth.currentUser.emailVerified) { grantNoAds(); overlay.remove(); toast('¡Publicidad desactivada! ✓'); return; }
+    if (!email) { body.innerHTML = '<div class="cloud-msg error">Registrá tu email primero.</div>'; return; }
+    if (!_auth)  { body.innerHTML = '<div class="cloud-msg error" style="font-size:12px">Servicio no disponible. Recargá la página.</div>'; return; }
 
     body.innerHTML =
-      '<p style="color:var(--muted);font-size:13px;margin:0 0 14px">Te mandamos un link de verificación a:<br>' +
-        '<strong style="color:var(--text)">' + escapeHTML(email) + '</strong></p>' +
-      '<button class="btn-primary" id="noads-send">Enviar código al correo</button>' +
-      '<div class="msg" id="noads-msg" style="margin-top:10px"></div>' +
-      '<button class="verify-btn" id="noads-check" style="display:none;margin-top:12px">Ya hice clic en el link → verificar</button>';
+      '<p style="color:var(--muted);font-size:13px;margin:0 0 14px">' +
+        'Te enviamos un link a:<br>' +
+        '<strong style="color:var(--text)">' + escapeHTML(email) + '</strong><br>' +
+        '<span style="font-size:11px">Hacé clic en el link del mail y la publicidad se desactiva sola.</span>' +
+      '</p>' +
+      '<button class="btn-primary" id="noads-send">Enviar link al correo</button>' +
+      '<div class="msg" id="noads-msg" style="margin-top:10px"></div>';
 
     body.querySelector('#noads-send').addEventListener('click', async () => {
       const btn = body.querySelector('#noads-send'); const msgEl = body.querySelector('#noads-msg');
       btn.disabled = true; btn.textContent = 'Enviando…';
       try {
-        await _auth.currentUser.sendEmailVerification({ url: window.location.origin + window.location.pathname, handleCodeInApp: false });
-        localStorage.setItem('arcade_noads_' + email, '1');
-        msgEl.className = 'msg ok'; msgEl.textContent = '✓ Revisá tu casilla y hacé clic en el link.';
-        body.querySelector('#noads-check').style.display = '';
+        await _auth.sendSignInLinkToEmail(email, {
+          url: window.location.origin + window.location.pathname,
+          handleCodeInApp: true
+        });
+        localStorage.setItem('arcade_emaillink', email);
+        msgEl.className = 'msg ok';
+        msgEl.textContent = '✓ Revisá tu casilla y hacé clic en el link. Después volvé acá.';
         btn.textContent = 'Reenviar'; btn.disabled = false;
       } catch(e) {
         msgEl.className = 'msg error';
-        msgEl.textContent = e.code === 'auth/too-many-requests' ? 'Demasiados intentos. Esperá unos minutos.' : 'Error al enviar. Intentá de nuevo.';
-        btn.disabled = false; btn.textContent = 'Enviar código al correo';
+        msgEl.textContent = e.code === 'auth/too-many-requests'
+          ? 'Demasiados intentos. Esperá unos minutos.'
+          : 'Error al enviar (' + e.code + '). Intentá de nuevo.';
+        btn.disabled = false; btn.textContent = 'Enviar link al correo';
       }
-    });
-    body.querySelector('#noads-check').addEventListener('click', async () => {
-      const msgEl = body.querySelector('#noads-msg');
-      try {
-        await _auth.currentUser.reload();
-        if (_auth.currentUser.emailVerified) { grantNoAds(); overlay.remove(); toast('¡Publicidad desactivada! ✓'); }
-        else { msgEl.className = 'msg error'; msgEl.textContent = 'El email todavía no fue verificado. Revisá tu casilla.'; }
-      } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Error de conexión.'; }
     });
   }
 
@@ -1180,8 +1166,25 @@
   window.addEventListener('beforeunload', () => { if(currentROM&&emulatorReady) autoSaveLocal(); });
   window.addEventListener('pagehide',     () => { if(currentROM&&emulatorReady) autoSaveLocal(); });
 
-  (function init() {
+  (async function init() {
     initFirebase();
+
+    // Handle returning from email link click — signs in and grants no-ads automatically
+    if (_auth && _auth.isSignInWithEmailLink(window.location.href)) {
+      const linkEmail = localStorage.getItem('arcade_emaillink') || '';
+      if (linkEmail) {
+        try {
+          await _auth.signInWithEmailLink(linkEmail, window.location.href);
+          localStorage.removeItem('arcade_emaillink');
+          localStorage.setItem('arcade_noads_' + linkEmail, '1');
+          window.history.replaceState({}, '', window.location.pathname);
+          // Persist no-ads in session if already registered
+          const s = loadStore(STORE.SESSION, null);
+          if (s) { s.noAds = true; saveStore(STORE.SESSION, s); }
+        } catch(e) { console.warn('[FB] email link:', e.code); }
+      }
+    }
+
     const session = loadStore(STORE.SESSION, null);
     if (session?.email && session?.name) {
       if (!session.synced) {
