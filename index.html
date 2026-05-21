@@ -779,8 +779,16 @@
   async function initNoAdsFlow(overlay) {
     const body  = overlay.querySelector('#noads-body');
     const email = currentUser?.email || '';
+
+    if (!_auth?.currentUser && _auth) {
+      body.innerHTML = '<div class="cloud-msg">Conectando…</div>';
+      await new Promise(resolve => {
+        const timer = setTimeout(resolve, 5000);
+        const unsub = _auth.onAuthStateChanged(user => { if (user) { clearTimeout(timer); unsub(); resolve(); } });
+      });
+    }
     if (!_auth?.currentUser) {
-      body.innerHTML = '<div class="cloud-msg error" style="font-size:12px">Conectando… intentá en unos segundos.</div>'; return;
+      body.innerHTML = '<div class="cloud-msg error" style="font-size:12px">No se pudo conectar. Recargá la página e intentá de nuevo.</div>'; return;
     }
     try { await _auth.currentUser.reload(); } catch(_) {}
     if (_auth.currentUser.emailVerified) { grantNoAds(); overlay.remove(); toast('¡Publicidad desactivada! ✓'); return; }
