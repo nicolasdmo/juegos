@@ -967,6 +967,7 @@
     delStore(STORE.CURRENT_CONSOLE, true);
     delStore(STORE.CURRENT_ROM, true);
     currentConsole = null;
+    loadConsoleMenu();
     showScreen('consoles');
   });
 
@@ -1030,7 +1031,8 @@
   function buildCoverCandidates(rom, manualUrl) {
     const list = []; if (manualUrl) list.push(manualUrl);
     const extRe = new RegExp('\\.(' + currentConsole.exts.join('|') + ')$', 'i');
-    const base   = rom.name.replace(extRe,'').trim();
+    // Quitar extensión y tags de dump: [!], [S], [p1], [b], etc.
+    const base   = rom.name.replace(extRe,'').replace(/\s*\[[^\]]*\]/g,'').trim();
 
     const variants = [];
     const add = s => { const t=(s||'').trim().replace(/\s+/g,' '); if(t&&!variants.includes(t)) variants.push(t); };
@@ -1040,7 +1042,9 @@
     while (/\s*\([^)]*\)\s*$/.test(stripped)) { stripped=stripped.replace(/\s*\([^)]*\)\s*$/,'').trim(); add(stripped); }
     const core = stripped;
 
-    if (core) ['(World)','(USA, Europe)','(USA)','(Europe)','(Japan)','(USA, Europe, Korea)','(World) (Rev 1)','(USA, Europe) (Rev 1)'].forEach(t=>add(core+' '+t));
+    if (core) ['(World)','(USA, Europe)','(USA)','(Europe)','(Japan)',
+               '(USA, Europe, Brazil)','(USA, Europe, Korea)','(USA, Australia)',
+               '(World) (Rev 1)','(USA, Europe) (Rev 1)','(USA) (Rev 1)'].forEach(t=>add(core+' '+t));
 
     if (/Pokemon/i.test(base)) variants.slice().forEach(v=>add(v.replace(/Pokemon/g,'Pokémon')));
     variants.slice().forEach(v=>{
