@@ -9,6 +9,8 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<!-- GA4: función base siempre disponible; el script de medición se carga dinámicamente si GA4_ID está configurado -->
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());</script>
 <style>
   :root {
     --bg:        #08000f;
@@ -492,6 +494,7 @@
   const BANNER_IMG_URL   = '';
   const BANNER_LINK_URL  = 'https://prisma-v2-six.vercel.app/';
   const AUTO_SAVE_MS     = 30000;
+  const GA4_ID           = ''; // ← Reemplazá con tu ID de Google Analytics 4: 'G-XXXXXXXXXX'
 
   const STORE = {
     SESSION:         'arcade_session_v2',
@@ -610,6 +613,33 @@
       _isPremium = snap.exists && snap.data().premium === true;
     } catch { _isPremium = false; }
     return _isPremium;
+  }
+
+  //=============================================================================
+  // ANALYTICS
+  //=============================================================================
+  function trackEvent(tipo, extra) {
+    const ev = {
+      tipo,
+      consola: currentConsole?.id   || null,
+      juego:   currentROM?.name     || null,
+      uid:     _auth?.currentUser?.uid || null,
+      device:  /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop',
+      ...extra
+    };
+    // Firestore: guardar en colección events
+    if (_db) {
+      try {
+        _db.collection('events').add({
+          ...ev,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      } catch(_) {}
+    }
+    // GA4: si está configurado
+    if (typeof gtag === 'function' && GA4_ID) {
+      gtag('event', tipo, { consola: ev.consola, juego: ev.juego, device: ev.device, ...extra });
+    }
   }
 
   //=============================================================================
@@ -743,6 +773,7 @@
     if (action === 'save') {
       const data = captureState(); if (!data) { toast('El emulador no está listo','error'); return; }
       setLocalSave(data);
+      trackEvent('partida_guardada', { tipo_save: 'local' });
       overlay.querySelector('#local-slot-wrap').innerHTML = renderLocalHTML(getLocalSave());
       toast('Guardado local ✓');
     } else if (action === 'load') {
@@ -777,6 +808,7 @@
         await saveCloudSlot(idx, data);
         const slots = await loadCloudSlots(); wrap.style.opacity = '';
         wrap.innerHTML = '<div class="slot-list">' + slots.map((s,i)=>renderCloudHTML(i,s)).join('') + '</div>';
+        trackEvent('partida_guardada', { tipo_save: 'cloud', ranura: idx + 1 });
         toast('Guardado en la nube ✓');
       } catch { wrap.style.opacity = ''; toast('Error al guardar en la nube','error'); }
     } else if (action === 'load') {
@@ -840,6 +872,7 @@
 
   function grantNoAds() {
     if (!currentUser) return;
+    if (!currentUser.noAds) trackEvent('no_ads_activado'); // solo la primera vez
     currentUser.noAds = true;
     saveStore(STORE.SESSION, currentUser);
     document.getElementById('game-banner')?.classList.add('no-ads');
@@ -1000,6 +1033,7 @@
       noAds: true, synced: true
     };
     saveStore(STORE.SESSION, user);
+    trackEvent('login', { metodo: 'Google' });
     submitToGoogleSheet(user.name, user.email);
     if (_db && _auth.currentUser) {
       try {
@@ -1016,6 +1050,7 @@
   document.getElementById('reg-guest').addEventListener('click', () => {
     const user = { name: 'Invitado', email: '', noAds: false, guest: true };
     saveStore(STORE.SESSION, user);
+    trackEvent('login', { metodo: 'Invitado' });
     enterApp(user);
   });
 
@@ -1055,6 +1090,7 @@
 
   function selectConsole(con) {
     currentConsole = con;
+    trackEvent('consola_seleccionada', { consola_nombre: con.name });
     saveStore(STORE.CURRENT_CONSOLE, con.id, true);
     document.getElementById('picker-title').textContent = con.emoji + ' ' + con.name;
     showScreen('picker');
@@ -1199,6 +1235,7 @@
   function bootEmulator(rom) {
     currentROM = rom;
     showScreen('game');
+    trackEvent('juego_iniciado', { juego_nombre: rom.name.replace(/\.[^.]+$/, '') });
     document.getElementById('loading-game-name').textContent =
       rom.name.replace(new RegExp('\\.(' + currentConsole.exts.join('|') + ')$','i'),'').replace(/[-_]/g,' ');
 
@@ -1222,6 +1259,7 @@
     // Detectar si el juego no carga en 20s y mostrar sugerencia de reset
     const loadHintTimer = setTimeout(() => {
       if (!emulatorReady) {
+        trackEvent('juego_no_cargo');
         document.getElementById('loading-spinner').style.display = 'none';
         document.getElementById('loading-status').textContent    = 'El juego no respondió.';
         document.getElementById('loading-hint').style.display    = '';
@@ -1343,6 +1381,7 @@
         ok = true;
       } catch(_) {}
       if (ok) {
+        trackEvent('ticket_enviado', { tipo_ticket: tipo });
         res.className = 'msg ok'; res.textContent = '✓ Mensaje enviado. ¡Gracias!';
         overlay.querySelector('#sup-msg').value = '';
         btn.textContent = 'Enviado ✓'; btn.disabled = true;
@@ -1443,6 +1482,13 @@
 
   (async function init() {
     initFirebase();
+    // Cargar script de GA4 solo si el ID está configurado
+    if (GA4_ID) {
+      const s = document.createElement('script');
+      s.async = true; s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA4_ID;
+      document.head.appendChild(s);
+      s.onload = () => gtag('config', GA4_ID);
+    }
 
     // Handle returning from email link click — signs in and grants no-ads automatically
     if (_auth && _auth.isSignInWithEmailLink(window.location.href)) {
