@@ -322,11 +322,12 @@
   .toast.show { opacity: 1; }
   .toast.error { border-color: var(--red); color: var(--red); }
 
-  /* Ocultar UI interna de EmulatorJS — solo los controles, NO el canvas ni el gamepad táctil */
-  .ejs_menu_bar, .ejs_menu_bar_hidden, .ejs_settings_parent, .ejs_cheat_parent,
-  .ejs_save_states_menu, .ejs_context_menu, .ejs_popout_container,
-  .ejs_loading_text, .ejs_pause_div, .ejs_start_button,
-  [class*="ejs_menu"], [class*="ejs_button"]:not([class*="ejs_gamepad"]) {
+  /* Ocultar solo los paneles del menú de EmulatorJS — NO el botón de inicio ni el canvas */
+  .ejs_menu_bar, .ejs_menu_bar_hidden,
+  .ejs_settings_parent, .ejs_cheat_parent,
+  .ejs_save_states_menu, .ejs_context_menu,
+  .ejs_popout_container, .ejs_loading_text,
+  [class*="ejs_menu"] {
     display: none !important; visibility: hidden !important; pointer-events: none !important;
   }
 </style>
@@ -852,13 +853,10 @@
   function hideEJSUI() {
     document.querySelectorAll(
       '.ejs_menu_bar,.ejs_menu_bar_hidden,.ejs_settings_parent,.ejs_cheat_parent,' +
-      '.ejs_save_states_menu,.ejs_context_menu,.ejs_popout_container,' +
-      '.ejs_loading_text,.ejs_pause_div,.ejs_start_button,' +
-      '[class*="ejs_menu"],[class*="ejs_button"]'
+      '.ejs_save_states_menu,.ejs_context_menu,.ejs_popout_container,.ejs_loading_text,' +
+      '.ejs_pause_div,.ejs_start_button,[class*="ejs_menu"]'
     ).forEach(el => {
-      if (!el.className.includes('ejs_gamepad')) {
-        el.style.cssText += 'display:none!important;visibility:hidden!important;';
-      }
+      el.style.cssText += 'display:none!important;visibility:hidden!important;pointer-events:none!important;';
     });
   }
 
@@ -1136,17 +1134,15 @@
       setTimeout(() => { ov.style.display='none'; }, 400);
       if (autoSaveTimer) clearInterval(autoSaveTimer);
       autoSaveTimer = setInterval(autoSaveLocal, AUTO_SAVE_MS);
-      hideEJSUI();
+      // Hacer click en el botón de inicio si el core no arrancó solo (ej: NES)
+      function forceStart() {
+        const startBtn = document.querySelector('.ejs_start_button, .ejs_pause_div button, [class*="ejs_start"]');
+        if (startBtn) startBtn.click();
+        // Después del click, ocultar toda la UI del emulador
+        setTimeout(hideEJSUI, 150);
+      }
+      setTimeout(forceStart, 400);
       new MutationObserver(hideEJSUI).observe(document.getElementById('game'),{childList:true,subtree:true});
-      // Descartar cualquier overlay de Retroarch en el canvas (menu interno del emulador)
-      setTimeout(() => {
-        const gameEl = document.getElementById('game');
-        ['Escape','Enter'].forEach(key => {
-          gameEl.dispatchEvent(new KeyboardEvent('keydown', {key, code: key, bubbles: true}));
-          gameEl.dispatchEvent(new KeyboardEvent('keyup',   {key, code: key, bubbles: true}));
-        });
-        hideEJSUI();
-      }, 800);
     };
 
     const sc = document.createElement('script');
