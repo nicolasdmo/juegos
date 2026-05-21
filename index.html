@@ -402,9 +402,14 @@
       </div>
       <div class="game-loading" id="game-loading">
         <div class="loading-content">
-          <div class="loading-spinner"></div>
-          <div style="color:var(--text);font-size:15px;">Iniciando emulador…</div>
+          <div class="loading-spinner" id="loading-spinner"></div>
+          <div style="color:var(--text);font-size:15px;" id="loading-status">Iniciando emulador…</div>
           <div class="loading-game-name" id="loading-game-name"></div>
+          <div id="loading-hint" style="display:none;margin-top:18px;padding:12px 16px;background:rgba(165,94,240,0.12);border:1px solid rgba(165,94,240,0.35);border-radius:10px;font-size:13px;color:var(--muted);line-height:1.5;max-width:260px">
+            ⚠️ El juego está tardando mucho.<br>
+            Abrí <strong style="color:var(--text)">MENÚ → 🔄 Reiniciar consola</strong><br>
+            para intentarlo de nuevo.
+          </div>
         </div>
       </div>
       <div id="game"></div>
@@ -1127,8 +1132,18 @@
     const saved = getLocalSave();
     if (saved?.state) window.EJS_loadStateURL = 'data:application/octet-stream;base64,' + saved.state;
 
+    // Detectar si el juego no carga en 20s y mostrar sugerencia de reset
+    const loadHintTimer = setTimeout(() => {
+      if (!emulatorReady) {
+        document.getElementById('loading-spinner').style.display = 'none';
+        document.getElementById('loading-status').textContent    = 'El juego no respondió.';
+        document.getElementById('loading-hint').style.display    = '';
+      }
+    }, 20000);
+
     window.EJS_ready = function() {
       emulatorReady = true;
+      clearTimeout(loadHintTimer);
       const ov = document.getElementById('game-loading');
       ov.classList.add('hidden');
       setTimeout(() => { ov.style.display='none'; }, 400);
