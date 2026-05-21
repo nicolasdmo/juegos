@@ -413,7 +413,7 @@
 
   const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz_lXVeIGK-YZqkc4HXqy3xfBpOEESNn4GteThwXVnO9b3L9B9FhJqgzaxcFfPXQTCi/exec';
   const BANNER_IMG_URL  = '';
-  const BANNER_LINK_URL = '';
+  const BANNER_LINK_URL = 'https://prisma-v2-six.vercel.app/';
   const ROMS_FOLDER     = 'roms';
   const AUTO_SAVE_MS    = 30000;
   const STORE = {
@@ -433,7 +433,9 @@
       _auth = firebase.auth();
       _db   = firebase.firestore();
       _auth.onAuthStateChanged(user => {
-        if (user?.emailVerified && currentUser && !currentUser.noAds) grantNoAds();
+        if (user?.emailVerified && currentUser && !currentUser.noAds) {
+          if (localStorage.getItem('arcade_noads_' + currentUser.email)) grantNoAds();
+        }
       });
     } catch(e) { console.warn('[FB] init:', e); }
   }
@@ -747,19 +749,22 @@
     const container = document.getElementById('game-container');
     const adSlot    = document.getElementById('banner-ad-content');
 
-    if (currentUser?.noAds || _auth?.currentUser?.emailVerified) { grantNoAds(); return; }
+    if (currentUser?.noAds) { grantNoAds(); return; }
 
     adSlot.innerHTML = '';
+    const a = document.createElement('a');
+    a.href = BANNER_LINK_URL || '#'; a.target = '_blank'; a.rel = 'noopener noreferrer';
+    a.style.cssText = 'display:flex;align-items:center;justify-content:center;width:100%;height:100%;text-decoration:none;';
     if (BANNER_IMG_URL) {
-      const a = document.createElement('a');
-      a.href = BANNER_LINK_URL || '#'; a.target = '_blank'; a.rel = 'noopener noreferrer';
       const img = document.createElement('img'); img.src = BANNER_IMG_URL; img.alt = 'Publicidad';
-      a.appendChild(img); adSlot.appendChild(a);
+      a.appendChild(img);
     } else {
       const ph = document.createElement('div');
-      ph.className = 'banner-placeholder'; ph.textContent = 'Tu banner aquí';
-      adSlot.appendChild(ph);
+      ph.className = 'banner-placeholder';
+      ph.textContent = BANNER_LINK_URL ? '✨ Visitá nuestra tienda →' : 'Tu banner aquí';
+      a.appendChild(ph);
     }
+    adSlot.appendChild(a);
 
     const noadsBtn = document.createElement('button');
     noadsBtn.className = 'noads-btn'; noadsBtn.textContent = '× quitar publicidad';
