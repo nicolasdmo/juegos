@@ -756,14 +756,22 @@
     adSlot.innerHTML = '';
     const a = document.createElement('a');
     a.href = BANNER_LINK_URL || '#'; a.target = '_blank'; a.rel = 'noopener noreferrer';
-    a.style.cssText = 'display:flex;align-items:center;justify-content:center;width:100%;height:100%;text-decoration:none;';
+    a.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:100%;text-decoration:none;padding:0 12px;';
     if (BANNER_IMG_URL) {
-      const img = document.createElement('img'); img.src = BANNER_IMG_URL; img.alt = 'Publicidad';
+      const img = document.createElement('img'); img.src = BANNER_IMG_URL; img.alt = '';
+      img.style.cssText = 'max-height:42px;width:auto;object-fit:contain;';
       a.appendChild(img);
+    } else if (BANNER_LINK_URL) {
+      a.innerHTML =
+        '<span style="font-size:18px;line-height:1">🧠</span>' +
+        '<span style="color:#fff;font-size:12px;font-weight:600;letter-spacing:0.2px;line-height:1.3">' +
+          '¿Qué tipo de persona sos?<br>' +
+          '<span style="color:#fde68a;font-size:10px;font-weight:400">Test de personalidad gratuito</span>' +
+        '</span>' +
+        '<span style="background:#f59e0b;color:#1c0a00;font-size:10px;font-weight:800;padding:5px 10px;border-radius:50px;letter-spacing:0.5px;white-space:nowrap;flex-shrink:0">Hacé el test →</span>';
     } else {
       const ph = document.createElement('div');
-      ph.className = 'banner-placeholder';
-      ph.textContent = BANNER_LINK_URL ? '✨ Visitá nuestra tienda →' : 'Tu banner aquí';
+      ph.className = 'banner-placeholder'; ph.textContent = 'Tu banner aquí';
       a.appendChild(ph);
     }
     adSlot.appendChild(a);
