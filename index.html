@@ -133,10 +133,11 @@
 
   .game-banner {
     position: absolute; top: 0; left: 0; right: 0; height: 58px;
-    background: rgba(18,8,37,0.95); backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(123,63,200,0.4);
+    background: linear-gradient(90deg, #1a0840 0%, #35116a 50%, #1a0840 100%);
+    border-bottom: 2px solid rgba(165,94,240,0.5);
+    box-shadow: 0 2px 12px rgba(123,63,200,0.3);
     display: flex; align-items: center; justify-content: center;
-    z-index: 10000; overflow: visible;
+    z-index: 10000; overflow: hidden;
     transition: height 0.35s ease, opacity 0.35s ease, border-color 0.35s;
   }
   .banner-ad {
@@ -146,17 +147,18 @@
   .banner-ad a { display: flex; align-items: center; height: 100%; }
   .banner-ad img { max-height: 46px; width: auto; object-fit: contain; }
   .banner-placeholder {
-    color: var(--muted); font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
-    border: 1px dashed rgba(123,63,200,0.3); padding: 5px 16px; border-radius: 6px;
+    color: rgba(255,255,255,0.9); font-size: 13px; font-weight: 600;
+    letter-spacing: 0.5px; padding: 6px 16px;
   }
   .noads-btn {
-    position: absolute; bottom: -20px; right: 8px;
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
     background: transparent; border: none;
-    color: rgba(144,112,184,0.28); padding: 2px 6px;
+    color: rgba(255,255,255,0.2); padding: 2px 6px;
     font-size: 9px; font-weight: 600; letter-spacing: 0.5px;
     text-transform: uppercase; cursor: pointer; transition: color 0.15s;
+    white-space: nowrap;
   }
-  .noads-btn:hover { color: rgba(144,112,184,0.65); }
+  .noads-btn:hover { color: rgba(255,255,255,0.55); }
 
   #game-container.no-ads .game-banner { height: 0; opacity: 0; pointer-events: none; border-color: transparent; }
   #game-container.no-ads #game { top: 0; }
