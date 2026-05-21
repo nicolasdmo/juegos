@@ -322,8 +322,11 @@
   .toast.show { opacity: 1; }
   .toast.error { border-color: var(--red); color: var(--red); }
 
-  /* Ocultar toda la UI de EmulatorJS excepto el canvas y el gamepad táctil */
-  [class*="ejs_"]:not([class*="ejs_canvas"]):not([class*="ejs_gamepad"]):not([class*="ejs_virtual"]):not([class*="ejs_touch"]) {
+  /* Ocultar UI interna de EmulatorJS — solo los controles, NO el canvas ni el gamepad táctil */
+  .ejs_menu_bar, .ejs_menu_bar_hidden, .ejs_settings_parent, .ejs_cheat_parent,
+  .ejs_save_states_menu, .ejs_context_menu, .ejs_popout_container,
+  .ejs_loading_text, .ejs_pause_div, .ejs_start_button,
+  [class*="ejs_menu"], [class*="ejs_button"]:not([class*="ejs_gamepad"]) {
     display: none !important; visibility: hidden !important; pointer-events: none !important;
   }
 </style>
@@ -391,6 +394,7 @@
         <div class="menu-items" id="menu-items">
           <button class="menu-item" id="save-btn">💾 Guardar partida</button>
           <button class="menu-item" id="load-btn">📂 Cargar partida</button>
+          <button class="menu-item" id="reset-btn">🔄 Reiniciar consola</button>
           <button class="menu-item" id="controls-btn">🎮 Controles</button>
           <button class="menu-item" id="back-btn">← Volver al menú</button>
         </div>
@@ -847,11 +851,15 @@
   //=============================================================================
   function hideEJSUI() {
     document.querySelectorAll(
-      '.ejs_menu_bar,.ejs_menu_bar_hidden,.ejs_menu_button,' +
-      '.ejs_settings_parent,.ejs_cheat_parent,.ejs_save_states_menu,' +
-      '.ejs_context_menu,.ejs_popout_container,.ejs_loading_text'
-    ).forEach(el => { el.style.cssText += 'display:none!important;visibility:hidden!important;'; });
-    document.querySelectorAll('#game button,[class*="ejs_menu"]').forEach(el => { el.style.cssText += 'display:none!important;'; });
+      '.ejs_menu_bar,.ejs_menu_bar_hidden,.ejs_settings_parent,.ejs_cheat_parent,' +
+      '.ejs_save_states_menu,.ejs_context_menu,.ejs_popout_container,' +
+      '.ejs_loading_text,.ejs_pause_div,.ejs_start_button,' +
+      '[class*="ejs_menu"],[class*="ejs_button"]'
+    ).forEach(el => {
+      if (!el.className.includes('ejs_gamepad')) {
+        el.style.cssText += 'display:none!important;visibility:hidden!important;';
+      }
+    });
   }
 
   //=============================================================================
@@ -1167,6 +1175,15 @@
     autoSaveLocal();
     delStore(STORE.CURRENT_ROM, true);
     location.reload();
+  });
+  document.getElementById('reset-btn').addEventListener('click', () => {
+    closeMenu();
+    try {
+      const emu = window.EJS_emulator;
+      if (emu?.gameManager?.restart)      { emu.gameManager.restart(); toast('Consola reiniciada'); }
+      else if (emu?.restart)              { emu.restart();             toast('Consola reiniciada'); }
+      else                                { location.reload(); }
+    } catch(e)                            { location.reload(); }
   });
   document.getElementById('controls-btn').addEventListener('click', () => { closeMenu(); openControlsModal(); });
 
