@@ -481,8 +481,32 @@
       firebase.initializeApp(FIREBASE_CONFIG);
       _auth = firebase.auth();
       _db   = firebase.firestore();
-      _auth.onAuthStateChanged(user => {
-        if (user?.emailVerified && currentUser && !currentUser.noAds) {
+      _auth.onAuthStateChanged(async user => {
+        if (!user || !_db) return;
+
+        // Guardar / completar perfil del usuario en Firestore
+        const profileRef = _db.doc('users/' + user.uid);
+        try {
+          const snap = await profileRef.get();
+          if (!snap.exists) {
+            // Primera vez — guardar nombre + email del registro local
+            await profileRef.set({
+              name:      currentUser?.name  || '',
+              email:     user.email         || '',
+              createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+              verified:  user.emailVerified || false
+            });
+          } else if (user.emailVerified && !snap.data().verified) {
+            // El usuario verificó su email → actualizar bandera
+            await profileRef.update({
+              verified:   true,
+              verifiedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+          }
+        } catch(e) { console.warn('[FB] profile:', e); }
+
+        // Desactivar publicidad si el email ya fue verificado
+        if (user.emailVerified && currentUser && !currentUser.noAds) {
           if (localStorage.getItem('arcade_noads_' + currentUser.email)) grantNoAds();
         }
       });
@@ -1185,7 +1209,16 @@
           localStorage.removeItem('arcade_emaillink');
           localStorage.setItem('arcade_noads_' + linkEmail, '1');
           window.history.replaceState({}, '', window.location.pathname);
-          // Persist no-ads in session if already registered
+          // Marcar verified: true en Firestore
+          if (_auth.currentUser && _db) {
+            try {
+              await _db.doc('users/' + _auth.currentUser.uid).set(
+                { verified: true, verifiedAt: firebase.firestore.FieldValue.serverTimestamp() },
+                { merge: true }
+              );
+            } catch(_) {}
+          }
+          // Persist no-ads en sesión local
           const s = loadStore(STORE.SESSION, null);
           if (s) { s.noAds = true; saveStore(STORE.SESSION, s); }
         } catch(e) { console.warn('[FB] email link:', e.code); }
