@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>Arcade</title>
+<title>Arcadia — Retro Gaming</title>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -37,39 +37,60 @@
   .screen { display: none; width: 100vw; height: 100vh; }
   .screen.active { display: flex; flex-direction: column; }
 
-  /* ===== Register ===== */
-  #screen-register { align-items: center; justify-content: center; padding: 16px; }
-  .btn-google {
-    width: 100%; padding: 13px 16px; border-radius: 10px; border: 1.5px solid rgba(255,255,255,0.15);
-    background: #fff; color: #1f1f1f; font-size: 15px; font-weight: 600; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    transition: box-shadow 0.15s, transform 0.1s;
+  /* ===== Landing / Register ===== */
+  #screen-register { position: relative; align-items: center; justify-content: center; padding: 20px; overflow: hidden; }
+  .landing-bg {
+    position: absolute; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse at 25% 15%, rgba(123,63,200,0.22) 0%, transparent 55%),
+      radial-gradient(ellipse at 75% 85%, rgba(165,94,240,0.15) 0%, transparent 55%),
+      radial-gradient(circle, rgba(165,94,240,0.18) 1px, transparent 1px);
+    background-size: auto, auto, 36px 36px;
   }
-  .btn-google:hover  { box-shadow: 0 4px 18px rgba(0,0,0,0.35); transform: translateY(-1px); }
-  .btn-google:active { transform: translateY(0); }
+  .scanlines {
+    position: absolute; inset: 0; pointer-events: none; z-index: 1;
+    background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.07) 3px, rgba(0,0,0,0.07) 4px);
+  }
+  .pixel-deco { position: absolute; pointer-events: none; opacity: 0.45; filter: drop-shadow(0 0 8px rgba(165,94,240,0.7)); }
+  @keyframes floatA { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-14px) rotate(6deg)} }
+  @keyframes floatB { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-9px) rotate(-4deg)} }
+  @keyframes arcadeGlow {
+    0%,100% { text-shadow: 0 0 18px #a55ef0, 0 0 40px rgba(165,94,240,0.55), 0 0 90px rgba(165,94,240,0.25); }
+    50%      { text-shadow: 0 0 28px #d8b4fe, 0 0 60px rgba(192,132,252,0.75), 0 0 110px rgba(165,94,240,0.4); }
+  }
+  .landing-content {
+    position: relative; z-index: 2; display: flex; flex-direction: column;
+    align-items: center; width: 100%; max-width: 420px; text-align: center;
+  }
+  .landing-tag {
+    font-size: 11px; letter-spacing: 5px; color: var(--accent-hi);
+    text-transform: uppercase; font-weight: 700; margin-bottom: 10px; opacity: 0.9;
+  }
+  .landing-title {
+    font-size: clamp(58px, 18vw, 108px); font-weight: 900; letter-spacing: 10px;
+    margin: 0 0 4px; line-height: 1; color: #f4ecff;
+    animation: arcadeGlow 3s ease-in-out infinite;
+  }
+  .landing-consoles { font-size: 20px; letter-spacing: 10px; margin: 10px 0 4px; opacity: 0.6; }
+  .landing-sub { font-size: 11px; color: var(--muted); letter-spacing: 1.5px; margin: 0 0 30px; line-height: 1.8; text-transform: uppercase; }
+  .landing-divider { width: 80px; height: 2px; background: linear-gradient(90deg, transparent, var(--accent), transparent); margin: 0 auto 28px; }
+  .landing-buttons { width: 100%; max-width: 300px; }
+  .btn-google {
+    width: 100%; padding: 15px 20px; border-radius: 12px; border: none;
+    background: #fff; color: #1f1f1f; font-size: 16px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    box-shadow: 0 6px 28px rgba(0,0,0,0.45); transition: box-shadow 0.15s, transform 0.1s;
+  }
+  .btn-google:hover  { box-shadow: 0 8px 35px rgba(0,0,0,0.55); transform: translateY(-2px); }
+  .btn-google:active { transform: translateY(0); box-shadow: 0 3px 12px rgba(0,0,0,0.3); }
   .btn-google:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
   .btn-guest {
-    width: 100%; padding: 10px; background: transparent; border: 1px solid var(--border);
-    color: var(--muted); border-radius: 8px; font-size: 13px; cursor: pointer; margin-top: 8px;
-    transition: border-color 0.15s, color 0.15s;
+    width: 100%; padding: 11px; background: transparent;
+    border: 1px solid rgba(165,94,240,0.35); color: var(--muted);
+    border-radius: 10px; font-size: 13px; cursor: pointer; margin-top: 10px;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
   }
-  .btn-guest:hover { border-color: var(--accent); color: var(--text); }
-  .register-card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 18px;
-    padding: 30px; width: 100%; max-width: 380px;
-    box-shadow: 0 0 40px rgba(123,63,200,0.18);
-  }
-  .register-card h1 { margin: 0 0 4px; font-size: 26px; font-weight: 700; }
-  .register-card .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
-  .field { margin-bottom: 14px; }
-  .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-  .field input {
-    width: 100%; padding: 12px 14px; background: var(--bg);
-    border: 1px solid var(--border); border-radius: 10px;
-    color: var(--text); font-size: 15px;
-    -webkit-user-select: text; user-select: text;
-  }
-  .field input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(123,63,200,0.2); }
+  .btn-guest:hover { border-color: var(--accent); color: var(--text); background: rgba(123,63,200,0.08); }
   .btn-primary {
     width: 100%; padding: 14px; background: var(--btn-a);
     box-shadow: 0 5px 0 var(--btn-a-sh); border: none; border-radius: 50px;
@@ -354,21 +375,34 @@
     <div class="banner-ad" id="banner-ad-content"></div>
   </div>
 
-  <!-- REGISTER -->
+  <!-- REGISTER / LANDING -->
   <div id="screen-register" class="screen active">
-    <div class="register-card">
-      <div style="font-size:38px;margin-bottom:8px">🎮</div>
-      <h1 style="margin:0 0 4px">Arcade Retro</h1>
-      <div class="subtitle">Jugá clásicos de Game Boy, NES, Sega y Atari</div>
-      <button class="btn-google" id="reg-google">
-        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.8 2.5 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.8 6C12.4 13 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8C43.7 37.4 46.5 31.4 46.5 24.5z"/><path fill="#FBBC05" d="M10.5 28.7A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.7l-7.8-6A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.5 10.8l8-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.2 1.5-5 2.4-8.4 2.4-6.2 0-11.5-4.2-13.4-9.8l-8 6.1C6.5 42.6 14.6 48 24 48z"/></svg>
-        Continuar con Google
-      </button>
-      <button class="btn-guest" id="reg-guest">Jugar sin cuenta →</button>
-      <div class="msg" id="reg-msg" style="margin-top:10px"></div>
-      <p style="color:var(--muted);font-size:11px;margin-top:14px;line-height:1.5">
-        Con Google: guardado en la nube y sin publicidad 🚫
-      </p>
+    <div class="landing-bg"></div>
+    <div class="scanlines"></div>
+    <!-- Píxeles flotantes decorativos -->
+    <div class="pixel-deco" style="top:7%;left:6%;font-size:30px;animation:floatA 4.2s ease-in-out infinite">👾</div>
+    <div class="pixel-deco" style="top:10%;right:7%;font-size:24px;animation:floatB 5.1s ease-in-out infinite 1s">🕹️</div>
+    <div class="pixel-deco" style="top:72%;left:5%;font-size:22px;animation:floatA 6s ease-in-out infinite 2s">🎮</div>
+    <div class="pixel-deco" style="top:68%;right:5%;font-size:26px;animation:floatB 4.8s ease-in-out infinite 0.5s">⭐</div>
+    <div class="pixel-deco" style="top:38%;left:2%;font-size:14px;animation:floatA 5.5s ease-in-out infinite 1.5s;letter-spacing:0">✦</div>
+    <div class="pixel-deco" style="top:32%;right:3%;font-size:16px;animation:floatB 4s ease-in-out infinite 2.5s;letter-spacing:0">✦</div>
+    <div class="pixel-deco" style="top:85%;left:30%;font-size:12px;animation:floatA 7s ease-in-out infinite 3s;letter-spacing:0">◆</div>
+    <div class="pixel-deco" style="top:20%;left:20%;font-size:10px;animation:floatB 5s ease-in-out infinite 0.8s;letter-spacing:0">◆</div>
+    <!-- Contenido principal -->
+    <div class="landing-content">
+      <div class="landing-tag">★ Retro Gaming Experience ★</div>
+      <h1 class="landing-title">ARCADIA</h1>
+      <div class="landing-consoles">🎮 · 🕹️ · 📟 · 🎯 · 👾</div>
+      <p class="landing-sub">Game Boy · NES · Master System · Game Gear · Atari</p>
+      <div class="landing-divider"></div>
+      <div class="landing-buttons">
+        <button class="btn-google" id="reg-google">
+          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.8 2.5 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.8 6C12.4 13 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8C43.7 37.4 46.5 31.4 46.5 24.5z"/><path fill="#FBBC05" d="M10.5 28.7A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.7l-7.8-6A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.5 10.8l8-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.2 1.5-5 2.4-8.4 2.4-6.2 0-11.5-4.2-13.4-9.8l-8 6.1C6.5 42.6 14.6 48 24 48z"/></svg>
+          Continuar con Google
+        </button>
+        <button class="btn-guest" id="reg-guest">Jugar sin cuenta →</button>
+      </div>
+      <div class="msg" id="reg-msg" style="margin-top:14px;text-align:center"></div>
     </div>
   </div>
 
