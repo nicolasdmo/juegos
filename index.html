@@ -416,6 +416,14 @@
       </div>
     </div>
     <div class="console-grid" id="console-grid"></div>
+    <div style="padding:12px 16px 20px;text-align:center">
+      <button id="support-btn" style="background:none;border:1px solid rgba(165,94,240,0.25);color:var(--muted);
+        border-radius:8px;padding:8px 18px;font-size:12px;cursor:pointer;transition:all 0.15s"
+        onmouseover="this.style.borderColor='rgba(165,94,240,0.6)';this.style.color='var(--text)'"
+        onmouseout="this.style.borderColor='rgba(165,94,240,0.25)';this.style.color='var(--muted)'">
+        💬 Sugerencias y soporte
+      </button>
+    </div>
   </div>
 
   <!-- ROM PICKER -->
@@ -1276,6 +1284,80 @@
     } catch(e)                            { location.reload(); }
   });
   document.getElementById('controls-btn').addEventListener('click', () => { closeMenu(); openControlsModal(); });
+  document.getElementById('support-btn').addEventListener('click', openSupportModal);
+
+  function openSupportModal() {
+    document.getElementById('support-modal')?.remove();
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay'; overlay.id = 'support-modal';
+    overlay.innerHTML =
+      '<div class="modal" style="max-width:360px">' +
+        '<h3 style="margin:0 0 4px">💬 Sugerencias y soporte</h3>' +
+        '<p style="color:var(--muted);font-size:12px;margin:0 0 16px">Tu mensaje va directo a los desarrolladores.</p>' +
+        '<div style="margin-bottom:10px">' +
+          '<select id="sup-tipo" style="width:100%;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);' +
+            'border-radius:8px;color:var(--text);font-size:13px;cursor:pointer">' +
+            '<option value="sugerencia">💡 Sugerencia</option>' +
+            '<option value="bug">🐛 Reportar un problema</option>' +
+            '<option value="juego">🎮 Pedir un juego</option>' +
+            '<option value="otro">💬 Otro</option>' +
+          '</select>' +
+        '</div>' +
+        '<textarea id="sup-msg" rows="4" placeholder="Contanos qué pensás, qué falla o qué juego querés ver..." ' +
+          'style="-webkit-user-select:text;user-select:text;width:100%;padding:10px 12px;background:var(--surface2);' +
+          'border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;' +
+          'resize:none;font-family:inherit;line-height:1.5"></textarea>' +
+        '<div class="msg" id="sup-result" style="margin-top:8px"></div>' +
+        '<div class="modal-footer" style="margin-top:14px;gap:8px">' +
+          '<button class="btn-cancel" id="sup-cancel">Cancelar</button>' +
+          '<button class="btn-primary" id="sup-send" style="flex:1;padding:12px">Enviar</button>' +
+        '</div>' +
+      '</div>';
+
+    overlay.querySelector('#sup-cancel').addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+
+    overlay.querySelector('#sup-send').addEventListener('click', async () => {
+      const msg  = (overlay.querySelector('#sup-msg').value || '').trim();
+      const tipo = overlay.querySelector('#sup-tipo').value;
+      const res  = overlay.querySelector('#sup-result');
+      const btn  = overlay.querySelector('#sup-send');
+      if (!msg) { res.className='msg error'; res.textContent='Escribí algo primero.'; return; }
+      btn.disabled = true; btn.textContent = 'Enviando…';
+      const ticket = {
+        tipo, mensaje: msg,
+        nombre:  currentUser?.name  || 'Invitado',
+        email:   currentUser?.email || '',
+        fecha:   new Date().toISOString(),
+        uid:     _auth?.currentUser?.uid || null
+      };
+      let ok = false;
+      // Guardar en Firestore
+      if (_db) {
+        try { await _db.collection('tickets').add({ ...ticket, createdAt: firebase.firestore.FieldValue.serverTimestamp() }); ok = true; }
+        catch(e) { console.warn('[FB] ticket:', e); }
+      }
+      // Guardar en Google Sheet como fallback
+      try {
+        fetch(APPS_SCRIPT_URL + '?' + new URLSearchParams({ action:'ticket', ...ticket }), { mode:'no-cors' });
+        ok = true;
+      } catch(_) {}
+      if (ok) {
+        res.className = 'msg ok'; res.textContent = '✓ Mensaje enviado. ¡Gracias!';
+        overlay.querySelector('#sup-msg').value = '';
+        btn.textContent = 'Enviado ✓'; btn.disabled = true;
+        setTimeout(() => overlay.remove(), 2000);
+      } else {
+        res.className = 'msg error'; res.textContent = 'Error al enviar. Intentá de nuevo.';
+        btn.disabled = false; btn.textContent = 'Enviar';
+      }
+    });
+
+    document.body.appendChild(overlay);
+    // Habilitar selección de texto en el textarea
+    overlay.querySelector('#sup-msg').addEventListener('touchstart', e => e.stopPropagation(), {passive:true});
+    overlay.querySelector('#sup-msg').focus();
+  }
 
   function openControlsModal() {
     document.getElementById('controls-modal')?.remove();
