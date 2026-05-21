@@ -490,15 +490,8 @@
   }
 
   function fbPassword(email) {
-    const k = 'arcade_fbpw_' + email;
-    let pw = localStorage.getItem(k);
-    if (!pw) {
-      const arr = new Uint8Array(24);
-      crypto.getRandomValues(arr);
-      pw = Array.from(arr, b => b.toString(16).padStart(2,'0')).join('');
-      localStorage.setItem(k, pw);
-    }
-    return pw;
+    // Determinista: mismo email → misma contraseña en cualquier dispositivo/sesión
+    return btoa(email.toLowerCase() + ':arc@d3_arcade!').slice(0, 32);
   }
 
   async function firebaseSignIn(email) {
@@ -507,10 +500,16 @@
     try {
       await _auth.signInWithEmailAndPassword(email, pw);
     } catch(e) {
-      if (['auth/user-not-found','auth/invalid-credential','auth/invalid-login-credentials'].includes(e.code)) {
+      const needsCreate = ['auth/user-not-found','auth/invalid-credential',
+        'auth/invalid-login-credentials','auth/wrong-password'].includes(e.code);
+      if (needsCreate) {
         try { await _auth.createUserWithEmailAndPassword(email, pw); }
-        catch(e2) { console.warn('[FB] create user:', e2); }
-      } else { console.warn('[FB] sign in:', e); }
+        catch(e2) {
+          if (e2.code === 'auth/email-already-in-use') {
+            console.warn('[FB] password mismatch for existing account:', email);
+          } else { console.warn('[FB] create:', e2.code); }
+        }
+      } else { console.warn('[FB] sign-in error:', e.code); }
     }
   }
 
@@ -780,12 +779,15 @@
     const body  = overlay.querySelector('#noads-body');
     const email = currentUser?.email || '';
 
-    if (!_auth?.currentUser && _auth) {
+    if (!_auth?.currentUser && _auth && email) {
       body.innerHTML = '<div class="cloud-msg">Conectando…</div>';
-      await new Promise(resolve => {
-        const timer = setTimeout(resolve, 5000);
-        const unsub = _auth.onAuthStateChanged(user => { if (user) { clearTimeout(timer); unsub(); resolve(); } });
-      });
+      await firebaseSignIn(email);
+      if (!_auth.currentUser) {
+        await new Promise(resolve => {
+          const timer = setTimeout(resolve, 4000);
+          const unsub = _auth.onAuthStateChanged(user => { if (user) { clearTimeout(timer); unsub(); resolve(); } });
+        });
+      }
     }
     if (!_auth?.currentUser) {
       body.innerHTML = '<div class="cloud-msg error" style="font-size:12px">No se pudo conectar. Recargá la página e intentá de nuevo.</div>'; return;
