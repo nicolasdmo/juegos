@@ -173,17 +173,17 @@
   .game-banner.no-ads { height: 0; opacity: 0; pointer-events: none; border-color: transparent; }
   body.no-ads #screen-register,
   body.no-ads #screen-consoles,
-  body.no-ads #screen-picker { padding-top: 16px !important; }
-  body.no-ads #game { top: 0 !important; }
+  body.no-ads #screen-picker,
+  body.no-ads #screen-game { padding-top: 0 !important; }
   body.no-ads .game-menu { top: calc(90vw + 10px) !important; }
 
   /* ===== Game Screen ===== */
-  #screen-game { padding: 0; }
+  #screen-game { padding-top: 58px; padding-left: 0; padding-right: 0; padding-bottom: 0; }
   #game-container { width: 100%; height: 100%; background: var(--bg); position: relative; }
 
   #game {
-    position: absolute; top: 58px; left: 0; right: 0; bottom: 0;
-    background: var(--bg); transition: top 0.35s ease;
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--bg);
   }
   .game-loading {
     position: absolute; inset: 0; background: var(--bg);
