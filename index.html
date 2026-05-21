@@ -322,11 +322,8 @@
   .toast.show { opacity: 1; }
   .toast.error { border-color: var(--red); color: var(--red); }
 
-  .ejs_menu_bar, .ejs_menu_bar_hidden, .ejs_menu_button,
-  .ejs_settings_parent, .ejs_cheat_parent, .ejs_save_states_menu,
-  .ejs_context_menu, .ejs_popout_container, .ejs_loading_text,
-  .ejs_pause_div, .ejs_main_button,
-  [class^="ejs_"][class$="button"], [class*="ejs_menu"] {
+  /* Ocultar toda la UI de EmulatorJS excepto el canvas y el gamepad táctil */
+  [class*="ejs_"]:not([class*="ejs_canvas"]):not([class*="ejs_gamepad"]):not([class*="ejs_virtual"]):not([class*="ejs_touch"]) {
     display: none !important; visibility: hidden !important; pointer-events: none !important;
   }
 </style>
@@ -394,6 +391,7 @@
         <div class="menu-items" id="menu-items">
           <button class="menu-item" id="save-btn">💾 Guardar partida</button>
           <button class="menu-item" id="load-btn">📂 Cargar partida</button>
+          <button class="menu-item" id="controls-btn">🎮 Controles</button>
           <button class="menu-item" id="back-btn">← Volver al menú</button>
         </div>
       </div>
@@ -1128,6 +1126,15 @@
       autoSaveTimer = setInterval(autoSaveLocal, AUTO_SAVE_MS);
       hideEJSUI();
       new MutationObserver(hideEJSUI).observe(document.getElementById('game'),{childList:true,subtree:true});
+      // Descartar cualquier overlay de Retroarch en el canvas (menu interno del emulador)
+      setTimeout(() => {
+        const gameEl = document.getElementById('game');
+        ['Escape','Enter'].forEach(key => {
+          gameEl.dispatchEvent(new KeyboardEvent('keydown', {key, code: key, bubbles: true}));
+          gameEl.dispatchEvent(new KeyboardEvent('keyup',   {key, code: key, bubbles: true}));
+        });
+        hideEJSUI();
+      }, 800);
     };
 
     const sc = document.createElement('script');
@@ -1157,6 +1164,50 @@
     delStore(STORE.CURRENT_ROM, true);
     location.reload();
   });
+  document.getElementById('controls-btn').addEventListener('click', () => { closeMenu(); openControlsModal(); });
+
+  function openControlsModal() {
+    document.getElementById('controls-modal')?.remove();
+
+    const CONTROLS = {
+      gb:    { name:'Game Boy / GBC', buttons:[['↑↓←→','Flechas'],['A','Z'],['B','X'],['Start','Enter'],['Select','Shift']] },
+      nes:   { name:'NES', buttons:[['↑↓←→','Flechas'],['A','Z'],['B','X'],['Start','Enter'],['Select','Shift']] },
+      sms:   { name:'Master System', buttons:[['↑↓←→','Flechas'],['Botón 1','Z'],['Botón 2','X'],['Pausa','Enter']] },
+      gg:    { name:'Game Gear', buttons:[['↑↓←→','Flechas'],['Botón 1','Z'],['Botón 2','X'],['Start','Enter']] },
+      atari: { name:'Atari 2600', buttons:[['↑↓←→','Flechas'],['Fuego','Z'],['Reset','Enter']] }
+    };
+
+    const cfg = CONTROLS[currentConsole?.id] || CONTROLS.gb;
+    const rows = cfg.buttons.map(([btn, key]) =>
+      '<tr>' +
+        '<td style="padding:8px 12px;color:var(--muted);text-align:right">' + btn + '</td>' +
+        '<td style="padding:8px 12px">' +
+          '<kbd style="background:#1a0840;border:1px solid rgba(165,94,240,0.6);border-radius:5px;' +
+               'padding:3px 10px;font-size:13px;color:#e0d0ff;font-family:monospace">' + key + '</kbd>' +
+        '</td>' +
+      '</tr>'
+    ).join('');
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay'; overlay.id = 'controls-modal';
+    overlay.innerHTML =
+      '<div class="modal" style="max-width:320px">' +
+        '<h3 style="margin:0 0 4px">🎮 ' + cfg.name + '</h3>' +
+        '<p style="color:var(--muted);font-size:12px;margin:0 0 16px">Controles de teclado</p>' +
+        '<table style="width:100%;border-collapse:collapse">' + rows + '</table>' +
+        '<hr style="border-color:var(--border);margin:16px 0 12px">' +
+        '<p style="color:var(--muted);font-size:12px;margin:0;text-align:center">' +
+          '📱 En celular aparecen controles táctiles automáticamente' +
+        '</p>' +
+        '<div class="modal-footer" style="margin-top:14px">' +
+          '<button class="btn-cancel" id="controls-close">Cerrar</button>' +
+        '</div>' +
+      '</div>';
+
+    overlay.querySelector('#controls-close').addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
+  }
 
   //=============================================================================
   // KIOSK PROTECTION
