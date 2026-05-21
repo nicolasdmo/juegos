@@ -778,39 +778,62 @@
   async function initNoAdsFlow(overlay) {
     const body  = overlay.querySelector('#noads-body');
     const email = currentUser?.email || '';
-
     if (!email) { body.innerHTML = '<div class="cloud-msg error">Registrá tu email primero.</div>'; return; }
-    if (!_auth)  { body.innerHTML = '<div class="cloud-msg error" style="font-size:12px">Servicio no disponible. Recargá la página.</div>'; return; }
 
-    body.innerHTML =
-      '<p style="color:var(--muted);font-size:13px;margin:0 0 14px">' +
-        'Te enviamos un link a:<br>' +
-        '<strong style="color:var(--text)">' + escapeHTML(email) + '</strong><br>' +
-        '<span style="font-size:11px">Hacé clic en el link del mail y la publicidad se desactiva sola.</span>' +
-      '</p>' +
-      '<button class="btn-primary" id="noads-send">Enviar link al correo</button>' +
-      '<div class="msg" id="noads-msg" style="margin-top:10px"></div>';
+    function showSend(extraMsg) {
+      body.innerHTML =
+        '<p style="color:var(--muted);font-size:13px;margin:0 0 12px">' +
+          'Verificá <strong style="color:var(--text)">' + escapeHTML(email) + '</strong><br>' +
+          '<span style="font-size:11px">Te mandamos un código de 6 dígitos al correo.</span>' +
+        '</p>' +
+        '<button class="btn-primary" id="noads-send">Enviar código</button>' +
+        (extraMsg ? '<div class="msg ' + extraMsg.cls + '" style="margin-top:10px">' + extraMsg.text + '</div>' : '');
+      body.querySelector('#noads-send').addEventListener('click', doSend);
+    }
 
-    body.querySelector('#noads-send').addEventListener('click', async () => {
-      const btn = body.querySelector('#noads-send'); const msgEl = body.querySelector('#noads-msg');
-      btn.disabled = true; btn.textContent = 'Enviando…';
+    function showVerify() {
+      body.innerHTML =
+        '<p style="color:var(--muted);font-size:13px;margin:0 0 10px">' +
+          '✉️ Código enviado a <strong style="color:var(--text)">' + escapeHTML(email) + '</strong>' +
+        '</p>' +
+        '<input id="noads-code" type="text" inputmode="numeric" maxlength="6" placeholder="_ _ _ _ _ _"' +
+          ' style="width:100%;padding:12px;font-size:22px;text-align:center;letter-spacing:8px;' +
+          'background:#1a0840;color:#fff;border:2px solid rgba(165,94,240,0.5);border-radius:8px;outline:none">' +
+        '<button class="btn-primary" id="noads-verify" style="margin-top:10px;width:100%">Verificar</button>' +
+        '<div class="msg" id="noads-msg" style="margin-top:8px"></div>' +
+        '<button class="btn-cancel" id="noads-resend" style="margin-top:6px;font-size:12px">Reenviar código</button>';
+      body.querySelector('#noads-code').focus();
+      body.querySelector('#noads-verify').addEventListener('click', doVerify);
+      body.querySelector('#noads-resend').addEventListener('click', doSend);
+      body.querySelector('#noads-code').addEventListener('keydown', e => { if (e.key === 'Enter') doVerify(); });
+    }
+
+    async function doSend() {
+      const btn = body.querySelector('#noads-send') || body.querySelector('#noads-resend');
+      if (btn) { btn.disabled = true; btn.textContent = 'Enviando…'; }
+      const code = String(Math.floor(100000 + Math.random() * 900000));
+      localStorage.setItem('arcade_otp', JSON.stringify({ email, code, exp: Date.now() + 10 * 60000 }));
       try {
-        await _auth.sendSignInLinkToEmail(email, {
-          url: window.location.origin + window.location.pathname,
-          handleCodeInApp: true
-        });
-        localStorage.setItem('arcade_emaillink', email);
-        msgEl.className = 'msg ok';
-        msgEl.textContent = '✓ Revisá tu casilla y hacé clic en el link. Después volvé acá.';
-        btn.textContent = 'Reenviar'; btn.disabled = false;
-      } catch(e) {
-        msgEl.className = 'msg error';
-        msgEl.textContent = e.code === 'auth/too-many-requests'
-          ? 'Demasiados intentos. Esperá unos minutos.'
-          : 'Error al enviar (' + e.code + '). Intentá de nuevo.';
-        btn.disabled = false; btn.textContent = 'Enviar link al correo';
-      }
-    });
+        await fetch(APPS_SCRIPT_URL + '?' + new URLSearchParams({ action: 'code', email, code }), { mode: 'no-cors' });
+      } catch(_) {}
+      showVerify();
+    }
+
+    function doVerify() {
+      const entered = (body.querySelector('#noads-code')?.value || '').replace(/\s/g, '');
+      const msgEl   = body.querySelector('#noads-msg');
+      let stored;
+      try { stored = JSON.parse(localStorage.getItem('arcade_otp') || '{}'); } catch(_) { stored = {}; }
+      if (stored.email !== email) { msgEl.className = 'msg error'; msgEl.textContent = 'Enviá el código primero.'; return; }
+      if (Date.now() > stored.exp) { msgEl.className = 'msg error'; msgEl.textContent = 'El código expiró. Reenvialo.'; return; }
+      if (entered !== stored.code) { msgEl.className = 'msg error'; msgEl.textContent = 'Código incorrecto. Revisá tu casilla.'; return; }
+      localStorage.removeItem('arcade_otp');
+      grantNoAds();
+      overlay.remove();
+      toast('¡Publicidad desactivada! ✓');
+    }
+
+    showSend();
   }
 
   //=============================================================================
