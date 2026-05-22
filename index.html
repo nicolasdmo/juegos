@@ -571,11 +571,6 @@
             });
           }
         } catch(e) { console.warn('[FB] profile:', e); }
-
-        // Desactivar publicidad si el email ya fue verificado
-        if (user.emailVerified && currentUser && !currentUser.noAds) {
-          if (localStorage.getItem('arcade_noads_' + currentUser.email)) grantNoAds();
-        }
       });
     } catch(e) { console.warn('[FB] init:', e); }
   }
