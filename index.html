@@ -368,7 +368,7 @@
     display: none !important; visibility: hidden !important; pointer-events: none !important;
   }
 
-  /* ===== Mobile en juego: banner pasa al fondo, MENÚ dentro de él ===== */
+  /* ===== Mobile en juego: banner pasa al fondo, MENÚ arriba a la derecha ===== */
   @media (max-width: 767px) {
     body.in-game .game-banner {
       top: auto !important;
@@ -381,12 +381,33 @@
       padding-top: 0 !important;
       padding-bottom: 58px !important;
     }
-    /* MENÚ centrado verticalmente dentro de la barra de 58px */
+    /* MENÚ: ícono pequeño arriba a la derecha */
     body.in-game .game-menu {
-      bottom: 13px;
-      right: 8px;
+      top: 6px;
+      bottom: auto !important;
+      right: 6px;
+    }
+    body.in-game .menu-toggle {
+      padding: 7px 9px;
+      font-size: 9px;
+      letter-spacing: 0;
+    }
+    /* Texto "MENÚ" oculto, solo el ícono */
+    body.in-game .menu-word { display: none; }
+    /* Menú se abre hacia abajo porque el botón está arriba */
+    body.in-game .menu-items {
+      bottom: auto;
+      top: calc(100% + 8px);
     }
   }
+  /* Botón "Quitar publicidad" en el menú del juego */
+  .menu-item-noads {
+    background: linear-gradient(135deg, rgba(180,130,0,0.28), rgba(240,180,0,0.15));
+    border-color: rgba(240,180,0,0.45) !important;
+    color: #fcd34d !important;
+    font-weight: 700;
+  }
+  .menu-item-noads:hover { background: linear-gradient(135deg, rgba(180,130,0,0.45), rgba(240,180,0,0.3)) !important; }
 </style>
 </head>
 <body oncontextmenu="return false" ondragstart="return false">
@@ -469,8 +490,9 @@
   <div id="screen-game" class="screen">
     <div id="game-container">
       <div class="game-menu">
-        <button class="menu-toggle" id="menu-toggle" aria-label="Menú">⏸ MENÚ</button>
+        <button class="menu-toggle" id="menu-toggle" aria-label="Menú"><span>⏸</span><span class="menu-word"> MENÚ</span></button>
         <div class="menu-items" id="menu-items">
+          <button class="menu-item menu-item-noads" id="noads-menu-btn">⭐ Quitar publicidad</button>
           <button class="menu-item" id="save-btn">💾 Guardar partida</button>
           <button class="menu-item" id="load-btn">📂 Cargar partida</button>
           <button class="menu-item" id="reset-btn">🔄 Reiniciar consola</button>
@@ -509,7 +531,9 @@
     messagingSenderId: '93255950338',
     appId:             '1:93255950338:web:0be6e4ff2032613aa8471b'
   };
-  const MERCADOPAGO_LINK = '';
+  const MERCADOPAGO_NOADS_LINK    = ''; // ← Link de pago "sin publicidad" ($9.999/mes)
+  const MERCADOPAGO_PREMIUM_LINK  = ''; // ← Link de pago "guardado en la nube" ($1.999/mes)
+  const MERCADOPAGO_LINK          = MERCADOPAGO_PREMIUM_LINK; // alias de compatibilidad
   const APPS_SCRIPT_URL  = 'https://script.google.com/macros/s/AKfycbz_lXVeIGK-YZqkc4HXqy3xfBpOEESNn4GteThwXVnO9b3L9B9FhJqgzaxcFfPXQTCi/exec';
   const BANNER_IMG_URL   = '';
   const BANNER_LINK_URL  = 'https://prisma-v2-six.vercel.app/';
@@ -803,7 +827,7 @@
     const payBtn = MERCADOPAGO_LINK
       ? '<a href="'+MERCADOPAGO_LINK+'" target="_blank" rel="noopener noreferrer" class="btn-mp">Pagar con MercadoPago</a>'
       : '<div class="btn-mp-disabled">MercadoPago · Próximamente</div>';
-    return '<div class="premium-cta"><div class="premium-cta-title">🔒 Guardado en la nube</div><div class="premium-cta-desc">10 ranuras · Acceso desde cualquier dispositivo</div><div class="premium-price">$1 <span>/ mes</span></div>' + payBtn + '<div class="premium-note">Después de pagar tu cuenta se activa en las próximas horas.<br>El guardado local siempre es gratis.</div><button class="verify-btn" data-sa="verify" data-st="cloud">Ya pagué — verificar activación</button></div>';
+    return '<div class="premium-cta"><div class="premium-cta-title">☁️ Guardado en la nube</div><div class="premium-cta-desc">10 ranuras · Acceso desde cualquier dispositivo</div><div class="premium-price">$1.999 <span>/ mes</span></div>' + payBtn + '<div class="premium-note">Después de pagar tu cuenta se activa en las próximas horas.<br>El guardado local siempre es gratis.</div><button class="verify-btn" data-sa="verify" data-st="cloud">Ya pagué — verificar activación</button></div>';
   }
 
   async function handleLocal(action, overlay) {
@@ -934,48 +958,48 @@
   }
 
   async function initNoAdsFlow(overlay) {
-    const body  = overlay.querySelector('#noads-body');
-    const email = currentUser?.email || '';
-    // Ya tiene no-ads → cerrar de una
+    const body = overlay.querySelector('#noads-body');
+    // Ya tiene no-ads activo
     if (currentUser?.noAds) { grantNoAds(); overlay.remove(); toast('¡Publicidad desactivada! ✓'); return; }
 
-    // Invitado o usuario sin Google → mostrar botón de Google
-    body.innerHTML =
-      '<p style="color:var(--muted);font-size:13px;margin:0 0 16px">' +
-        'Conectate con Google para verificar tu identidad y desactivar la publicidad para siempre.' +
-      '</p>' +
-      '<button class="btn-google" id="noads-google" style="margin-bottom:6px">' +
-        '<svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.8 2.5 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.8 6C12.4 13 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8C43.7 37.4 46.5 31.4 46.5 24.5z"/><path fill="#FBBC05" d="M10.5 28.7A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.7l-7.8-6A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.5 10.8l8-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.2 1.5-5 2.4-8.4 2.4-6.2 0-11.5-4.2-13.4-9.8l-8 6.1C6.5 42.6 14.6 48 24 48z"/></svg>' +
-        ' Conectar con Google' +
-      '</button>' +
-      '<div class="msg" id="noads-msg" style="margin-top:8px"></div>';
+    const payBtn = MERCADOPAGO_NOADS_LINK
+      ? '<a href="' + MERCADOPAGO_NOADS_LINK + '" target="_blank" rel="noopener noreferrer" class="btn-mp" style="display:block;text-align:center;margin:14px 0 6px;font-size:15px">Pagar con MercadoPago →</a>'
+      : '<div class="btn-mp-disabled" style="display:block;text-align:center;margin:14px 0 6px">MercadoPago · Próximamente</div>';
 
-    body.querySelector('#noads-google').addEventListener('click', async () => {
-      const btn   = body.querySelector('#noads-google');
+    body.innerHTML =
+      '<div style="text-align:center;padding:6px 0">' +
+        '<div style="font-size:36px;margin-bottom:8px">🚫</div>' +
+        '<div style="font-size:16px;font-weight:800;margin-bottom:4px">Sin publicidad para siempre</div>' +
+        '<div style="color:var(--muted);font-size:12px;margin-bottom:14px;line-height:1.5">Jugá sin interrupciones.<br>Un único pago mensual, cancelás cuando quieras.</div>' +
+        '<div style="font-size:36px;font-weight:900;color:var(--accent-hi);letter-spacing:-1px">$9.999 <span style="font-size:14px;color:var(--muted);font-weight:400">/ mes</span></div>' +
+        payBtn +
+        '<div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6">' +
+          'Tu cuenta se activa en las próximas horas después del pago.<br>' +
+          '<button class="verify-btn" id="noads-verify" style="margin-top:6px">Ya pagué — verificar activación</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="msg" id="noads-msg" style="margin-top:10px;text-align:center"></div>';
+
+    body.querySelector('#noads-verify').addEventListener('click', async () => {
       const msgEl = body.querySelector('#noads-msg');
-      btn.disabled = true; btn.childNodes[1].textContent = ' Conectando…';
-      const fbUser = await signInWithGoogle();
-      if (!fbUser) {
-        btn.disabled = false; btn.childNodes[1].textContent = ' Conectar con Google';
-        msgEl.className = 'msg error'; msgEl.textContent = 'No se pudo conectar. Intentá de nuevo.'; return;
+      const verBtn = body.querySelector('#noads-verify');
+      verBtn.textContent = 'Verificando…'; verBtn.disabled = true;
+      if (!_auth?.currentUser || !_db) {
+        msgEl.className = 'msg error'; msgEl.textContent = 'Necesitás estar logueado con Google.';
+        verBtn.textContent = 'Ya pagué — verificar activación'; verBtn.disabled = false; return;
       }
-      // Actualizar sesión local con datos de Google
-      currentUser.name  = fbUser.displayName || currentUser.name;
-      currentUser.email = fbUser.email;
-      currentUser.photo = fbUser.photoURL;
-      currentUser.noAds = true;
-      currentUser.guest  = false;
-      saveStore(STORE.SESSION, currentUser);
-      if (_db && _auth.currentUser) {
-        try {
-          await _db.doc('users/' + _auth.currentUser.uid).set(
-            { name: currentUser.name, email: currentUser.email, photo: currentUser.photo,
-              verified: true, verifiedAt: firebase.firestore.FieldValue.serverTimestamp() },
-            { merge: true }
-          );
-        } catch(_) {}
+      try {
+        const snap = await _db.doc('users/' + _auth.currentUser.uid).get();
+        if (snap.exists && snap.data().noAds === true) {
+          grantNoAds(); overlay.remove(); toast('¡Publicidad desactivada! ✓');
+        } else {
+          msgEl.className = 'msg error'; msgEl.textContent = 'No encontramos tu pago todavía. Intentá en unas horas.';
+          verBtn.textContent = 'Ya pagué — verificar activación'; verBtn.disabled = false;
+        }
+      } catch(e) {
+        msgEl.className = 'msg error'; msgEl.textContent = 'Error al verificar. Intentá de nuevo.';
+        verBtn.textContent = 'Ya pagué — verificar activación'; verBtn.disabled = false;
       }
-      grantNoAds(); overlay.remove(); toast('¡Publicidad desactivada! ✓');
     });
   }
 
@@ -1343,6 +1367,7 @@
   document.addEventListener('click',      e => { if(outsideMenu(e)) closeMenu(); });
   document.addEventListener('touchstart', e => { if(outsideMenu(e)) closeMenu(); }, {passive:true});
 
+  document.getElementById('noads-menu-btn').addEventListener('click', () => { closeMenu(); openNoAdsModal(); });
   document.getElementById('save-btn').addEventListener('click', openSlotsModal);
   document.getElementById('load-btn').addEventListener('click', openSlotsModal);
   document.getElementById('back-btn').addEventListener('click', () => {
