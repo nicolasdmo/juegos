@@ -407,10 +407,13 @@
     }
     /* Texto "MENÚ" oculto, solo el ícono */
     body.in-game .menu-word { display: none; }
-    /* Menú se abre hacia abajo porque el botón está arriba */
+    /* Menú se despliega hacia arriba: el botón está en el medio, así
+       los 6 ítems quedan siempre dentro de la pantalla */
     body.in-game .menu-items {
-      bottom: auto;
-      top: calc(100% + 8px);
+      bottom: calc(100% + 8px);
+      top: auto;
+      max-height: 78vh;
+      overflow-y: auto;
     }
   }
   /* Botón "Quitar publicidad" en el menú del juego */
