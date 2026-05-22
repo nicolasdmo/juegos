@@ -363,8 +363,7 @@
   .ejs_menu_bar, .ejs_menu_bar_hidden,
   .ejs_settings_parent, .ejs_cheat_parent,
   .ejs_save_states_menu, .ejs_context_menu,
-  .ejs_popout_container, .ejs_loading_text,
-  [class*="ejs_menu"] {
+  .ejs_popout_container, .ejs_loading_text {
     display: none !important; visibility: hidden !important; pointer-events: none !important;
   }
 
@@ -1007,10 +1006,11 @@
   // EMULATORJS UI — ocultar
   //=============================================================================
   function hideEJSUI() {
+    // NO incluir .ejs_pause_div ni .ejs_start_button — contienen los controles táctiles
+    // (Start, Select) que el usuario necesita para jugar
     document.querySelectorAll(
       '.ejs_menu_bar,.ejs_menu_bar_hidden,.ejs_settings_parent,.ejs_cheat_parent,' +
-      '.ejs_save_states_menu,.ejs_context_menu,.ejs_popout_container,.ejs_loading_text,' +
-      '.ejs_pause_div,.ejs_start_button,[class*="ejs_menu"]'
+      '.ejs_save_states_menu,.ejs_context_menu,.ejs_popout_container,.ejs_loading_text'
     ).forEach(el => {
       el.style.cssText += 'display:none!important;visibility:hidden!important;pointer-events:none!important;';
     });
@@ -1304,7 +1304,7 @@
     window.EJS_gameUrl       = rom.path;
     window.EJS_core          = currentConsole.core;
     window.EJS_pathtodata    = 'https://cdn.emulatorjs.org/stable/data/';
-    window.EJS_startOnLoaded = true;
+    window.EJS_startOnLoad = true;
     window.EJS_volume        = 0.6;
     window.EJS_disableDatabases = true;
     window.EJS_Buttons = {
@@ -1347,6 +1347,12 @@
 
       playBtn.addEventListener('click', () => {
         // Gesto real → el browser permite activar el audio
+        // Reanudar AudioContext bloqueado por política del browser
+        try {
+          const ac = window.EJS_emulator?.gameManager?.sound?.ac;
+          if (ac && ac.state === 'suspended') ac.resume();
+        } catch(_) {}
+        // Por si el juego todavía no arrancó (fallback)
         const startBtn = document.querySelector('.ejs_start_button, .ejs_pause_div button');
         if (startBtn) startBtn.click();
         try { const e = window.EJS_emulator; if (e?.play) e.play(); } catch(_) {}
