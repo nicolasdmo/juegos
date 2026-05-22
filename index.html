@@ -6,9 +6,6 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Arcadia — Retro Gaming</title>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <!-- GA4: función base siempre disponible; el script de medición se carga dinámicamente si GA4_ID está configurado -->
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());</script>
 <style>
@@ -53,12 +50,12 @@
     position: absolute; inset: 0; pointer-events: none; z-index: 1;
     background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.07) 3px, rgba(0,0,0,0.07) 4px);
   }
-  .pixel-deco { position: absolute; pointer-events: none; opacity: 0.45; filter: drop-shadow(0 0 8px rgba(165,94,240,0.7)); }
+  .pixel-deco { position: absolute; pointer-events: none; opacity: 0.45; filter: drop-shadow(0 0 8px rgba(165,94,240,0.7)); will-change: transform; }
   @keyframes floatA { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-14px) rotate(6deg)} }
   @keyframes floatB { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-9px) rotate(-4deg)} }
   @keyframes arcadeGlow {
-    0%,100% { text-shadow: 0 0 18px #a55ef0, 0 0 40px rgba(165,94,240,0.55), 0 0 90px rgba(165,94,240,0.25); }
-    50%      { text-shadow: 0 0 28px #d8b4fe, 0 0 60px rgba(192,132,252,0.75), 0 0 110px rgba(165,94,240,0.4); }
+    0%,100% { filter: drop-shadow(0 0 8px rgba(165,94,240,0.9)) drop-shadow(0 0 20px rgba(165,94,240,0.45)); }
+    50%      { filter: drop-shadow(0 0 14px rgba(192,132,252,1)) drop-shadow(0 0 32px rgba(165,94,240,0.65)); }
   }
   .landing-content {
     position: relative; z-index: 2; display: flex; flex-direction: column;
@@ -72,6 +69,7 @@
     font-size: clamp(58px, 18vw, 108px); font-weight: 900; letter-spacing: 10px;
     margin: 0 0 4px; line-height: 1; color: #f4ecff;
     animation: arcadeGlow 3s ease-in-out infinite;
+    will-change: filter;
   }
   .landing-consoles { font-size: 20px; letter-spacing: 10px; margin: 10px 0 4px; opacity: 0.6; }
   .landing-sub { font-size: 11px; color: var(--muted); letter-spacing: 1.5px; margin: 0 0 30px; line-height: 1.8; text-transform: uppercase; }
@@ -152,7 +150,7 @@
   .rom-card {
     background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
     padding: 8px; cursor: pointer; text-align: center;
-    transition: all 0.15s; display: flex; flex-direction: column;
+    transition: background 0.15s, border-color 0.15s, box-shadow 0.15s; display: flex; flex-direction: column;
   }
   .rom-card:hover { background: var(--surface2); border-color: var(--accent); box-shadow: 0 0 14px rgba(123,63,200,0.2); }
   .rom-card:active { transform: scale(0.97); }
@@ -261,7 +259,7 @@
   .menu-item {
     background: rgba(18,8,37,0.96); border: 1px solid var(--border); color: var(--text);
     padding: 10px 16px; border-radius: 50px; font-size: 13px; font-weight: 600;
-    cursor: pointer; text-align: left; backdrop-filter: blur(8px); white-space: nowrap;
+    cursor: pointer; text-align: left; white-space: nowrap;
     transition: background 0.12s;
   }
   .menu-item:hover { background: rgba(58,24,104,0.95); border-color: var(--accent); }
@@ -375,8 +373,9 @@
       transform: translateY(-50%);
       border-top: none;
       border-bottom: none;
-      box-shadow: 0 4px 18px rgba(123,63,200,0.5), 0 -4px 18px rgba(123,63,200,0.5);
+      box-shadow: 0 0 12px rgba(123,63,200,0.35);
       pointer-events: none; /* no interceptar toques sobre los controles del emulador */
+      will-change: transform;
     }
     body.in-game .game-banner .noads-btn {
       pointer-events: auto; /* el botón × quitar publicidad sí debe ser tappable */
@@ -424,6 +423,20 @@
     font-weight: 700;
   }
   .menu-item-noads:hover { background: linear-gradient(135deg, rgba(180,130,0,0.45), rgba(240,180,0,0.3)) !important; }
+
+  /* Renderizado pixelado: más fiel y sin coste extra en GPUs retro */
+  #game canvas {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+
+  /* Respetar configuración de movimiento reducido del sistema */
+  @media (prefers-reduced-motion: reduce) {
+    .landing-title { animation: none; }
+    .pixel-deco    { animation: none !important; }
+    .loading-spinner { animation: none; border-top-color: var(--accent-hi); }
+    * { transition-duration: 0.01ms !important; }
+  }
 </style>
 </head>
 <body oncontextmenu="return false" ondragstart="return false">
@@ -534,6 +547,9 @@
 
   <div class="toast" id="toast"></div>
 
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script>
   //=============================================================================
   // CONFIG
@@ -752,7 +768,9 @@
   }
   function autoSaveLocal() {
     if (!emulatorReady || !currentUser || !currentROM) return;
-    const data = captureState(); if (data) setLocalSave(data);
+    const doSave = () => { const data = captureState(); if (data) setLocalSave(data); };
+    if (window.requestIdleCallback) requestIdleCallback(doSave, { timeout: 5000 });
+    else doSave();
   }
 
   //=============================================================================
