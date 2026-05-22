@@ -378,7 +378,16 @@
     }
     body.in-game #screen-game {
       padding-top: 0 !important;
-      padding-bottom: 58px !important;
+      padding-bottom: 0 !important;
+    }
+    /* #game llega hasta el borde superior del banner — EJS calcula controles dentro de este rect */
+    body.in-game #game-container {
+      height: calc(100vh - 58px) !important;
+      max-height: calc(100vh - 58px) !important;
+      overflow: hidden;
+    }
+    body.in-game #game {
+      bottom: 0 !important;
     }
     /* MENÚ: ícono pequeño arriba a la derecha */
     body.in-game .game-menu {
