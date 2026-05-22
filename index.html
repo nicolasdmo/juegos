@@ -213,11 +213,10 @@
   body.no-ads #screen-consoles,
   body.no-ads #screen-picker,
   body.no-ads #screen-game { padding-top: 0 !important; }
-  body.no-ads .game-menu { top: calc(90vw + 10px) !important; }
 
   /* ===== Game Screen ===== */
   #screen-game { padding-top: 58px; padding-left: 0; padding-right: 0; padding-bottom: 0; }
-  #game-container { width: 100%; height: 100%; background: var(--bg); position: relative; }
+  #game-container { width: 100%; flex: 1; min-height: 0; background: var(--bg); position: relative; }
 
   #game {
     position: absolute; top: 0; left: 0; right: 0; bottom: 0;
@@ -240,7 +239,7 @@
 
   .game-menu {
     position: fixed; right: 16px;
-    top: calc(58px + 90vw + 10px);
+    bottom: 20px;
     z-index: 99999;
   }
   .menu-toggle {
@@ -834,7 +833,6 @@
   // BANNER + NO-ADS
   //=============================================================================
   function setupBanner() {
-    if (currentUser?.noAds) { grantNoAds(); return; }
     if (document.getElementById('game-banner').querySelector('.noads-btn')) return;
 
     const adSlot = document.getElementById('banner-ad-content');
@@ -1030,7 +1028,7 @@
     const user = {
       name: fbUser.displayName || fbUser.email.split('@')[0],
       email: fbUser.email, photo: fbUser.photoURL,
-      noAds: true, synced: true
+      noAds: false, synced: true
     };
     saveStore(STORE.SESSION, user);
     trackEvent('login', { metodo: 'Google' });
