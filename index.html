@@ -502,7 +502,7 @@
         </div>
       </div>
       <div class="game-loading" id="game-loading">
-        <div class="loading-content">
+        <div class="loading-content" id="loading-content">
           <div class="loading-spinner" id="loading-spinner"></div>
           <div style="color:var(--text);font-size:15px;" id="loading-status">Iniciando emulador…</div>
           <div class="loading-game-name" id="loading-game-name"></div>
@@ -1330,20 +1330,31 @@
     window.EJS_ready = function() {
       emulatorReady = true;
       clearTimeout(loadHintTimer);
-      const ov = document.getElementById('game-loading');
-      ov.classList.add('hidden');
-      setTimeout(() => { ov.style.display='none'; }, 400);
       if (autoSaveTimer) clearInterval(autoSaveTimer);
       autoSaveTimer = setInterval(autoSaveLocal, AUTO_SAVE_MS);
-      // Hacer click en el botón de inicio si el core no arrancó solo (ej: NES)
-      function forceStart() {
-        const startBtn = document.querySelector('.ejs_start_button, .ejs_pause_div button, [class*="ejs_start"]');
+
+      // Mostrar botón ▶ JUGAR — el browser necesita un gesto real del usuario
+      // para permitir audio (el autostart programático no funciona en todos los cores)
+      const ov = document.getElementById('game-loading');
+      document.getElementById('loading-spinner').style.display = 'none';
+      document.getElementById('loading-status').textContent    = '¡Listo para jugar!';
+
+      const playBtn = document.createElement('button');
+      playBtn.className = 'btn-primary';
+      playBtn.style.cssText = 'width:170px;margin-top:18px;font-size:17px;letter-spacing:2px;padding:16px';
+      playBtn.textContent = '▶  JUGAR';
+      document.getElementById('loading-content').appendChild(playBtn);
+
+      playBtn.addEventListener('click', () => {
+        // Gesto real → el browser permite activar el audio
+        const startBtn = document.querySelector('.ejs_start_button, .ejs_pause_div button');
         if (startBtn) startBtn.click();
-        // Después del click, ocultar toda la UI del emulador
-        setTimeout(hideEJSUI, 150);
-      }
-      setTimeout(forceStart, 400);
-      setTimeout(findAndHideSlowBtn, 1500);
+        try { const e = window.EJS_emulator; if (e?.play) e.play(); } catch(_) {}
+        ov.classList.add('hidden');
+        setTimeout(() => { ov.style.display = 'none'; hideEJSUI(); }, 350);
+      });
+
+      setTimeout(findAndHideSlowBtn, 2000);
       new MutationObserver(hideEJSUI).observe(document.getElementById('game'),{childList:true,subtree:true});
     };
 
