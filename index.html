@@ -367,24 +367,25 @@
     display: none !important; visibility: hidden !important; pointer-events: none !important;
   }
 
-  /* ===== Mobile en juego: banner pasa al fondo, MENÚ arriba a la derecha ===== */
+  /* ===== Mobile en juego: banner flotante al centro, MENÚ arriba a la derecha ===== */
   @media (max-width: 767px) {
     body.in-game .game-banner {
-      top: auto !important;
-      bottom: 0;
+      top: 50% !important;
+      bottom: auto !important;
+      transform: translateY(-50%);
+      border-top: none;
       border-bottom: none;
-      border-top: 2px solid rgba(165,94,240,0.5);
-      box-shadow: 0 -2px 12px rgba(123,63,200,0.3);
+      box-shadow: 0 4px 18px rgba(123,63,200,0.5), 0 -4px 18px rgba(123,63,200,0.5);
     }
     body.in-game #screen-game {
       padding-top: 0 !important;
       padding-bottom: 0 !important;
     }
-    /* #game llega hasta el borde superior del banner — EJS calcula controles dentro de este rect */
+    /* Con el banner flotando al centro, #game ocupa todo el viewport */
     body.in-game #game-container {
-      height: calc(100vh - 58px) !important;
-      max-height: calc(100vh - 58px) !important;
-      overflow: hidden;
+      height: 100vh !important;
+      max-height: 100vh !important;
+      overflow: visible;
     }
     body.in-game #game {
       bottom: 0 !important;
