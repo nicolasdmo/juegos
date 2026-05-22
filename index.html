@@ -376,6 +376,10 @@
       border-top: none;
       border-bottom: none;
       box-shadow: 0 4px 18px rgba(123,63,200,0.5), 0 -4px 18px rgba(123,63,200,0.5);
+      pointer-events: none; /* no interceptar toques sobre los controles del emulador */
+    }
+    body.in-game .game-banner .noads-btn {
+      pointer-events: auto; /* el botón × quitar publicidad sí debe ser tappable */
     }
     body.in-game #screen-game {
       padding-top: 0 !important;
@@ -1348,23 +1352,28 @@
       playBtn.textContent = '▶  JUGAR';
       document.getElementById('loading-content').appendChild(playBtn);
 
+      // Observer solo mientras carga — se desconecta cuando el usuario pulsa JUGAR
+      const ejsObserver = new MutationObserver(hideEJSUI);
+      ejsObserver.observe(document.getElementById('game'), {childList:true, subtree:true});
+
       playBtn.addEventListener('click', () => {
-        // Gesto real → el browser permite activar el audio
-        // Reanudar AudioContext bloqueado por política del browser
+        // Gesto real → el browser desbloquea el AudioContext
         try {
           const ac = window.EJS_emulator?.gameManager?.sound?.ac;
           if (ac && ac.state === 'suspended') ac.resume();
         } catch(_) {}
-        // Por si el juego todavía no arrancó (fallback)
-        const startBtn = document.querySelector('.ejs_start_button, .ejs_pause_div button');
-        if (startBtn) startBtn.click();
+        // EJS_startOnLoad ya arrancó el juego — no tocar .ejs_pause_div ni sus botones
+        // (hacerlo confunde a EJS y oculta los controles táctiles)
         try { const e = window.EJS_emulator; if (e?.play) e.play(); } catch(_) {}
         ov.classList.add('hidden');
-        setTimeout(() => { ov.style.display = 'none'; hideEJSUI(); }, 350);
+        setTimeout(() => {
+          ov.style.display = 'none';
+          hideEJSUI();
+          ejsObserver.disconnect(); // ya no necesitamos vigilar — el CSS se encarga del resto
+        }, 350);
       });
 
       setTimeout(findAndHideSlowBtn, 2000);
-      new MutationObserver(hideEJSUI).observe(document.getElementById('game'),{childList:true,subtree:true});
     };
 
     const sc = document.createElement('script');
