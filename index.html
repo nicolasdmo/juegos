@@ -421,6 +421,28 @@
     font-weight: 700;
   }
   .menu-item-noads:hover { background: linear-gradient(135deg, rgba(180,130,0,0.45), rgba(240,180,0,0.3)) !important; }
+
+  /* ===== Controles táctiles propios (Start / Select) ===== */
+  #touch-controls {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+    display: flex; gap: 16px; z-index: 60;
+  }
+  .tc-btn {
+    background: rgba(18,8,37,0.62);
+    border: 2px solid rgba(165,94,240,0.6);
+    color: rgba(240,229,255,0.92);
+    font-size: 11px; font-weight: 800; letter-spacing: 1.5px;
+    padding: 10px 22px; border-radius: 50px;
+    font-family: inherit; cursor: pointer;
+    touch-action: none; -webkit-user-select: none; user-select: none;
+    -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+    transition: background 0.08s, transform 0.08s;
+  }
+  .tc-btn.active {
+    background: var(--accent); border-color: var(--accent-hi);
+    color: #fff; transform: scale(0.94);
+  }
 </style>
 </head>
 <body oncontextmenu="return false" ondragstart="return false">
@@ -667,7 +689,7 @@
   }
 
   //=============================================================================
-  // EJS TOUCH BUTTONS — ocultar Slow
+  // EJS TOUCH BUTTONS — ocultar Slow + controles táctiles propios
   //=============================================================================
   function findAndHideSlowBtn() {
     const gameEl = document.getElementById('game');
@@ -679,6 +701,42 @@
         const target = el.closest('button') || el.parentElement;
         if (target) target.style.display = 'none';
       }
+    });
+  }
+
+  // Inyecta input al emulador. Índices RetroArch estándar: 2 = SELECT, 3 = START.
+  // Sirve para las 5 consolas (en Atari START/SELECT son los switches Reset/Select,
+  // en Master System START es Pausa).
+  function simInput(index, value) {
+    try {
+      const gm = window.EJS_emulator?.gameManager;
+      if (gm && gm.simulateInput) gm.simulateInput(0, index, value);
+    } catch(_) {}
+  }
+
+  // EmulatorJS no dibuja Start/Select de forma confiable en móvil, así que los
+  // ponemos nosotros: dos botones propios que mandan input directo al core.
+  function setupTouchControls() {
+    if (!('ontouchstart' in window)) return;          // solo dispositivos táctiles
+    if (document.getElementById('touch-controls')) return;
+
+    const bar = document.createElement('div');
+    bar.id = 'touch-controls';
+    bar.innerHTML =
+      '<button class="tc-btn" data-idx="2" aria-label="Select">SELECT</button>' +
+      '<button class="tc-btn" data-idx="3" aria-label="Start">START</button>';
+    document.getElementById('game-container').appendChild(bar);
+
+    bar.querySelectorAll('.tc-btn').forEach(btn => {
+      const idx = parseInt(btn.dataset.idx, 10);
+      btn.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        try { btn.setPointerCapture(e.pointerId); } catch(_) {}
+        btn.classList.add('active'); simInput(idx, 1);
+      });
+      const release = () => { btn.classList.remove('active'); simInput(idx, 0); };
+      btn.addEventListener('pointerup',     release);
+      btn.addEventListener('pointercancel', release);
     });
   }
 
@@ -1279,8 +1337,10 @@
   }
 
   function selectROM(rom) {
+    // Lanzar directo dentro del gesto del usuario: el tap en la carátula
+    // habilita el audio del browser, así no hace falta un botón "JUGAR".
     saveStore(STORE.CURRENT_ROM, rom, true);
-    location.reload();
+    bootEmulator(rom);
   }
 
   //=============================================================================
@@ -1340,38 +1400,29 @@
       if (autoSaveTimer) clearInterval(autoSaveTimer);
       autoSaveTimer = setInterval(autoSaveLocal, AUTO_SAVE_MS);
 
-      // Mostrar botón ▶ JUGAR — el browser necesita un gesto real del usuario
-      // para permitir audio (el autostart programático no funciona en todos los cores)
-      const ov = document.getElementById('game-loading');
-      document.getElementById('loading-spinner').style.display = 'none';
-      document.getElementById('loading-status').textContent    = '¡Listo para jugar!';
+      // El tap en la carátula ya dio activación de usuario → desbloquear audio
+      try {
+        const ac = window.EJS_emulator?.gameManager?.sound?.ac;
+        if (ac && ac.state === 'suspended') ac.resume();
+      } catch(_) {}
 
-      const playBtn = document.createElement('button');
-      playBtn.className = 'btn-primary';
-      playBtn.style.cssText = 'width:170px;margin-top:18px;font-size:17px;letter-spacing:2px;padding:16px';
-      playBtn.textContent = '▶  JUGAR';
-      document.getElementById('loading-content').appendChild(playBtn);
+      // Controles táctiles propios (Start / Select) — EmulatorJS no los dibuja
+      setupTouchControls();
 
-      // Observer solo mientras carga — se desconecta cuando el usuario pulsa JUGAR
+      // Observer breve para ocultar los paneles de EmulatorJS mientras monta
       const ejsObserver = new MutationObserver(hideEJSUI);
       ejsObserver.observe(document.getElementById('game'), {childList:true, subtree:true});
 
-      playBtn.addEventListener('click', () => {
-        // Gesto real → el browser desbloquea el AudioContext
-        try {
-          const ac = window.EJS_emulator?.gameManager?.sound?.ac;
-          if (ac && ac.state === 'suspended') ac.resume();
-        } catch(_) {}
-        // EJS_startOnLoad ya arrancó el juego — no tocar .ejs_pause_div ni sus botones
-        // (hacerlo confunde a EJS y oculta los controles táctiles)
-        try { const e = window.EJS_emulator; if (e?.play) e.play(); } catch(_) {}
-        ov.classList.add('hidden');
-        setTimeout(() => {
-          ov.style.display = 'none';
-          hideEJSUI();
-          ejsObserver.disconnect(); // ya no necesitamos vigilar — el CSS se encarga del resto
-        }, 350);
-      });
+      // El juego ya arrancó (EJS_startOnLoad) → ocultar overlay automáticamente
+      const ov = document.getElementById('game-loading');
+      document.getElementById('loading-spinner').style.display = 'none';
+      document.getElementById('loading-status').textContent    = '¡Listo!';
+      ov.classList.add('hidden');
+      setTimeout(() => {
+        ov.style.display = 'none';
+        hideEJSUI();
+        ejsObserver.disconnect();
+      }, 400);
 
       setTimeout(findAndHideSlowBtn, 2000);
     };
@@ -1544,6 +1595,17 @@
   document.addEventListener('gesturestart', e=>e.preventDefault());
 
   //=============================================================================
+  // AUDIO UNLOCK — red de seguridad si el browser bloqueó el AudioContext
+  // (p.ej. al recargar la página en medio de una partida, sin gesto previo)
+  //=============================================================================
+  document.addEventListener('pointerdown', () => {
+    try {
+      const ac = window.EJS_emulator?.gameManager?.sound?.ac;
+      if (ac && ac.state === 'suspended') ac.resume();
+    } catch(_) {}
+  }, true);
+
+  //=============================================================================
   // ENTRY POINT
   //=============================================================================
   function enterApp(user) {
@@ -1580,31 +1642,6 @@
       s.async = true; s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA4_ID;
       document.head.appendChild(s);
       s.onload = () => gtag('config', GA4_ID);
-    }
-
-    // Handle returning from email link click — signs in and grants no-ads automatically
-    if (_auth && _auth.isSignInWithEmailLink(window.location.href)) {
-      const linkEmail = localStorage.getItem('arcade_emaillink') || '';
-      if (linkEmail) {
-        try {
-          await _auth.signInWithEmailLink(linkEmail, window.location.href);
-          localStorage.removeItem('arcade_emaillink');
-          localStorage.setItem('arcade_noads_' + linkEmail, '1');
-          window.history.replaceState({}, '', window.location.pathname);
-          // Marcar verified: true en Firestore
-          if (_auth.currentUser && _db) {
-            try {
-              await _db.doc('users/' + _auth.currentUser.uid).set(
-                { verified: true, verifiedAt: firebase.firestore.FieldValue.serverTimestamp() },
-                { merge: true }
-              );
-            } catch(_) {}
-          }
-          // Persist no-ads en sesión local
-          const s = loadStore(STORE.SESSION, null);
-          if (s) { s.noAds = true; saveStore(STORE.SESSION, s); }
-        } catch(e) { console.warn('[FB] email link:', e.code); }
-      }
     }
 
     const session = loadStore(STORE.SESSION, null);
