@@ -505,7 +505,6 @@
           <button class="menu-item" id="load-btn">📂 Cargar partida</button>
           <button class="menu-item" id="reset-btn">🔄 Reiniciar consola</button>
           <button class="menu-item" id="controls-btn">🎮 Controles</button>
-          <button class="menu-item" id="fast-toggle-btn">🏃 Ocultar Fast</button>
           <button class="menu-item" id="back-btn">← Volver al menú</button>
         </div>
       </div>
@@ -663,11 +662,8 @@
   }
 
   //=============================================================================
-  // EJS TOUCH BUTTONS — ocultar Slow, toggle Fast
+  // EJS TOUCH BUTTONS — ocultar Slow
   //=============================================================================
-  let fastBtnEl = null;
-  let fastBtnVisible = true;
-
   function findAndHideSlowBtn() {
     const gameEl = document.getElementById('game');
     if (!gameEl) return;
@@ -677,9 +673,6 @@
       if (t === 'slow') {
         const target = el.closest('button') || el.parentElement;
         if (target) target.style.display = 'none';
-      }
-      if (t === 'fast' && !fastBtnEl) {
-        fastBtnEl = el.closest('button') || el.parentElement;
       }
     });
   }
@@ -1411,12 +1404,6 @@
     } catch(e)                            { location.reload(); }
   });
   document.getElementById('controls-btn').addEventListener('click', () => { closeMenu(); openControlsModal(); });
-  document.getElementById('fast-toggle-btn').addEventListener('click', () => {
-    closeMenu();
-    fastBtnVisible = !fastBtnVisible;
-    if (fastBtnEl) fastBtnEl.style.display = fastBtnVisible ? '' : 'none';
-    document.getElementById('fast-toggle-btn').textContent = fastBtnVisible ? '🏃 Ocultar Fast' : '🏃 Mostrar Fast';
-  });
   document.getElementById('support-btn').addEventListener('click', openSupportModal);
 
   function openSupportModal() {
