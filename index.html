@@ -1310,15 +1310,6 @@
     currentROM = rom;
     document.body.classList.add('in-game');
 
-    // Limpiar controles guardados por EmulatorJS en localStorage para que
-    // EJS_defaultControls tome efecto (si hay un mapping viejo con Select=V, lo pisa)
-    try {
-      Object.keys(localStorage).forEach(k => {
-        if (k.startsWith('EJS_') && k.toLowerCase().includes('control')) {
-          localStorage.removeItem(k);
-        }
-      });
-    } catch(_) {}
     showScreen('game');
     trackEvent('juego_iniciado', { juego_nombre: rom.name.replace(/\.[^.]+$/, '') });
     document.getElementById('loading-game-name').textContent =
@@ -1331,31 +1322,6 @@
     window.EJS_startOnLoaded = true;
     window.EJS_volume        = 0.6;
     window.EJS_disableDatabases = true;
-
-    // Controles unificados para teclado PC:
-    // A=Z  B=X  Start=Enter  Select=Shift  D-Pad=Flechas
-    // Solo se setea 'value' (teclado). 'value2' (gamepad) queda en defaults de EJS.
-    // El default de EJS tiene Select=V; acá lo forzamos a Shift.
-    window.EJS_defaultControls = {
-      0: {
-        0:  { value: 'x'          }, // B      → X
-        1:  { value: 's'          }, // Y      → S
-        2:  { value: 'Shift'      }, // Select → Shift  ← fix principal
-        3:  { value: 'Enter'      }, // Start  → Enter
-        4:  { value: 'ArrowUp'    }, // ↑
-        5:  { value: 'ArrowDown'  }, // ↓
-        6:  { value: 'ArrowLeft'  }, // ←
-        7:  { value: 'ArrowRight' }, // →
-        8:  { value: 'z'          }, // A      → Z
-        9:  { value: 'a'          }, // X      → A
-        10: { value: 'q'          }, // L      → Q
-        11: { value: 'w'          }, // R      → W
-        12: { value: 'e'          }, // L2     → E
-        13: { value: 'r'          }, // R2     → R
-        14: { value: 'f'          }, // L3     → F
-        15: { value: 'g'          }, // R3     → G
-      }
-    };
 
     window.EJS_Buttons = {
       playPause:false, restart:false, mute:false, settings:false, fullscreen:true,
