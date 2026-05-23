@@ -1309,6 +1309,16 @@
   function bootEmulator(rom) {
     currentROM = rom;
     document.body.classList.add('in-game');
+
+    // Limpiar controles guardados por EmulatorJS en localStorage para que
+    // EJS_defaultControls tome efecto (si hay un mapping viejo con Select=V, lo pisa)
+    try {
+      Object.keys(localStorage).forEach(k => {
+        if (k.startsWith('EJS_') && k.toLowerCase().includes('control')) {
+          localStorage.removeItem(k);
+        }
+      });
+    } catch(_) {}
     showScreen('game');
     trackEvent('juego_iniciado', { juego_nombre: rom.name.replace(/\.[^.]+$/, '') });
     document.getElementById('loading-game-name').textContent =
@@ -1321,6 +1331,31 @@
     window.EJS_startOnLoaded = true;
     window.EJS_volume        = 0.6;
     window.EJS_disableDatabases = true;
+
+    // Controles unificados para PC:
+    // A=Z  B=X  Start=Enter  Select=Shift  D-Pad=Flechas
+    // (el default de EJS tiene Select=V; acá lo forzamos a Shift)
+    window.EJS_defaultControls = {
+      0: {
+        0:  { value: 'x',          value2: 'BUTTON_2'              }, // B
+        1:  { value: 's',          value2: 'BUTTON_4'              }, // Y
+        2:  { value: 'Shift',      value2: 'SELECT'                }, // Select → Shift ←
+        3:  { value: 'Enter',      value2: 'START'                 }, // Start  → Enter
+        4:  { value: 'ArrowUp',    value2: 'DPAD_UP'               }, // ↑
+        5:  { value: 'ArrowDown',  value2: 'DPAD_DOWN'             }, // ↓
+        6:  { value: 'ArrowLeft',  value2: 'DPAD_LEFT'             }, // ←
+        7:  { value: 'ArrowRight', value2: 'DPAD_RIGHT'            }, // →
+        8:  { value: 'z',          value2: 'BUTTON_1'              }, // A
+        9:  { value: 'a',          value2: 'BUTTON_3'              }, // X
+        10: { value: 'q',          value2: 'LEFT_TOP_SHOULDER'     }, // L
+        11: { value: 'w',          value2: 'RIGHT_TOP_SHOULDER'    }, // R
+        12: { value: 'e',          value2: 'LEFT_BOTTOM_SHOULDER'  }, // L2
+        13: { value: 'r',          value2: 'RIGHT_BOTTOM_SHOULDER' }, // R2
+        14: { value: 'f',          value2: 'LEFT_STICK'            }, // L3
+        15: { value: 'g',          value2: 'RIGHT_STICK'           }, // R3
+      }
+    };
+
     window.EJS_Buttons = {
       playPause:false, restart:false, mute:false, settings:false, fullscreen:true,
       saveState:false, loadState:false, screenRecord:false, gamepad:false, cheat:false,
@@ -1497,10 +1532,10 @@
 
     const CONTROLS = {
       gb:    { name:'Game Boy / GBC', buttons:[['↑↓←→','Flechas'],['A','Z'],['B','X'],['Start','Enter'],['Select','Shift']] },
-      nes:   { name:'NES', buttons:[['↑↓←→','Flechas'],['A','Z'],['B','X'],['Start','Enter'],['Select','Shift']] },
-      sms:   { name:'Master System', buttons:[['↑↓←→','Flechas'],['Botón 1','Z'],['Botón 2','X'],['Pausa','Enter']] },
-      gg:    { name:'Game Gear', buttons:[['↑↓←→','Flechas'],['Botón 1','Z'],['Botón 2','X'],['Start','Enter']] },
-      atari: { name:'Atari 2600', buttons:[['↑↓←→','Flechas'],['Fuego','Z'],['Reset','Enter']] }
+      nes:   { name:'NES',            buttons:[['↑↓←→','Flechas'],['A','Z'],['B','X'],['Start','Enter'],['Select','Shift']] },
+      sms:   { name:'Master System',  buttons:[['↑↓←→','Flechas'],['Botón 1','Z'],['Botón 2','X'],['Pausa','Enter']] },
+      gg:    { name:'Game Gear',      buttons:[['↑↓←→','Flechas'],['Botón 1','Z'],['Botón 2','X'],['Start','Enter']] },
+      atari: { name:'Atari 2600',     buttons:[['↑↓←→','Flechas'],['Fuego','Z'],['Select','Shift'],['Reset','Enter']] }
     };
 
     const cfg = CONTROLS[currentConsole?.id] || CONTROLS.gb;
