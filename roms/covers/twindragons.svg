@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 280" width="200" height="280">
+  <defs>
+    <linearGradient id="bg6613" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0%" stop-color="#13170c"/>
+      <stop offset="100%" stop-color="#122a18"/>
+    </linearGradient>
+    <linearGradient id="bot6613" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(0,0,0,0.52)"/>
+      <stop offset="100%" stop-color="rgba(0,0,0,0.88)"/>
+    </linearGradient>
+    <pattern id="scan6613" width="1" height="3" patternUnits="userSpaceOnUse">
+      <rect y="2" width="200" height="1" fill="rgba(0,0,0,0.12)"/>
+    </pattern>
+  </defs>
+  <rect width="200" height="280" fill="url(#bg6613)"/>
+  <rect width="200" height="280" fill="url(#scan6613)"/>
+  <rect x="131" y="62" width="2" height="2" fill="#b9f23f" opacity="0.55"/>
+      <rect x="63" y="50" width="2" height="2" fill="#27f156" opacity="0.55"/>
+      <rect x="62" y="38" width="2" height="2" fill="#82b9ed" opacity="0.55"/>
+      <rect x="181" y="14" width="2" height="2" fill="#d8edaa" opacity="0.55"/>
+      <rect x="191" y="9" width="2" height="2" fill="#b9f23f" opacity="0.55"/>
+      <rect x="174" y="17" width="2" height="2" fill="#27f156" opacity="0.55"/>
+      <rect x="139" y="24" width="2" height="2" fill="#82b9ed" opacity="0.55"/>
+  <rect x="0" y="0" width="200" height="134" fill="rgba(0,0,0,0.22)"/>
+  <rect x="48" y="8" width="12" height="12" fill="#27f156"/>
+      <rect x="139" y="8" width="12" height="12" fill="#27f156"/>
+      <rect x="61" y="8" width="12" height="12" fill="#d8edaa"/>
+      <rect x="126" y="8" width="12" height="12" fill="#d8edaa"/>
+      <rect x="74" y="8" width="12" height="12" fill="#27f156"/>
+      <rect x="113" y="8" width="12" height="12" fill="#27f156"/>
+      <rect x="87" y="8" width="12" height="12" fill="#82b9ed"/>
+      <rect x="100" y="8" width="12" height="12" fill="#82b9ed"/>
+      <rect x="61" y="21" width="12" height="12" fill="#27f156"/>
+      <rect x="126" y="21" width="12" height="12" fill="#27f156"/>
+      <rect x="74" y="21" width="12" height="12" fill="#82b9ed"/>
+      <rect x="113" y="21" width="12" height="12" fill="#82b9ed"/>
+      <rect x="87" y="21" width="12" height="12" fill="#d8edaa"/>
+      <rect x="100" y="21" width="12" height="12" fill="#d8edaa"/>
+      <rect x="48" y="34" width="12" height="12" fill="#27f156"/>
+      <rect x="139" y="34" width="12" height="12" fill="#27f156"/>
+      <rect x="87" y="34" width="12" height="12" fill="#82b9ed"/>
+      <rect x="100" y="34" width="12" height="12" fill="#82b9ed"/>
+      <rect x="48" y="47" width="12" height="12" fill="#82b9ed"/>
+      <rect x="139" y="47" width="12" height="12" fill="#82b9ed"/>
+      <rect x="61" y="47" width="12" height="12" fill="#d8edaa"/>
+      <rect x="126" y="47" width="12" height="12" fill="#d8edaa"/>
+      <rect x="74" y="47" width="12" height="12" fill="#82b9ed"/>
+      <rect x="113" y="47" width="12" height="12" fill="#82b9ed"/>
+      <rect x="61" y="60" width="12" height="12" fill="#82b9ed"/>
+      <rect x="126" y="60" width="12" height="12" fill="#82b9ed"/>
+      <rect x="87" y="60" width="12" height="12" fill="#27f156"/>
+      <rect x="100" y="60" width="12" height="12" fill="#27f156"/>
+      <rect x="61" y="73" width="12" height="12" fill="#82b9ed"/>
+      <rect x="126" y="73" width="12" height="12" fill="#82b9ed"/>
+      <rect x="87" y="73" width="12" height="12" fill="#d8edaa"/>
+      <rect x="100" y="73" width="12" height="12" fill="#d8edaa"/>
+      <rect x="48" y="86" width="12" height="12" fill="#82b9ed"/>
+      <rect x="139" y="86" width="12" height="12" fill="#82b9ed"/>
+      <rect x="61" y="86" width="12" height="12" fill="#27f156"/>
+      <rect x="126" y="86" width="12" height="12" fill="#27f156"/>
+      <rect x="48" y="99" width="12" height="12" fill="#27f156"/>
+      <rect x="139" y="99" width="12" height="12" fill="#27f156"/>
+      <rect x="74" y="99" width="12" height="12" fill="#b9f23f"/>
+      <rect x="113" y="99" width="12" height="12" fill="#b9f23f"/>
+      <rect x="61" y="112" width="12" height="12" fill="#b9f23f"/>
+      <rect x="126" y="112" width="12" height="12" fill="#b9f23f"/>
+      <rect x="74" y="112" width="12" height="12" fill="#27f156"/>
+      <rect x="113" y="112" width="12" height="12" fill="#27f156"/>
+  <rect x="0" y="130" width="200" height="3" fill="#b9f23f" opacity="0.9"/>
+  <rect x="0" y="133" width="200" height="1" fill="#27f156" opacity="0.4"/>
+  <rect x="0" y="134" width="200" height="146" fill="url(#bot6613)"/>
+  <rect x="0" y="134" width="5" height="146" fill="#ef4444" opacity="0.88"/>
+  <text x="100" y="158" text-anchor="middle" font-family="monospace,sans-serif" font-size="13" font-weight="900" letter-spacing="1" fill="white">TWIN DRAGONS</text>
+  <rect x="12" y="250" width="44" height="18" rx="3" fill="#f87171" opacity="0.92"/>
+  <text x="34" y="263" text-anchor="middle" font-family="monospace" font-size="10" font-weight="700" fill="#000">NES</text>
+  <rect x="134" y="250" width="54" height="18" rx="3" fill="rgba(255,255,255,0.06)" stroke="#b9f23f" stroke-width="1"/>
+  <text x="161" y="263" text-anchor="middle" font-family="monospace" font-size="7" fill="#b9f23f" letter-spacing="0.5">HOMEBREW</text>
+</svg>

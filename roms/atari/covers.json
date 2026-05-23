@@ -1,0 +1,12 @@
+{
+  "anguna.bin": "roms/covers/anguna.svg",
+  "bitquest.bin": "roms/covers/bitquest.svg",
+  "fishy.bin": "roms/covers/fishy.svg",
+  "flappy_the_duck.bin": "roms/covers/flappy_the_duck.svg",
+  "halo2600.bin": "roms/covers/halo2600.svg",
+  "nanowing.bin": "roms/covers/nanowing.svg",
+  "stardust.bin": "roms/covers/stardust.svg",
+  "thrust.bin": "roms/covers/thrust.svg",
+  "turtlebay.bin": "roms/covers/turtlebay.svg",
+  "winterfortress.bin": "roms/covers/winterfortress.svg"
+}

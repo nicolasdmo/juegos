@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 280" width="200" height="280">
+  <defs>
+    <linearGradient id="bg18554" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0%" stop-color="#0c1716"/>
+      <stop offset="100%" stop-color="#12162a"/>
+    </linearGradient>
+    <linearGradient id="bot18554" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(0,0,0,0.52)"/>
+      <stop offset="100%" stop-color="rgba(0,0,0,0.88)"/>
+    </linearGradient>
+    <pattern id="scan18554" width="1" height="3" patternUnits="userSpaceOnUse">
+      <rect y="2" width="200" height="1" fill="rgba(0,0,0,0.12)"/>
+    </pattern>
+  </defs>
+  <rect width="200" height="280" fill="url(#bg18554)"/>
+  <rect width="200" height="280" fill="url(#scan18554)"/>
+  <rect x="145" y="87" width="2" height="2" fill="#3ff2e6" opacity="0.55"/>
+      <rect x="95" y="81" width="2" height="2" fill="#2745f1" opacity="0.55"/>
+      <rect x="173" y="13" width="2" height="2" fill="#ed82e2" opacity="0.55"/>
+      <rect x="99" y="91" width="2" height="2" fill="#aaede8" opacity="0.55"/>
+      <rect x="86" y="91" width="2" height="2" fill="#3ff2e6" opacity="0.55"/>
+      <rect x="135" y="57" width="2" height="2" fill="#2745f1" opacity="0.55"/>
+      <rect x="162" y="16" width="2" height="2" fill="#ed82e2" opacity="0.55"/>
+  <rect x="0" y="0" width="200" height="134" fill="rgba(0,0,0,0.22)"/>
+  <rect x="48" y="21" width="12" height="12" fill="#3ff2e6"/>
+      <rect x="139" y="21" width="12" height="12" fill="#3ff2e6"/>
+      <rect x="61" y="21" width="12" height="12" fill="#2745f1"/>
+      <rect x="126" y="21" width="12" height="12" fill="#2745f1"/>
+      <rect x="74" y="21" width="12" height="12" fill="#ed82e2"/>
+      <rect x="113" y="21" width="12" height="12" fill="#ed82e2"/>
+      <rect x="87" y="21" width="12" height="12" fill="#2745f1"/>
+      <rect x="100" y="21" width="12" height="12" fill="#2745f1"/>
+      <rect x="74" y="34" width="12" height="12" fill="#2745f1"/>
+      <rect x="113" y="34" width="12" height="12" fill="#2745f1"/>
+      <rect x="61" y="47" width="12" height="12" fill="#2745f1"/>
+      <rect x="126" y="47" width="12" height="12" fill="#2745f1"/>
+      <rect x="87" y="47" width="12" height="12" fill="#3ff2e6"/>
+      <rect x="100" y="47" width="12" height="12" fill="#3ff2e6"/>
+      <rect x="48" y="60" width="12" height="12" fill="#2745f1"/>
+      <rect x="139" y="60" width="12" height="12" fill="#2745f1"/>
+      <rect x="87" y="60" width="12" height="12" fill="#3ff2e6"/>
+      <rect x="100" y="60" width="12" height="12" fill="#3ff2e6"/>
+      <rect x="48" y="73" width="12" height="12" fill="#2745f1"/>
+      <rect x="139" y="73" width="12" height="12" fill="#2745f1"/>
+      <rect x="61" y="73" width="12" height="12" fill="#3ff2e6"/>
+      <rect x="126" y="73" width="12" height="12" fill="#3ff2e6"/>
+      <rect x="74" y="73" width="12" height="12" fill="#3ff2e6"/>
+      <rect x="113" y="73" width="12" height="12" fill="#3ff2e6"/>
+      <rect x="87" y="73" width="12" height="12" fill="#3ff2e6"/>
+      <rect x="100" y="73" width="12" height="12" fill="#3ff2e6"/>
+      <rect x="61" y="86" width="12" height="12" fill="#3ff2e6"/>
+      <rect x="126" y="86" width="12" height="12" fill="#3ff2e6"/>
+      <rect x="74" y="86" width="12" height="12" fill="#3ff2e6"/>
+      <rect x="113" y="86" width="12" height="12" fill="#3ff2e6"/>
+      <rect x="48" y="99" width="12" height="12" fill="#3ff2e6"/>
+      <rect x="139" y="99" width="12" height="12" fill="#3ff2e6"/>
+      <rect x="61" y="99" width="12" height="12" fill="#3ff2e6"/>
+      <rect x="126" y="99" width="12" height="12" fill="#3ff2e6"/>
+      <rect x="87" y="99" width="12" height="12" fill="#aaede8"/>
+      <rect x="100" y="99" width="12" height="12" fill="#aaede8"/>
+      <rect x="61" y="112" width="12" height="12" fill="#aaede8"/>
+      <rect x="126" y="112" width="12" height="12" fill="#aaede8"/>
+      <rect x="74" y="112" width="12" height="12" fill="#aaede8"/>
+      <rect x="113" y="112" width="12" height="12" fill="#aaede8"/>
+  <rect x="0" y="130" width="200" height="3" fill="#3ff2e6" opacity="0.9"/>
+  <rect x="0" y="133" width="200" height="1" fill="#2745f1" opacity="0.4"/>
+  <rect x="0" y="134" width="200" height="146" fill="url(#bot18554)"/>
+  <rect x="0" y="134" width="5" height="146" fill="#22c55e" opacity="0.88"/>
+  <text x="100" y="158" text-anchor="middle" font-family="monospace,sans-serif" font-size="13" font-weight="900" letter-spacing="1" fill="white">BRICKSTER</text>
+  <rect x="12" y="250" width="44" height="18" rx="3" fill="#4ade80" opacity="0.92"/>
+  <text x="34" y="263" text-anchor="middle" font-family="monospace" font-size="10" font-weight="700" fill="#000">GB</text>
+  <rect x="134" y="250" width="54" height="18" rx="3" fill="rgba(255,255,255,0.06)" stroke="#3ff2e6" stroke-width="1"/>
+  <text x="161" y="263" text-anchor="middle" font-family="monospace" font-size="7" fill="#3ff2e6" letter-spacing="0.5">HOMEBREW</text>
+</svg>

@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 280" width="200" height="280">
+  <defs>
+    <linearGradient id="bg786779" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0%" stop-color="#0c1517"/>
+      <stop offset="100%" stop-color="#13122a"/>
+    </linearGradient>
+    <linearGradient id="bot786779" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(0,0,0,0.52)"/>
+      <stop offset="100%" stop-color="rgba(0,0,0,0.88)"/>
+    </linearGradient>
+    <pattern id="scan786779" width="1" height="3" patternUnits="userSpaceOnUse">
+      <rect y="2" width="200" height="1" fill="rgba(0,0,0,0.12)"/>
+    </pattern>
+  </defs>
+  <rect width="200" height="280" fill="url(#bg786779)"/>
+  <rect width="200" height="280" fill="url(#scan786779)"/>
+  <rect x="31" y="42" width="2" height="2" fill="#3fdaf2" opacity="0.55"/>
+      <rect x="140" y="107" width="2" height="2" fill="#3127f1" opacity="0.55"/>
+      <rect x="144" y="83" width="2" height="2" fill="#ed82cd" opacity="0.55"/>
+      <rect x="55" y="101" width="2" height="2" fill="#aae4ed" opacity="0.55"/>
+      <rect x="155" y="96" width="2" height="2" fill="#3fdaf2" opacity="0.55"/>
+      <rect x="174" y="61" width="2" height="2" fill="#3127f1" opacity="0.55"/>
+      <rect x="154" y="42" width="2" height="2" fill="#ed82cd" opacity="0.55"/>
+  <rect x="0" y="0" width="200" height="134" fill="rgba(0,0,0,0.22)"/>
+  <rect x="74" y="8" width="12" height="12" fill="#aae4ed"/>
+      <rect x="113" y="8" width="12" height="12" fill="#aae4ed"/>
+      <rect x="87" y="8" width="12" height="12" fill="#aae4ed"/>
+      <rect x="100" y="8" width="12" height="12" fill="#aae4ed"/>
+      <rect x="61" y="21" width="12" height="12" fill="#aae4ed"/>
+      <rect x="126" y="21" width="12" height="12" fill="#aae4ed"/>
+      <rect x="61" y="34" width="12" height="12" fill="#aae4ed"/>
+      <rect x="126" y="34" width="12" height="12" fill="#aae4ed"/>
+      <rect x="74" y="34" width="12" height="12" fill="#3fdaf2"/>
+      <rect x="113" y="34" width="12" height="12" fill="#3fdaf2"/>
+      <rect x="87" y="34" width="12" height="12" fill="#aae4ed"/>
+      <rect x="100" y="34" width="12" height="12" fill="#aae4ed"/>
+      <rect x="48" y="47" width="12" height="12" fill="#aae4ed"/>
+      <rect x="139" y="47" width="12" height="12" fill="#aae4ed"/>
+      <rect x="61" y="47" width="12" height="12" fill="#3fdaf2"/>
+      <rect x="126" y="47" width="12" height="12" fill="#3fdaf2"/>
+      <rect x="48" y="60" width="12" height="12" fill="#3fdaf2"/>
+      <rect x="139" y="60" width="12" height="12" fill="#3fdaf2"/>
+      <rect x="61" y="60" width="12" height="12" fill="#aae4ed"/>
+      <rect x="126" y="60" width="12" height="12" fill="#aae4ed"/>
+      <rect x="87" y="60" width="12" height="12" fill="#ed82cd"/>
+      <rect x="100" y="60" width="12" height="12" fill="#ed82cd"/>
+      <rect x="48" y="73" width="12" height="12" fill="#aae4ed"/>
+      <rect x="139" y="73" width="12" height="12" fill="#aae4ed"/>
+      <rect x="74" y="73" width="12" height="12" fill="#ed82cd"/>
+      <rect x="113" y="73" width="12" height="12" fill="#ed82cd"/>
+      <rect x="61" y="86" width="12" height="12" fill="#ed82cd"/>
+      <rect x="126" y="86" width="12" height="12" fill="#ed82cd"/>
+      <rect x="87" y="86" width="12" height="12" fill="#3fdaf2"/>
+      <rect x="100" y="86" width="12" height="12" fill="#3fdaf2"/>
+      <rect x="87" y="99" width="12" height="12" fill="#aae4ed"/>
+      <rect x="100" y="99" width="12" height="12" fill="#aae4ed"/>
+      <rect x="74" y="112" width="12" height="12" fill="#aae4ed"/>
+      <rect x="113" y="112" width="12" height="12" fill="#aae4ed"/>
+  <rect x="0" y="130" width="200" height="3" fill="#3fdaf2" opacity="0.9"/>
+  <rect x="0" y="133" width="200" height="1" fill="#3127f1" opacity="0.4"/>
+  <rect x="0" y="134" width="200" height="146" fill="url(#bot786779)"/>
+  <rect x="0" y="134" width="5" height="146" fill="#0ea5e9" opacity="0.88"/>
+  <text x="100" y="158" text-anchor="middle" font-family="monospace,sans-serif" font-size="13" font-weight="900" letter-spacing="1" fill="white">ASTRO FORCE</text>
+  <rect x="12" y="250" width="44" height="18" rx="3" fill="#38bdf8" opacity="0.92"/>
+  <text x="34" y="263" text-anchor="middle" font-family="monospace" font-size="10" font-weight="700" fill="#000">SMS</text>
+  <rect x="134" y="250" width="54" height="18" rx="3" fill="rgba(255,255,255,0.06)" stroke="#3fdaf2" stroke-width="1"/>
+  <text x="161" y="263" text-anchor="middle" font-family="monospace" font-size="7" fill="#3fdaf2" letter-spacing="0.5">HOMEBREW</text>
+</svg>

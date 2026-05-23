@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 280" width="200" height="280">
+  <defs>
+    <linearGradient id="bg293026" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0%" stop-color="#0c1617"/>
+      <stop offset="100%" stop-color="#12122a"/>
+    </linearGradient>
+    <linearGradient id="bot293026" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(0,0,0,0.52)"/>
+      <stop offset="100%" stop-color="rgba(0,0,0,0.88)"/>
+    </linearGradient>
+    <pattern id="scan293026" width="1" height="3" patternUnits="userSpaceOnUse">
+      <rect y="2" width="200" height="1" fill="rgba(0,0,0,0.12)"/>
+    </pattern>
+  </defs>
+  <rect width="200" height="280" fill="url(#bg293026)"/>
+  <rect width="200" height="280" fill="url(#scan293026)"/>
+  <rect x="74" y="56" width="2" height="2" fill="#3fe6f2" opacity="0.55"/>
+      <rect x="115" y="30" width="2" height="2" fill="#272af1" opacity="0.55"/>
+      <rect x="46" y="17" width="2" height="2" fill="#ed82d4" opacity="0.55"/>
+      <rect x="123" y="97" width="2" height="2" fill="#aae8ed" opacity="0.55"/>
+      <rect x="159" y="51" width="2" height="2" fill="#3fe6f2" opacity="0.55"/>
+      <rect x="9" y="70" width="2" height="2" fill="#272af1" opacity="0.55"/>
+      <rect x="105" y="18" width="2" height="2" fill="#ed82d4" opacity="0.55"/>
+  <rect x="0" y="0" width="200" height="134" fill="rgba(0,0,0,0.22)"/>
+  <rect x="87" y="21" width="12" height="12" fill="#272af1"/>
+      <rect x="100" y="21" width="12" height="12" fill="#272af1"/>
+      <rect x="87" y="34" width="12" height="12" fill="#272af1"/>
+      <rect x="100" y="34" width="12" height="12" fill="#272af1"/>
+      <rect x="61" y="47" width="12" height="12" fill="#272af1"/>
+      <rect x="126" y="47" width="12" height="12" fill="#272af1"/>
+      <rect x="74" y="47" width="12" height="12" fill="#272af1"/>
+      <rect x="113" y="47" width="12" height="12" fill="#272af1"/>
+      <rect x="87" y="47" width="12" height="12" fill="#ed82d4"/>
+      <rect x="100" y="47" width="12" height="12" fill="#ed82d4"/>
+      <rect x="48" y="60" width="12" height="12" fill="#272af1"/>
+      <rect x="139" y="60" width="12" height="12" fill="#272af1"/>
+      <rect x="74" y="73" width="12" height="12" fill="#272af1"/>
+      <rect x="113" y="73" width="12" height="12" fill="#272af1"/>
+      <rect x="48" y="99" width="12" height="12" fill="#272af1"/>
+      <rect x="139" y="99" width="12" height="12" fill="#272af1"/>
+      <rect x="61" y="99" width="12" height="12" fill="#272af1"/>
+      <rect x="126" y="99" width="12" height="12" fill="#272af1"/>
+      <rect x="61" y="112" width="12" height="12" fill="#aae8ed"/>
+      <rect x="126" y="112" width="12" height="12" fill="#aae8ed"/>
+      <rect x="87" y="112" width="12" height="12" fill="#ed82d4"/>
+      <rect x="100" y="112" width="12" height="12" fill="#ed82d4"/>
+  <rect x="0" y="130" width="200" height="3" fill="#3fe6f2" opacity="0.9"/>
+  <rect x="0" y="133" width="200" height="1" fill="#272af1" opacity="0.4"/>
+  <rect x="0" y="134" width="200" height="146" fill="url(#bot293026)"/>
+  <rect x="0" y="134" width="5" height="146" fill="#ef4444" opacity="0.88"/>
+  <text x="100" y="158" text-anchor="middle" font-family="monospace,sans-serif" font-size="13" font-weight="900" letter-spacing="1" fill="white">INVADERS</text>
+  <rect x="12" y="250" width="44" height="18" rx="3" fill="#f87171" opacity="0.92"/>
+  <text x="34" y="263" text-anchor="middle" font-family="monospace" font-size="10" font-weight="700" fill="#000">NES</text>
+  <rect x="134" y="250" width="54" height="18" rx="3" fill="rgba(255,255,255,0.06)" stroke="#3fe6f2" stroke-width="1"/>
+  <text x="161" y="263" text-anchor="middle" font-family="monospace" font-size="7" fill="#3fe6f2" letter-spacing="0.5">HOMEBREW</text>
+</svg>
