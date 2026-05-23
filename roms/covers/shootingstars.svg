@@ -66,8 +66,8 @@
   <rect x="0" y="133" width="200" height="1" fill="#b1f127" opacity="0.4"/>
   <rect x="0" y="134" width="200" height="146" fill="url(#bot161043)"/>
   <rect x="0" y="134" width="5" height="146" fill="#0ea5e9" opacity="0.88"/>
-  <text x="100" y="158" text-anchor="middle" font-family="monospace,sans-serif" font-size="13" font-weight="900" letter-spacing="1" fill="white">SHOOTING</text>
-      <text x="100" y="180" text-anchor="middle" font-family="monospace,sans-serif" font-size="13" font-weight="900" letter-spacing="1" fill="white">STARS</text>
+  <text x="100" y="187" text-anchor="middle" font-family="monospace,sans-serif" font-size="19" font-weight="900" letter-spacing="1" fill="white">SHOOTING</text>
+      <text x="100" y="213" text-anchor="middle" font-family="monospace,sans-serif" font-size="19" font-weight="900" letter-spacing="1" fill="white">STARS</text>
   <rect x="12" y="250" width="44" height="18" rx="3" fill="#38bdf8" opacity="0.92"/>
   <text x="34" y="263" text-anchor="middle" font-family="monospace" font-size="10" font-weight="700" fill="#000">SMS</text>
   <rect x="134" y="250" width="54" height="18" rx="3" fill="rgba(255,255,255,0.06)" stroke="#f2873f" stroke-width="1"/>

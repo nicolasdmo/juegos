@@ -58,7 +58,7 @@
   <rect x="0" y="133" width="200" height="1" fill="#f1276a" opacity="0.4"/>
   <rect x="0" y="134" width="200" height="146" fill="url(#bot76137)"/>
   <rect x="0" y="134" width="5" height="146" fill="#a855f7" opacity="0.88"/>
-  <text x="100" y="158" text-anchor="middle" font-family="monospace,sans-serif" font-size="13" font-weight="900" letter-spacing="1" fill="white">HALO 2600</text>
+  <text x="100" y="200" text-anchor="middle" font-family="monospace,sans-serif" font-size="19" font-weight="900" letter-spacing="1" fill="white">HALO 2600</text>
   <rect x="12" y="250" width="44" height="18" rx="3" fill="#c084fc" opacity="0.92"/>
   <text x="34" y="263" text-anchor="middle" font-family="monospace" font-size="10" font-weight="700" fill="#000">ATR</text>
   <rect x="134" y="250" width="54" height="18" rx="3" fill="rgba(255,255,255,0.06)" stroke="#c53ff2" stroke-width="1"/>

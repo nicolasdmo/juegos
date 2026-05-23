@@ -126,13 +126,13 @@ def make_svg(filename, display_name, con_id):
             '<rect x="{}" y="{}" width="2" height="2" fill="{}" opacity="0.55"/>'.format(sx, sy, colors[ci])
         )
 
-    # Title lines
+    # Title lines — wrap at 11 chars so font stays big
     words = display_name.split()
     lines = []
     cur = ""
     for w in words:
         candidate = (cur + " " + w).strip()
-        if len(candidate) <= 13:
+        if len(candidate) <= 11:
             cur = candidate
         else:
             if cur:
@@ -142,13 +142,28 @@ def make_svg(filename, display_name, con_id):
         lines.append(cur)
     lines = lines[:2]
 
+    # Dynamic font-size based on longest line
+    longest = max(len(ln) for ln in lines)
+    if longest <= 6:
+        fsize = 22
+    elif longest <= 9:
+        fsize = 19
+    else:
+        fsize = 17
+
+    # Vertical centering in bottom panel (y=134 to y=248)
+    line_gap = fsize + 7
+    n_lines = len(lines)
+    block_h = fsize + (n_lines - 1) * line_gap
+    base_y = 134 + (114 - block_h) // 2 + fsize
+
     title_els = []
-    base_y = 158
     for i, ln in enumerate(lines):
-        ty = base_y + i * 22
+        ty = base_y + i * line_gap
         title_els.append(
             '<text x="100" y="{}" text-anchor="middle" font-family="monospace,sans-serif" '
-            'font-size="13" font-weight="900" letter-spacing="1" fill="white">{}</text>'.format(ty, ln.upper())
+            'font-size="{}" font-weight="900" letter-spacing="1" fill="white">{}</text>'.format(
+                ty, fsize, ln.upper())
         )
 
     uid = abs(h) % 999999
