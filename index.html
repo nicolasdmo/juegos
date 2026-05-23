@@ -1332,27 +1332,28 @@
     window.EJS_volume        = 0.6;
     window.EJS_disableDatabases = true;
 
-    // Controles unificados para PC:
+    // Controles unificados para teclado PC:
     // A=Z  B=X  Start=Enter  Select=Shift  D-Pad=Flechas
-    // (el default de EJS tiene Select=V; acá lo forzamos a Shift)
+    // Solo se setea 'value' (teclado). 'value2' (gamepad) queda en defaults de EJS.
+    // El default de EJS tiene Select=V; acá lo forzamos a Shift.
     window.EJS_defaultControls = {
       0: {
-        0:  { value: 'x',          value2: 'BUTTON_2'              }, // B
-        1:  { value: 's',          value2: 'BUTTON_4'              }, // Y
-        2:  { value: 'Shift',      value2: 'SELECT'                }, // Select → Shift ←
-        3:  { value: 'Enter',      value2: 'START'                 }, // Start  → Enter
-        4:  { value: 'ArrowUp',    value2: 'DPAD_UP'               }, // ↑
-        5:  { value: 'ArrowDown',  value2: 'DPAD_DOWN'             }, // ↓
-        6:  { value: 'ArrowLeft',  value2: 'DPAD_LEFT'             }, // ←
-        7:  { value: 'ArrowRight', value2: 'DPAD_RIGHT'            }, // →
-        8:  { value: 'z',          value2: 'BUTTON_1'              }, // A
-        9:  { value: 'a',          value2: 'BUTTON_3'              }, // X
-        10: { value: 'q',          value2: 'LEFT_TOP_SHOULDER'     }, // L
-        11: { value: 'w',          value2: 'RIGHT_TOP_SHOULDER'    }, // R
-        12: { value: 'e',          value2: 'LEFT_BOTTOM_SHOULDER'  }, // L2
-        13: { value: 'r',          value2: 'RIGHT_BOTTOM_SHOULDER' }, // R2
-        14: { value: 'f',          value2: 'LEFT_STICK'            }, // L3
-        15: { value: 'g',          value2: 'RIGHT_STICK'           }, // R3
+        0:  { value: 'x'          }, // B      → X
+        1:  { value: 's'          }, // Y      → S
+        2:  { value: 'Shift'      }, // Select → Shift  ← fix principal
+        3:  { value: 'Enter'      }, // Start  → Enter
+        4:  { value: 'ArrowUp'    }, // ↑
+        5:  { value: 'ArrowDown'  }, // ↓
+        6:  { value: 'ArrowLeft'  }, // ←
+        7:  { value: 'ArrowRight' }, // →
+        8:  { value: 'z'          }, // A      → Z
+        9:  { value: 'a'          }, // X      → A
+        10: { value: 'q'          }, // L      → Q
+        11: { value: 'w'          }, // R      → W
+        12: { value: 'e'          }, // L2     → E
+        13: { value: 'r'          }, // R2     → R
+        14: { value: 'f'          }, // L3     → F
+        15: { value: 'g'          }, // R3     → G
       }
     };
 
